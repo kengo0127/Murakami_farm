@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 - 作業タスク</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f7f0;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #2e5c28;
+      color: #fff;
+      padding: 13px 16px 10px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    }
+
+    .header-row1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .header-title { font-size: 17px; font-weight: 800; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .btn-logout {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .header-row2 {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      opacity: 0.88;
+    }
+
+    .today-label { font-size: 13px; }
+
+    #currentTime {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Timeline ── */
+    .timeline {
+      padding: 14px 12px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Break card */
+    .break-card {
+      background: #fff8e1;
+      border: 1.5px dashed #ffca28;
+      border-radius: 12px;
+      padding: 11px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      color: #7a5f00;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .break-time {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 400;
+      color: #9a7f20;
+    }
+
+    /* Task card */
+    .task-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 2.5px solid transparent;
+    }
+
+    .task-card.status-completed {
+      opacity: 0.5;
+      background: #f5f5f5;
+    }
+
+    .task-card.status-active {
+      border-color: #43a047;
+      box-shadow: 0 4px 18px rgba(67,160,71,0.18);
+    }
+
+    .task-card.status-next {
+      border-color: #a5d6a7;
+    }
+
+    .task-card.status-started {
+      border-color: #43a047;
+      box-shadow: 0 4px 18px rgba(67,160,71,0.18);
+    }
+
+    .task-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .crop-badge {
+      background: #e8f5e9;
+      color: #2e5c28;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+
+    .task-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .task-time {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .task-note {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .status-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+
+    .status-badge.active { background: #e8f5e9; color: #2e5c28; }
+    .status-badge.next   { background: #f1f1f1; color: #666; }
+
+    /* Complete button */
+    .btn-complete {
+      width: 100%;
+      padding: 15px;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.15s, transform 0.1s;
+      margin-top: 4px;
+    }
+
+    .btn-complete:active  { transform: scale(0.98); background: #1a3d17; }
+    .btn-complete:disabled { background: #bbb; cursor: not-allowed; }
+
+    .btn-complete.subtle {
+      background: transparent;
+      color: #888;
+      border: 1.5px solid #ddd;
+      font-size: 14px;
+      padding: 11px;
+      font-weight: 600;
+    }
+
+    /* Start button */
+    .btn-start {
+      width: 100%;
+      padding: 15px;
+      background: #388e3c;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.15s, transform 0.1s;
+      margin-top: 4px;
+    }
+
+    .btn-start:active  { transform: scale(0.98); background: #2e7d32; }
+    .btn-start:disabled { background: #bbb; cursor: not-allowed; }
+
+    .btn-start.subtle {
+      background: transparent;
+      color: #888;
+      border: 1.5px solid #ddd;
+      font-size: 14px;
+      padding: 11px;
+      font-weight: 600;
+    }
+
+    .started-info {
+      font-size: 12px;
+      color: #2e7d32;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    /* Completed info */
+    .completed-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    /* Empty / Loading */
+    .empty-state, .loading-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #bbb;
+    }
+
+    .empty-state .icon { font-size: 52px; margin-bottom: 14px; }
+    .empty-state p { font-size: 15px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-row1">
+    <div class="header-title">🌿 村上農園</div>
+    <div class="header-right">
+      <span id="userName"></span>
+      <button class="btn-logout" onclick="logout()">ログアウト</button>
+    </div>
+  </div>
+  <div class="header-row2">
+    <span class="today-label" id="todayLabel"></span>
+    <span id="currentTime"></span>
+  </div>
+</header>
+
+<div class="timeline" id="timeline">
+  <div class="loading-state">読み込み中...</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script>
+
+  // ── 休憩時間定義 ──────────────────────────────────────
+  const BREAKS = [
+    { type: 'break', label: '☕ 休憩',   start: '10:00', end: '10:30' },
+    { type: 'break', label: '🍱 昼休憩', start: '12:00', end: '13:00' },
+    { type: 'break', label: '☕ 休憩',   start: '15:00', end: '15:30' },
+  ];
+
+  let currentProfile = null;
+  // DBが追いつく前に再描画されても「開始済み」状態を保持するローカルキャッシュ
+  const localStartedTasks = new Map(); // taskId -> Date
+
+  // ── 時刻ユーティリティ ──────────────────────────────────
+  function getToday() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function toMin(t) {
+    const [h, m] = t.substring(0, 5).split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function fmt(t) {
+    return t.substring(0, 5);
+  }
+
+  function fmtHM(date) {
+    return String(date.getHours()).padStart(2,'0') + ':' + String(date.getMinutes()).padStart(2,'0');
+  }
+
+  function formatDateJa(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const w = ['日','月','火','水','木','金','土'][d.getDay()];
+    return `${d.getMonth()+1}月${d.getDate()}日（${w}）`;
+  }
+
+  function getNowMin() {
+    const n = new Date();
+    return n.getHours() * 60 + n.getMinutes();
+  }
+
+  // ── 時計 ──────────────────────────────────────────────
+  function updateClock() {
+    document.getElementById('currentTime').textContent = fmtHM(new Date());
+  }
+
+  // ── タスクの状態判定 ───────────────────────────────────
+  function getStatus(task) {
+    if (task.task_completions?.length) return 'completed';
+    const now = getNowMin();
+    const s = toMin(task.scheduled_start);
+    const e = toMin(task.scheduled_end);
+    if (now >= s && now <= e) return 'active';
+    if (now < s)              return 'upcoming';
+    return 'overdue';
+  }
+
+  // ── カード HTML 生成 ───────────────────────────────────
+  function taskCardHTML(task, status) {
+    const start   = fmt(task.scheduled_start);
+    const end     = fmt(task.scheduled_end);
+    const comp    = task.task_completions?.[0];
+    const started = task.task_starts?.[0];
+
+    const badge =
+      status === 'started' ? `<div class="status-badge active">▶ 作業中</div>` :
+      status === 'active'  ? `<div class="status-badge active">▶ 作業中</div>` :
+      status === 'next'    ? `<div class="status-badge next">⏭ 次の作業</div>` : '';
+
+    const startedInfo = started
+      ? `<div class="started-info">⏱ ${fmtHM(new Date(started.started_at))} 開始</div>` : '';
+
+    const note = task.note
+      ? `<div class="task-note">${task.note}</div>` : '';
+
+    let action;
+    if (status === 'completed') {
+      const at = comp ? `（${fmtHM(new Date(comp.completed_at))}完了）` : '';
+      action = `<div class="completed-info"><span>✅</span><span>完了済み${at}</span></div>`;
+    } else if (status === 'started') {
+      action = `<button class="btn-complete" onclick="handleComplete('${task.id}','${task.scheduled_start}')">✓ 完了</button>`;
+    } else if (status === 'active' || status === 'next') {
+      action = `<button class="btn-start" onclick="handleStart('${task.id}')">▶ 開始</button>`;
+    } else {
+      action = `<button class="btn-start subtle" onclick="handleStart('${task.id}')">開始する</button>`;
+    }
+
+    return `
+      <div class="task-card status-${status}" id="task-${task.id}" data-scheduled-start="${task.scheduled_start}">
+        <div class="task-header">
+          <span class="crop-badge">${task.crop}</span>
+          <span class="task-name">${task.task_name}</span>
+        </div>
+        ${badge}
+        ${startedInfo}
+        <div class="task-time">${start} 〜 ${end}</div>
+        ${note}
+        ${action}
+      </div>`;
+  }
+
+  // ── タイムライン描画 ───────────────────────────────────
+  function renderTimeline(tasks) {
+    const el = document.getElementById('timeline');
+
+    if (!tasks.length) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>本日の作業タスクは<br>まだ登録されていません</p>
+        </div>`;
+      return;
+    }
+
+    // ステータスマップを作成
+    const statusMap = {};
+    tasks.forEach(t => { statusMap[t.id] = getStatus(t); });
+
+    // active/started がなければ最初の upcoming を next に昇格
+    const hasActiveOrStarted = Object.values(statusMap).some(s => s === 'active' || s === 'started');
+    if (!hasActiveOrStarted) {
+      const first = tasks.find(t => statusMap[t.id] === 'upcoming');
+      if (first) statusMap[first.id] = 'next';
+    }
+
+    // タスクと休憩を時刻順にマージ
+    const items = [
+      ...tasks.map(t => ({ ...t, type: 'task', _sort: toMin(t.scheduled_start) })),
+      ...BREAKS.map(b => ({ ...b, _sort: toMin(b.start) })),
+    ].sort((a, b) => a._sort - b._sort);
+
+    el.innerHTML = items.map(item => {
+      if (item.type === 'break') {
+        return `
+          <div class="break-card">
+            <span>${item.label}</span>
+            <span class="break-time">${item.start} 〜 ${item.end}</span>
+          </div>`;
+      }
+      return taskCardHTML(item, statusMap[item.id]);
+    }).join('');
+  }
+
+  // ── 完了ボタン処理 ─────────────────────────────────────
+  async function handleComplete(taskId, scheduledStart) {
+    const btn = document.querySelector(`#task-${taskId} .btn-complete`);
+    if (btn) { btn.disabled = true; btn.textContent = '記録中...'; }
+
+    const now = new Date();
+    const startDate = new Date(`${getToday()}T${scheduledStart.substring(0,8)}`);
+    const durationMinutes = Math.max(0, Math.round((now - startDate) / 60000));
+
+    const { error } = await supabaseClient
+      .from('task_completions')
+      .insert({
+        task_id: taskId,
+        completed_by: currentProfile.id,
+        completed_at: now.toISOString(),
+        duration_minutes: durationMinutes,
+      });
+
+    if (error && error.code !== '23505') {
+      // 重複以外の本当のエラーだけアラート
+      alert('エラーが発生しました。もう一度お試しください。');
+      console.error(error);
+      if (btn) { btn.disabled = false; btn.textContent = '✓ 完了'; }
+      return;
+    }
+
+    // 成功 or すでに完了済み → その場でカードを完了表示に切り替え
+    markTaskCompleted(taskId, now);
+    // DB反映を待ってから全体を再描画
+    setTimeout(() => loadTasks(), 800);
+  }
+
+  // ── 開始ボタン処理 ─────────────────────────────────────
+  async function handleStart(taskId) {
+    const btn = document.querySelector(`#task-${taskId} .btn-start`);
+    if (btn) { btn.disabled = true; btn.textContent = '記録中...'; }
+
+    const now = new Date();
+
+    // await前に設定（insert中にrealtimeがloadTasksを呼んでも状態が戻らないよう）
+    localStartedTasks.set(taskId, now);
+    markTaskStarted(taskId, now);
+
+    const { error } = await supabaseClient
+      .from('task_starts')
+      .insert({
+        task_id: taskId,
+        started_by: currentProfile.id,
+        started_at: now.toISOString(),
+      });
+
+    if (error && error.code !== '23505') {
+      localStartedTasks.delete(taskId);
+      alert('エラーが発生しました。もう一度お試しください。');
+      if (btn) { btn.disabled = false; btn.textContent = '▶ 開始'; }
+      return;
+    }
+
+    setTimeout(() => loadTasks(), 800);
+  }
+
+  function markTaskStarted(taskId, startedAt) {
+    const card = document.getElementById(`task-${taskId}`);
+    if (!card) return;
+
+    card.className = 'task-card status-started';
+
+    // status-badge を更新（なければ追加）
+    let badge = card.querySelector('.status-badge');
+    if (badge) {
+      badge.className = 'status-badge active';
+      badge.textContent = '▶ 作業中';
+    } else {
+      badge = document.createElement('div');
+      badge.className = 'status-badge active';
+      badge.textContent = '▶ 作業中';
+      card.querySelector('.task-header').insertAdjacentElement('afterend', badge);
+    }
+
+    // 開始時刻表示を badge の直後に挿入
+    if (!card.querySelector('.started-info')) {
+      const div = document.createElement('div');
+      div.className = 'started-info';
+      div.textContent = `⏱ ${fmtHM(startedAt)} 開始`;
+      badge.insertAdjacentElement('afterend', div);
+    }
+
+    // 開始ボタン → 完了ボタンに差し替え
+    const startBtn = card.querySelector('.btn-start');
+    if (startBtn) {
+      const scheduledStart = card.dataset.scheduledStart;
+      const completeBtn = document.createElement('button');
+      completeBtn.className = 'btn-complete';
+      completeBtn.onclick = () => handleComplete(taskId, scheduledStart);
+      completeBtn.textContent = '✓ 完了';
+      startBtn.replaceWith(completeBtn);
+    }
+  }
+
+  // 該当カードだけ即時に完了済み表示へ差し替え
+  function markTaskCompleted(taskId, completedAt) {
+    const card = document.getElementById(`task-${taskId}`);
+    if (!card) return;
+
+    card.className = 'task-card status-completed';
+
+    // バッジ除去
+    const badge = card.querySelector('.status-badge');
+    if (badge) badge.remove();
+
+    // ボタンを完了情報に差し替え（緑ボタン → ✅表示）
+    const btn = card.querySelector('.btn-complete');
+    if (btn) {
+      const div = document.createElement('div');
+      div.className = 'completed-info';
+      div.innerHTML = `<span class="completed-stamp">✅</span><span>完了済み（${fmtHM(completedAt)}完了）</span>`;
+      btn.replaceWith(div);
+    }
+  }
+
+  // ── タスク読み込み ─────────────────────────────────────
+  async function loadTasks() {
+    const today = getToday();
+
+    // ① 担当タスクID取得
+    const { data: assignments } = await supabaseClient
+      .from('task_assignments')
+      .select('task_id')
+      .eq('staff_id', currentProfile.id);
+
+    if (!assignments?.length) { renderTimeline([]); return; }
+
+    const taskIds = assignments.map(a => a.task_id);
+
+    // ② タスク取得（completions は別クエリ）
+    const { data: tasks, error: tErr } = await supabaseClient
+      .from('tasks')
+      .select('id, crop, task_name, scheduled_start, scheduled_end, note')
+      .eq('date', today)
+      .in('id', taskIds)
+      .order('scheduled_start');
+
+    if (tErr || !tasks?.length) { renderTimeline([]); return; }
+
+    // ③ 完了記録を別クエリで取得
+    const { data: completions } = await supabaseClient
+      .from('task_completions')
+      .select('id, task_id, completed_by, completed_at, duration_minutes')
+      .in('task_id', taskIds);
+
+    // ④ 開始記録を別クエリで取得
+    const { data: starts } = await supabaseClient
+      .from('task_starts')
+      .select('task_id, started_at, started_by')
+      .in('task_id', taskIds);
+
+    // ⑤ タスクに完了・開始データを結合
+    const compMap = {};
+    completions?.forEach(c => { compMap[c.task_id] = c; });
+
+    const startsMap = {};
+    starts?.forEach(s => { startsMap[s.task_id] = s; });
+
+    const merged = tasks.map(t => {
+      const dbStart = startsMap[t.id];
+      // DBが確認済みならローカルキャッシュを削除
+      if (dbStart && localStartedTasks.has(t.id)) localStartedTasks.delete(t.id);
+      // DBになければローカルキャッシュで補完（再描画しても状態が戻らない）
+      const localStart = localStartedTasks.get(t.id);
+      const startsEntry = dbStart
+        ? [dbStart]
+        : localStart
+          ? [{ task_id: t.id, started_at: localStart.toISOString() }]
+          : [];
+      return {
+        ...t,
+        task_completions: compMap[t.id] ? [compMap[t.id]] : [],
+        task_starts:      startsEntry,
+      };
+    });
+
+    renderTimeline(merged);
+  }
+
+  // ── 初期化 ────────────────────────────────────────────
+  (async () => {
+    currentProfile = await requireAuth('staff');
+    if (!currentProfile) return;
+
+    document.getElementById('userName').textContent = currentProfile.name;
+    document.getElementById('todayLabel').textContent = formatDateJa(getToday());
+
+    updateClock();
+    setInterval(updateClock, 30000);
+
+    // 1分ごとに再描画（作業中/次の作業の切り替えのため）
+    setInterval(loadTasks, 60000);
+
+    await loadTasks();
+
+    // 他スタッフが完了・開始ボタンを押したらリアルタイムで反映
+    supabaseClient
+      .channel('completions')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'task_completions' },
+        () => loadTasks()
+      )
+      .subscribe();
+
+    supabaseClient
+      .channel('starts')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'task_starts' },
+        () => loadTasks()
+      )
+      .subscribe();
+  })();
+
+</script>
+</body>
+</html>

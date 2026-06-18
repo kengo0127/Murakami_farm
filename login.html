@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 タスク管理 - ログイン</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: linear-gradient(160deg, #e8f5e9 0%, #f1f8e9 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 40px 32px 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 6px 32px rgba(0, 80, 0, 0.10);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .header-icon {
+      font-size: 52px;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #2e5c28;
+      letter-spacing: 0.04em;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: #7a9c76;
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 8px;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 15px 16px;
+      border: 2px solid #dde8dd;
+      border-radius: 12px;
+      font-size: 16px;
+      color: #222;
+      background: #fafffe;
+      transition: border-color 0.18s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #4caf50;
+      background: #fff;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 17px;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.18s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-login:hover { background: #3d7a37; }
+    .btn-login:active { transform: scale(0.98); }
+    .btn-login:disabled { background: #aaa; cursor: not-allowed; }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      display: none;
+      margin-top: 18px;
+      padding: 13px 16px;
+      background: #fff0f0;
+      border: 1.5px solid #ffcccc;
+      border-radius: 10px;
+      color: #c0392b;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .error-box.show { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="header">
+      <div class="header-icon">🌿</div>
+      <h1>村上農園</h1>
+      <p>タスク管理システム</p>
+    </div>
+
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label for="email">メールアドレス</label>
+        <input
+          type="email"
+          id="email"
+          placeholder="your@email.com"
+          autocomplete="email"
+          inputmode="email"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">パスワード</label>
+        <input
+          type="password"
+          id="password"
+          autocomplete="current-password"
+          required
+        >
+      </div>
+
+      <button type="submit" class="btn-login" id="loginBtn">
+        ログイン
+      </button>
+
+      <div class="error-box" id="errorBox"></div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script>
+    // すでにログイン済みならリダイレクト
+    (async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) redirectByRole(session.user.id);
+    })();
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn      = document.getElementById('loginBtn');
+      const errorBox = document.getElementById('errorBox');
+
+      errorBox.classList.remove('show');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>ログイン中...';
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        await redirectByRole(data.user.id);
+      } catch (err) {
+        const msg = errorMessage(err.message);
+        errorBox.textContent = msg;
+        errorBox.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = 'ログイン';
+      }
+    });
+
+    async function redirectByRole(userId) {
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      window.location.href = profile?.role === 'admin' ? 'admin.html' : 'staff.html';
+    }
+
+    function errorMessage(msg) {
+      if (msg.includes('Invalid login credentials'))
+        return 'メールアドレスまたはパスワードが正しくありません';
+      if (msg.includes('Email not confirmed'))
+        return 'メールアドレスの確認が完了していません。確認メールをご確認ください。';
+      if (msg.includes('Too many requests'))
+        return 'ログイン試行が多すぎます。しばらく時間をおいてから再試行してください。';
+      return 'ログインに失敗しました。しばらくしてから再試行してください。';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# 認証情報・ローカル作業ファイル
+supabaseのURLとか.txt
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db

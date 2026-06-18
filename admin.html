@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 - 管理者</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f7f0;
+      min-height: 100vh;
+      padding-bottom: 48px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a3d17;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+    }
+
+    .header-title { font-size: 17px; font-weight: 800; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .admin-badge {
+      background: rgba(255,255,255,0.15);
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+    }
+
+    .btn-logout {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      border-top: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 11px;
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      border-bottom-color: #81c784;
+    }
+
+    /* ── Layout ── */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+
+    /* ── Date selector ── */
+    .date-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    .date-bar label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #555;
+      white-space: nowrap;
+    }
+
+    #selectedDate {
+      border: 1.5px solid #dde8dd;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a3d17;
+      cursor: pointer;
+    }
+
+    /* ── Form card ── */
+    .form-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+
+    .form-card h2 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #1a3d17;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e8f5e9;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 540px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    .form-group input[type="text"],
+    .form-group select,
+    .form-group textarea,
+    .form-group input[list] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 8px;
+      font-size: 15px;
+      color: #222;
+      background: #fafffe;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #4caf50;
+    }
+
+    .form-group textarea { resize: vertical; }
+
+    /* Staff checkboxes */
+    .staff-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .staff-check-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f5f5f5;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .staff-check-label:has(input:checked) {
+      background: #e8f5e9;
+      border-color: #4caf50;
+      color: #1a3d17;
+    }
+
+    .staff-check-label input { accent-color: #2e5c28; }
+
+    .no-staff-msg {
+      color: #aaa;
+      font-size: 13px;
+      padding: 8px 0;
+    }
+
+    /* Form actions */
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .btn-submit {
+      flex: 1;
+      padding: 12px;
+      background: #1a3d17;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-submit:hover { background: #2e5c28; }
+    .btn-submit:disabled { background: #aaa; cursor: not-allowed; }
+
+    .btn-cancel-edit {
+      padding: 12px 20px;
+      background: transparent;
+      color: #888;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ── Task list ── */
+    .section-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #555;
+      margin-bottom: 10px;
+      letter-spacing: 0.03em;
+    }
+
+    .task-list-empty {
+      background: #fff;
+      border-radius: 12px;
+      padding: 36px;
+      text-align: center;
+      color: #bbb;
+      font-size: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+
+    .task-item {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .task-item-left { flex: 1; min-width: 0; }
+
+    .task-item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 3px;
+    }
+
+    .crop-badge {
+      background: #e8f5e9;
+      color: #1a3d17;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+
+    .task-item-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #222;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .task-item-meta {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .task-item-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-edit, .btn-delete {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-edit {
+      background: #e8f5e9;
+      color: #1a3d17;
+    }
+
+    .btn-edit:hover { background: #c8e6c9; }
+
+    .btn-delete {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .btn-delete:hover { background: #ffcdd2; }
+
+    /* ── Progress view ── */
+    .progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .now-display {
+      background: #1a3d17;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+    }
+
+    /* 作物カラム */
+    .progress-columns {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+
+    .progress-column {
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .col-header {
+      background: #1a3d17;
+      color: #fff;
+      padding: 11px 16px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .col-body {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* 現在時刻ライン */
+    .now-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #e53935;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 0;
+    }
+
+    .now-line::before,
+    .now-line::after {
+      content: '';
+      flex: 1;
+      height: 2px;
+      background: #e53935;
+    }
+
+    /* 休憩区切り */
+    .col-break {
+      background: #fff8e1;
+      border: 1.5px dashed #ffca28;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #7a5f00;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* タスクカード（進捗用コンパクト） */
+    .p-card {
+      background: #f9f9f9;
+      border-radius: 10px;
+      padding: 10px 12px;
+      border-left: 3px solid #e0e0e0;
+    }
+
+    .p-card.status-completed { border-left-color: #4caf50; background: #f1f8f1; }
+    .p-card.status-active    { border-left-color: #ff9800; background: #fff8f0; }
+    .p-card.status-overdue   { border-left-color: #f44336; background: #fff5f5; }
+    .p-card.status-upcoming  { border-left-color: #ccc; }
+
+    .p-time { font-size: 11px; color: #aaa; margin-bottom: 2px; }
+    .p-name { font-size: 14px; font-weight: 700; color: #222; margin-bottom: 5px; }
+
+    .p-status {
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .p-status.completed { color: #2e7d32; }
+    .p-status.active    { color: #e65100; }
+    .p-status.overdue   { color: #c62828; }
+
+    .p-staff { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    .s-chip {
+      background: #efefef;
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+    }
+
+    .s-chip.done { background: #e8f5e9; color: #1a3d17; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-title">🌿 村上農園</div>
+    <div class="header-right">
+      <span id="userName"></span>
+      <span class="admin-badge">管理者</span>
+      <button class="btn-logout" onclick="logout()">ログアウト</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="register" onclick="showTab('register')">📝 タスク登録</button>
+    <button class="tab-btn" data-tab="progress" onclick="showTab('progress')">📊 進捗確認</button>
+    <button class="tab-btn" data-tab="export" onclick="showTab('export')">📥 データ出力</button>
+  </div>
+</header>
+
+<!-- ── タスク登録タブ ── -->
+<div id="tab-register" class="tab-content active">
+  <div class="container">
+
+    <div class="date-bar">
+      <label>対象日</label>
+      <input type="date" id="selectedDate" onchange="onDateChange()">
+    </div>
+
+    <div class="form-card">
+      <h2 id="formTitle">＋ タスクを登録</h2>
+      <form id="taskForm" onsubmit="handleSubmit(event)">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>作物</label>
+            <input list="cropList" id="crop" placeholder="例：スイカ" required>
+            <datalist id="cropList">
+              <option value="スイカ">
+              <option value="メロン">
+            </datalist>
+          </div>
+          <div class="form-group">
+            <label>タスク名</label>
+            <input type="text" id="taskName" placeholder="例：洗浄・袋詰め" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>担当スタッフ</label>
+          <div id="staffCheckboxes" class="staff-grid">
+            <span class="no-staff-msg">読み込み中...</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>開始時刻</label>
+            <select id="startTime" required></select>
+          </div>
+          <div class="form-group">
+            <label>終了時刻</label>
+            <select id="endTime" required></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>メモ（任意）</label>
+          <textarea id="note" rows="2" placeholder="補足事項があれば"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel-edit" id="cancelBtn" onclick="resetForm()" style="display:none">キャンセル</button>
+          <button type="submit" class="btn-submit" id="submitBtn">登録する</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="section-title" id="taskListTitle">登録済みタスク</div>
+    <div id="taskList"></div>
+
+  </div>
+</div>
+
+<!-- ── 進捗確認タブ ── -->
+<div id="tab-progress" class="tab-content">
+  <div class="container">
+    <div class="progress-header">
+      <div class="section-title" style="margin:0">本日の進捗</div>
+      <div class="now-display" id="nowDisplay"></div>
+    </div>
+    <div id="progressList"></div>
+  </div>
+</div>
+
+<!-- ── データ出力タブ ── -->
+<div id="tab-export" class="tab-content">
+  <div class="container">
+    <div class="form-card">
+      <h2>📥 作業記録のエクスポート</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>開始日</label>
+          <input type="date" id="exportFrom">
+        </div>
+        <div class="form-group">
+          <label>終了日</label>
+          <input type="date" id="exportTo">
+        </div>
+      </div>
+      <p style="font-size:13px;color:#888;margin-bottom:16px;">
+        出力項目：日付 / スタッフ数 / タスク名 / 作物 / 予定開始 / 予定終了 / 予定所要時間(分) / 実開始時刻 / 完了時刻 / 所要時間(分) / 予実の差分(分) / 開始時間記録漏れ / スタッフ名
+      </p>
+      <button class="btn-submit" id="exportBtn" onclick="exportCSV()">CSVダウンロード（Excel対応）</button>
+      <div id="exportMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script>
+
+  let currentProfile = null;
+  let staffList = [];
+  let editingTaskId = null;
+  let currentTab = 'register';
+
+  // 6:00〜20:00 を15分刻みでselectに設定
+  function populateTimeSelects() {
+    const options = ['<option value="">-- 選択 --</option>'];
+    for (let h = 6; h <= 20; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        options.push(`<option value="${hh}:${mm}">${hh}:${mm}</option>`);
+      }
+    }
+    const html = options.join('');
+    document.getElementById('startTime').innerHTML = html;
+    document.getElementById('endTime').innerHTML   = html;
+  }
+
+  // ── ユーティリティ ───────────────────────────────────────
+  function getToday() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function toMin(t) {
+    const [h, m] = t.substring(0, 5).split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function fmt(t) { return t.substring(0, 5); }
+
+  function fmtHM(date) {
+    return String(date.getHours()).padStart(2,'0') + ':' + String(date.getMinutes()).padStart(2,'0');
+  }
+
+  function getNowMin() {
+    const n = new Date(); return n.getHours() * 60 + n.getMinutes();
+  }
+
+  function getStatus(task) {
+    if (task.task_completions?.length) return 'completed';
+    const now = getNowMin();
+    const s = toMin(task.scheduled_start), e = toMin(task.scheduled_end);
+    if (now >= s && now <= e) return 'active';
+    if (now < s)              return 'upcoming';
+    return 'overdue';
+  }
+
+  // ── タブ切り替え ─────────────────────────────────────────
+  function showTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+
+    if (tab === 'progress') {
+      updateNowDisplay();
+      loadProgress();
+    }
+  }
+
+  // ── CSVエクスポート ──────────────────────────────────────
+  async function exportCSV() {
+    const from = document.getElementById('exportFrom').value;
+    const to   = document.getElementById('exportTo').value;
+    const msg  = document.getElementById('exportMsg');
+    const btn  = document.getElementById('exportBtn');
+
+    if (!from || !to) { msg.textContent = '開始日と終了日を選択してください'; return; }
+    if (from > to)    { msg.textContent = '開始日は終了日より前にしてください'; return; }
+
+    btn.disabled = true;
+    btn.textContent = '取得中...';
+    msg.textContent = '';
+
+    // ① 期間内のタスク取得
+    const { data: tasks, error: tErr } = await supabaseClient
+      .from('tasks')
+      .select('id, date, crop, task_name, scheduled_start, scheduled_end')
+      .gte('date', from)
+      .lte('date', to)
+      .order('date')
+      .order('scheduled_start');
+
+    if (tErr || !tasks?.length) {
+      msg.textContent = 'この期間にデータがありません';
+      btn.disabled = false;
+      btn.textContent = 'CSVダウンロード（Excel対応）';
+      return;
+    }
+
+    const taskIds = tasks.map(t => t.id);
+
+    // ② 担当スタッフ取得
+    const { data: assignments } = await supabaseClient
+      .from('task_assignments')
+      .select('task_id, profiles(name)')
+      .in('task_id', taskIds);
+
+    // ③ 完了記録取得
+    const { data: completions } = await supabaseClient
+      .from('task_completions')
+      .select('task_id, completed_at, duration_minutes')
+      .in('task_id', taskIds);
+
+    // ④ 開始記録取得
+    const { data: starts } = await supabaseClient
+      .from('task_starts')
+      .select('task_id, started_at')
+      .in('task_id', taskIds);
+
+    // マップ化
+    const assignMap = {};
+    assignments?.forEach(a => {
+      if (!assignMap[a.task_id]) assignMap[a.task_id] = [];
+      assignMap[a.task_id].push(a.profiles?.name ?? '—');
+    });
+
+    const compMap = {};
+    completions?.forEach(c => { compMap[c.task_id] = c; });
+
+    const startsMap = {};
+    starts?.forEach(s => { startsMap[s.task_id] = s; });
+
+    // CSV行を生成（タスクごとに1行）
+    const header = ['日付', 'スタッフ数', 'タスク名', '作物', '予定開始', '予定終了', '予定所要時間(分)', '実開始時刻', '完了時刻', '所要時間(分)', '予実の差分(分)', '開始時間記録漏れ', 'スタッフ名'];
+    const rows = [header];
+
+    tasks.forEach(task => {
+      const staffNames     = assignMap[task.id] ?? [];
+      const comp           = compMap[task.id];
+      const start          = startsMap[task.id];
+      const plannedMins    = toMin(task.scheduled_end) - toMin(task.scheduled_start);
+
+      const actualStartedAt = start?.started_at ?? null;
+      const completedAt     = comp?.completed_at ?? null;
+
+      // 所要時間: 実開始→完了 があればそれを使用、なければ計画開始→完了のフォールバック
+      let durationMins = '';
+      if (comp) {
+        if (actualStartedAt) {
+          durationMins = Math.round((new Date(completedAt) - new Date(actualStartedAt)) / 60000);
+        } else {
+          durationMins = comp.duration_minutes ?? '';
+        }
+      }
+
+      const diff = (durationMins !== '') ? durationMins - plannedMins : '';
+
+      // 開始時間記録漏れフラグ（完了済みのタスクにのみ適用）
+      const missingStartFlag = comp ? (actualStartedAt ? 'FALSE' : 'TRUE') : '';
+
+      rows.push([
+        task.date,
+        staffNames.length,
+        task.task_name,
+        task.crop,
+        fmt(task.scheduled_start),
+        fmt(task.scheduled_end),
+        plannedMins,
+        actualStartedAt ? fmtHM(new Date(actualStartedAt)) : '',
+        completedAt ? fmtHM(new Date(completedAt)) : '',
+        durationMins,
+        diff,
+        missingStartFlag,
+        staffNames.join('、'),
+      ]);
+    });
+
+    // CSVテキスト生成（Excel用BOM付きUTF-8）
+    const csvText = '﻿' + rows
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\r\n');
+
+    // ダウンロード
+    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `村上農園_作業記録_${from}_${to}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    msg.textContent = `${rows.length - 1}件のデータをダウンロードしました`;
+    btn.disabled = false;
+    btn.textContent = 'CSVダウンロード（Excel対応）';
+  }
+
+  // ── スタッフチェックボックス描画 ────────────────────────
+  function renderStaffCheckboxes(checkedIds = []) {
+    const el = document.getElementById('staffCheckboxes');
+    if (!staffList.length) {
+      el.innerHTML = '<span class="no-staff-msg">スタッフが登録されていません</span>';
+      return;
+    }
+    el.innerHTML = staffList.map(s => `
+      <label class="staff-check-label">
+        <input type="checkbox" class="staff-cb" value="${s.id}" ${checkedIds.includes(s.id) ? 'checked' : ''}>
+        ${s.name}
+      </label>
+    `).join('');
+  }
+
+  // ── タスク一覧描画 ──────────────────────────────────────
+  function renderTaskList(tasks) {
+    const el = document.getElementById('taskList');
+    const date = document.getElementById('selectedDate').value;
+    document.getElementById('taskListTitle').textContent =
+      `登録済みタスク（${date}）`;
+
+    if (!tasks.length) {
+      el.innerHTML = '<div class="task-list-empty">この日のタスクはまだ登録されていません</div>';
+      return;
+    }
+
+    el.innerHTML = tasks.map(task => {
+      const staffNames = task.task_assignments
+        ?.map(a => a.profiles?.name ?? '—')
+        .join('、') || '担当なし';
+      return `
+        <div class="task-item">
+          <div class="task-item-left">
+            <div class="task-item-header">
+              <span class="crop-badge">${task.crop}</span>
+              <span class="task-item-name">${task.task_name}</span>
+            </div>
+            <div class="task-item-meta">
+              ${fmt(task.scheduled_start)} 〜 ${fmt(task.scheduled_end)}　担当：${staffNames}
+            </div>
+          </div>
+          <div class="task-item-actions">
+            <button class="btn-edit" onclick="startEdit(${JSON.stringify(task).replace(/"/g,'&quot;')})">編集</button>
+            <button class="btn-delete" onclick="deleteTask('${task.id}')">削除</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ── タスク読み込み ──────────────────────────────────────
+  async function loadTasks() {
+    const date = document.getElementById('selectedDate').value;
+    const { data: tasks, error } = await supabaseClient
+      .from('tasks')
+      .select(`
+        id, crop, task_name, scheduled_start, scheduled_end, note,
+        task_assignments(staff_id, profiles(id, name)),
+        task_completions(id, completed_at)
+      `)
+      .eq('date', date)
+      .order('scheduled_start');
+
+    if (error) { console.error(error); return; }
+    renderTaskList(tasks ?? []);
+  }
+
+  // ── フォーム送信 ────────────────────────────────────────
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const crop      = document.getElementById('crop').value.trim();
+    const taskName  = document.getElementById('taskName').value.trim();
+    const startTime = document.getElementById('startTime').value + ':00';
+    const endTime   = document.getElementById('endTime').value   + ':00';
+    if (!startTime || !endTime) { alert('時刻を選択してください'); btn.disabled = false; return; }
+    const note      = document.getElementById('note').value.trim();
+    const date      = document.getElementById('selectedDate').value;
+    const staffIds  = [...document.querySelectorAll('.staff-cb:checked')].map(c => c.value);
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '処理中...';
+
+    try {
+      if (editingTaskId) {
+        await updateTask(editingTaskId, { crop, task_name: taskName, scheduled_start: startTime, scheduled_end: endTime, note }, staffIds);
+      } else {
+        await createTask({ date, crop, task_name: taskName, scheduled_start: startTime, scheduled_end: endTime, note }, staffIds);
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function createTask(taskData, staffIds) {
+    const { data: task, error } = await supabaseClient
+      .from('tasks')
+      .insert({ ...taskData, created_by: currentProfile.id })
+      .select('id')
+      .single();
+
+    if (error) { alert('登録に失敗しました'); console.error(error); return; }
+
+    if (staffIds.length) {
+      await supabaseClient
+        .from('task_assignments')
+        .insert(staffIds.map(sid => ({ task_id: task.id, staff_id: sid })));
+    }
+
+    resetForm();
+    await loadTasks();
+  }
+
+  async function updateTask(taskId, updates, staffIds) {
+    const { error } = await supabaseClient
+      .from('tasks')
+      .update(updates)
+      .eq('id', taskId);
+
+    if (error) { alert('更新に失敗しました'); console.error(error); return; }
+
+    // 担当を一旦全削除して再登録
+    await supabaseClient.from('task_assignments').delete().eq('task_id', taskId);
+    if (staffIds.length) {
+      await supabaseClient
+        .from('task_assignments')
+        .insert(staffIds.map(sid => ({ task_id: taskId, staff_id: sid })));
+    }
+
+    resetForm();
+    await loadTasks();
+  }
+
+  // ── 編集開始 ────────────────────────────────────────────
+  function startEdit(task) {
+    editingTaskId = task.id;
+
+    document.getElementById('crop').value      = task.crop;
+    document.getElementById('taskName').value  = task.task_name;
+    document.getElementById('startTime').value = fmt(task.scheduled_start);
+    document.getElementById('endTime').value   = fmt(task.scheduled_end);
+    // selectの場合、値が選択肢にない時は空になるので補完不要
+    document.getElementById('note').value      = task.note ?? '';
+
+    const assignedIds = task.task_assignments?.map(a => a.staff_id) ?? [];
+    renderStaffCheckboxes(assignedIds);
+
+    document.getElementById('formTitle').textContent = '✏️ タスクを編集';
+    document.getElementById('submitBtn').textContent = '更新する';
+    document.getElementById('cancelBtn').style.display = 'block';
+
+    document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // ── 削除 ────────────────────────────────────────────────
+  async function deleteTask(taskId) {
+    if (!confirm('このタスクを削除しますか？\n完了記録も一緒に削除されます。')) return;
+    await supabaseClient.from('tasks').delete().eq('id', taskId);
+    await loadTasks();
+  }
+
+  // ── フォームリセット ────────────────────────────────────
+  function resetForm() {
+    editingTaskId = null;
+    document.getElementById('taskForm').reset();
+    renderStaffCheckboxes();
+    document.getElementById('formTitle').textContent = '＋ タスクを登録';
+    document.getElementById('submitBtn').textContent = '登録する';
+    document.getElementById('cancelBtn').style.display = 'none';
+  }
+
+  function onDateChange() { loadTasks(); }
+
+  // ── 進捗確認 ────────────────────────────────────────────
+  function updateNowDisplay() {
+    document.getElementById('nowDisplay').textContent = '現在 ' + fmtHM(new Date());
+  }
+
+  const PROGRESS_BREAKS = [
+    { label: '☕ 休憩',   start: '10:00', end: '10:30' },
+    { label: '🍱 昼休憩', start: '12:00', end: '13:00' },
+    { label: '☕ 休憩',   start: '15:00', end: '15:30' },
+  ];
+
+  async function loadProgress() {
+    updateNowDisplay();
+
+    const { data: tasks, error } = await supabaseClient
+      .from('tasks')
+      .select(`
+        id, crop, task_name, scheduled_start, scheduled_end, note,
+        task_assignments(staff_id, profiles(name)),
+        task_completions(id, completed_at)
+      `)
+      .eq('date', getToday())
+      .order('scheduled_start');
+
+    if (error) { console.error(error); return; }
+
+    const el = document.getElementById('progressList');
+    if (!tasks?.length) {
+      el.innerHTML = '<div class="task-list-empty">本日のタスクはまだ登録されていません</div>';
+      return;
+    }
+
+    // 作物ごとにグループ化（登録順を維持）
+    const cropOrder = [];
+    const cropMap = {};
+    tasks.forEach(task => {
+      if (!cropMap[task.crop]) { cropMap[task.crop] = []; cropOrder.push(task.crop); }
+      cropMap[task.crop].push(task);
+    });
+
+    el.innerHTML = `
+      <div class="progress-columns">
+        ${cropOrder.map(crop => renderCropColumn(crop, cropMap[crop])).join('')}
+      </div>`;
+  }
+
+  function renderCropColumn(crop, tasks) {
+    const nowMin = getNowMin();
+
+    // タスクと休憩を時刻順にマージ
+    const items = [
+      ...tasks.map(t => ({ type: 'task', ...t, _min: toMin(t.scheduled_start) })),
+      ...PROGRESS_BREAKS.map(b => ({ type: 'break', ...b, _min: toMin(b.start) })),
+    ].sort((a, b) => a._min - b._min);
+
+    let nowInserted = false;
+    const rows = items.map(item => {
+      let nowLine = '';
+      if (!nowInserted && item._min > nowMin) {
+        nowInserted = true;
+        nowLine = `<div class="now-line"><span>${fmtHM(new Date())}</span></div>`;
+      }
+
+      if (item.type === 'break') {
+        return nowLine + `
+          <div class="col-break">
+            <span>${item.label}</span>
+            <span>${item.start}〜${item.end}</span>
+          </div>`;
+      }
+
+      const status = getStatus(item);
+      const comp   = item.task_completions?.[0];
+      const names  = item.task_assignments?.map(a => a.profiles?.name ?? '—') ?? [];
+
+      const statusLine =
+        status === 'completed' ? `<div class="p-status completed">✅ ${comp ? fmtHM(new Date(comp.completed_at)) + ' 完了' : '完了'}</div>` :
+        status === 'active'    ? `<div class="p-status active">▶ 作業中</div>` :
+        status === 'overdue'   ? `<div class="p-status overdue">⚠ 遅延</div>` : '';
+
+      const chips = names.map(n =>
+        `<span class="s-chip ${status === 'completed' ? 'done' : ''}">${n}</span>`
+      ).join('');
+
+      return nowLine + `
+        <div class="p-card status-${status}">
+          <div class="p-time">${fmt(item.scheduled_start)} 〜 ${fmt(item.scheduled_end)}</div>
+          <div class="p-name">${item.task_name}</div>
+          ${statusLine}
+          ${chips ? `<div class="p-staff">${chips}</div>` : ''}
+        </div>`;
+    });
+
+    // 全タスクが過去の場合、末尾に現在ライン
+    if (!nowInserted) {
+      rows.push(`<div class="now-line"><span>${fmtHM(new Date())}</span></div>`);
+    }
+
+    return `
+      <div class="progress-column">
+        <div class="col-header">${crop}</div>
+        <div class="col-body">${rows.join('')}</div>
+      </div>`;
+  }
+
+  // ── 初期化 ───────────────────────────────────────────────
+  (async () => {
+    currentProfile = await requireAuth('admin');
+    if (!currentProfile) return;
+
+    document.getElementById('userName').textContent = currentProfile.name;
+    document.getElementById('selectedDate').value = getToday();
+    populateTimeSelects();
+
+    // スタッフ一覧取得
+    const { data } = await supabaseClient
+      .from('profiles')
+      .select('id, name')
+      .eq('role', 'staff')
+      .order('name');
+    staffList = data ?? [];
+    renderStaffCheckboxes();
+
+    await loadTasks();
+
+    // 進捗タブの時計
+    setInterval(() => {
+      if (currentTab === 'progress') {
+        updateNowDisplay();
+        loadProgress();
+      }
+    }, 60000);
+
+    // 完了記録のリアルタイム反映
+    supabaseClient
+      .channel('admin-completions')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'task_completions' },
+        () => { if (currentTab === 'progress') loadProgress(); }
+      )
+      .subscribe();
+  })();
+
+</script>
+</body>
+</html>

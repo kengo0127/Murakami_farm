@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 タスク管理</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f0f7f0;
+      margin: 0;
+    }
+    p { color: #666; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <p>読み込み中...</p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script>
+    (async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const profile = await getMyProfile();
+      if (!profile) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      window.location.href = profile.role === 'admin' ? 'admin.html' : 'staff.html';
+    })();
+  </script>
+</body>
+</html>
