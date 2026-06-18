@@ -479,8 +479,8 @@
       if (btn) { btn.disabled = false; btn.textContent = '▶ 開始'; }
       return;
     }
-
-    setTimeout(() => loadTasks(), 800);
+    // loadTasks() は呼ばない。markTaskStarted() のDOM更新のみで確定させる。
+    // 60秒ごとの定期更新 or 完了ボタン押下時に再読み込みされる。
   }
 
   function markTaskStarted(taskId, startedAt) {
@@ -635,7 +635,10 @@
       .channel('starts')
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'task_starts' },
-        () => loadTasks()
+        (payload) => {
+          // 自分が押した開始は markTaskStarted() で処理済みなのでスキップ
+          if (payload.new?.started_by !== currentProfile?.id) loadTasks();
+        }
       )
       .subscribe();
   })();
