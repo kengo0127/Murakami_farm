@@ -467,6 +467,48 @@
     }
 
     .s-chip.done { background: #e8f5e9; color: #1a3d17; }
+
+    /* ── 自発報告 ── */
+    .report-item {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .report-time {
+      font-size: 12px;
+      color: #999;
+      width: 48px;
+      flex-shrink: 0;
+    }
+
+    .report-type-badge {
+      background: #e8f5e9;
+      color: #1a3d17;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+
+    .report-staff {
+      font-size: 14px;
+      font-weight: 700;
+      color: #222;
+      flex: 1;
+    }
+
+    .report-qty {
+      font-size: 13px;
+      font-weight: 700;
+      color: #2e5c28;
+    }
   </style>
 </head>
 <body>
@@ -483,6 +525,7 @@
   <div class="tabs">
     <button class="tab-btn active" data-tab="register" onclick="showTab('register')">📝 タスク登録</button>
     <button class="tab-btn" data-tab="progress" onclick="showTab('progress')">📊 進捗確認</button>
+    <button class="tab-btn" data-tab="reports" onclick="showTab('reports')">📋 自発報告</button>
     <button class="tab-btn" data-tab="export" onclick="showTab('export')">📥 データ出力</button>
   </div>
 </header>
@@ -562,6 +605,18 @@
   </div>
 </div>
 
+<!-- ── 自発報告タブ ── -->
+<div id="tab-reports" class="tab-content">
+  <div class="container">
+    <div class="date-bar">
+      <label>対象日</label>
+      <input type="date" id="reportsDate" onchange="loadReports()">
+    </div>
+    <div class="section-title" id="reportsListTitle">自発的な作業報告</div>
+    <div id="reportsList"></div>
+  </div>
+</div>
+
 <!-- ── データ出力タブ ── -->
 <div id="tab-export" class="tab-content">
   <div class="container">
@@ -582,6 +637,16 @@
       </p>
       <button class="btn-submit" id="exportBtn" onclick="exportCSV()">CSVダウンロード（Excel対応）</button>
       <div id="exportMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
+    </div>
+
+    <div class="form-card">
+      <h2>📋 自発報告のエクスポート</h2>
+      <p style="font-size:13px;color:#888;margin-bottom:16px;">
+        上記と同じ期間で、自発的な作業報告（収穫・整理整頓・除草・在庫確認）をCSV出力します。<br>
+        出力項目：日付 / 時刻 / スタッフ名 / 作業内容 / 数量 / 単位
+      </p>
+      <button class="btn-submit" id="exportReportsBtn" onclick="exportReportsCSV()">CSVダウンロード（Excel対応）</button>
+      <div id="exportReportsMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
     </div>
   </div>
 </div>
@@ -650,6 +715,9 @@
     if (tab === 'progress') {
       updateNowDisplay();
       loadProgress();
+    }
+    if (tab === 'reports') {
+      loadReports();
     }
   }
 
@@ -772,6 +840,68 @@
     const a    = document.createElement('a');
     a.href     = url;
     a.download = `村上農園_作業記録_${from}_${to}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    msg.textContent = `${rows.length - 1}件のデータをダウンロードしました`;
+    btn.disabled = false;
+    btn.textContent = 'CSVダウンロード（Excel対応）';
+  }
+
+  // ── 自発報告CSVエクスポート ──────────────────────────────
+  async function exportReportsCSV() {
+    const from = document.getElementById('exportFrom').value;
+    const to   = document.getElementById('exportTo').value;
+    const msg  = document.getElementById('exportReportsMsg');
+    const btn  = document.getElementById('exportReportsBtn');
+
+    if (!from || !to) { msg.textContent = '開始日と終了日を選択してください'; return; }
+    if (from > to)    { msg.textContent = '開始日は終了日より前にしてください'; return; }
+
+    btn.disabled = true;
+    btn.textContent = '取得中...';
+    msg.textContent = '';
+
+    const { data: reports, error } = await supabaseClient
+      .from('work_reports')
+      .select('date, reported_at, work_type, quantity, unit, profiles(name)')
+      .gte('date', from)
+      .lte('date', to)
+      .order('date')
+      .order('reported_at');
+
+    if (error || !reports?.length) {
+      msg.textContent = 'この期間にデータがありません';
+      btn.disabled = false;
+      btn.textContent = 'CSVダウンロード（Excel対応）';
+      return;
+    }
+
+    const header = ['日付', '時刻', 'スタッフ名', '作業内容', '数量', '単位'];
+    const rows = [header];
+
+    reports.forEach(r => {
+      rows.push([
+        r.date,
+        fmtHM(new Date(r.reported_at)),
+        r.profiles?.name ?? '—',
+        r.work_type,
+        r.quantity ?? '',
+        r.unit ?? '',
+      ]);
+    });
+
+    const csvText = '﻿' + rows
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\r\n');
+
+    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `村上農園_自発報告_${from}_${to}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1062,6 +1192,63 @@
       </div>`;
   }
 
+  // ── 自発報告一覧 ─────────────────────────────────────────
+  const WORK_TYPE_ICON = { '収穫': '🌾', '整理整頓': '🧹', '除草': '🌱', '在庫確認': '📦' };
+
+  async function loadReports() {
+    const date = document.getElementById('reportsDate').value;
+    document.getElementById('reportsListTitle').textContent = `自発的な作業報告（${date}）`;
+
+    const { data: reports, error } = await supabaseClient
+      .from('work_reports')
+      .select('id, reported_at, work_type, quantity, unit, profiles(name)')
+      .eq('date', date)
+      .order('reported_at', { ascending: false });
+
+    if (error) { console.error(error); return; }
+    renderReportsList(reports ?? []);
+  }
+
+  function renderReportsList(reports) {
+    const el = document.getElementById('reportsList');
+
+    if (!reports.length) {
+      el.innerHTML = '<div class="task-list-empty">この日の自発報告はまだありません</div>';
+      return;
+    }
+
+    el.innerHTML = reports.map(r => {
+      const qty = (r.quantity != null && r.unit) ? `<span class="report-qty">${r.quantity}${r.unit}</span>` : '';
+      return `
+        <div class="report-item">
+          <span class="report-time">${fmtHM(new Date(r.reported_at))}</span>
+          <span class="report-type-badge">${WORK_TYPE_ICON[r.work_type] ?? ''} ${r.work_type}</span>
+          <span class="report-staff">${r.profiles?.name ?? '—'}</span>
+          ${qty}
+        </div>`;
+    }).join('');
+  }
+
+  // ── 日付が変わったら自動でリロード ─────────────────────
+  // タブを開きっぱなしにしても、翌朝には前日の画面が残らないようにする。
+  const AUTO_RELOAD_HOUR = 24; // 0〜24（24 = 翌日0:00）。23:00にしたい場合は 23 に変更する
+
+  function scheduleAutoReload() {
+    const now  = new Date();
+    const next = new Date(now);
+    next.setHours(AUTO_RELOAD_HOUR, 0, 0, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
+
+    setTimeout(() => {
+      // タスク編集中の場合は入力内容を消さないよう5分後に再チェック
+      if (editingTaskId) {
+        setTimeout(scheduleAutoReload, 5 * 60 * 1000);
+        return;
+      }
+      location.reload();
+    }, next - now);
+  }
+
   // ── 初期化 ───────────────────────────────────────────────
   (async () => {
     currentProfile = await requireAuth('admin');
@@ -1069,6 +1256,7 @@
 
     document.getElementById('userName').textContent = currentProfile.name;
     document.getElementById('selectedDate').value = getToday();
+    document.getElementById('reportsDate').value = getToday();
     populateTimeSelects();
 
     // スタッフ一覧取得
@@ -1081,6 +1269,8 @@
     renderStaffCheckboxes();
 
     await loadTasks();
+
+    scheduleAutoReload();
 
     // 進捗タブの時計
     setInterval(() => {
