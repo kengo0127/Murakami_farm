@@ -187,6 +187,14 @@ work_reports
 - reported_at (timestamp) ─ 報告時刻
 ```
 
+### task_delay_notifications（遅延通知の送信済み記録）
+```
+task_delay_notifications
+- task_id (uuid, PK, FK to tasks) ─ 送信済みタスク（1タスク1件）
+- notified_at (timestamp) ─ 通知送信時刻
+```
+Edge Function（サービスロール）専用のテーブル。クライアント向けのRLSポリシーはなし（全拒否）。
+
 ---
 
 ## 開発方針
@@ -218,10 +226,18 @@ work_reports
 - スタッフへのアカウント配布方法（現在はSupabaseダッシュボードで手動作成）
 - 複数日分のタスクをまとめて登録する機能の要否（前日タスクのコピーなど）
 
+## 通知機能（メール）
+
+- **完了報告の遅延通知（実装済み）**
+  - 完了予定時刻（scheduled_end）から5分経過しても完了ボタンが押されていない場合、管理者へ「作業が遅延、または完了報告忘れです」というメールを送信
+  - 実現方法：Supabase Edge Function（`supabase/functions/check-delayed-tasks`）を pg_cron で5分おきに自動実行し、Resend経由でメール送信
+  - 同じタスクへの二重送信を防ぐため、送信済みタスクは `task_delay_notifications` テーブルに記録
+  - 送信先は環境変数 `ADMIN_ALERT_EMAIL`（Supabase Edge Functionsのsecrets）で管理。現在は `oshmsakaikufa@gmail.com` 宛
+  - **制約**：Resendで独自ドメインを認証登録していないため、Resendアカウント作成時のメールアドレス（`oshmsakaikufa@gmail.com`）以外には送信できない。他の宛先に変更・追加したい場合は、その宛先でResendアカウントを作り直すか、独自ドメインを取得してResendに認証登録する必要がある
+  - LINE Notifyは2025年3月末にサービス終了しているため使用不可
+
 ## 保留中の機能（今後実装）
 
-- **終了時刻に応じたメール通知**
+- **終了5分前のスタッフ向けリマインドメール**
   - 終了予定時刻の5分前になっても完了ボタンが押されていない場合、担当スタッフ本人のメールアドレスへ「作業終了5分前です」を送信
-  - 終了予定時刻から10分経過しても完了ボタンが押されていない場合、管理者へ「作業が遅延、または完了報告忘れです」を送信
-  - 実現には、定期的にDBをチェックしてメールを送る仕組み（Supabase Edge Functions + pg_cron + 外部メール送信サービスなど）が必要で、現在のフロントエンドのみの構成には無い要素のため、別途着手する
-  - LINE Notifyは2025年3月末にサービス終了しているため使用不可
+  - 上記の遅延通知と同じ仕組み（Edge Function + pg_cron）を流用して追加実装できる

@@ -1,0 +1,5 @@
+project_id = "wquwvkjnngqkiepthstq"
+
+[functions.check-delayed-tasks]
+# pg_cronからの定期呼び出しのみで使うため、JWT検証を無効化する
+verify_jwt = false

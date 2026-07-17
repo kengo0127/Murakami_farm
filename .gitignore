@@ -1,5 +1,6 @@
 # 認証情報・ローカル作業ファイル
 supabaseのURLとか.txt
+supabase/.temp/
 
 # Python
 __pycache__/
