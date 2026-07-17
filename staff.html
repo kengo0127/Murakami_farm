@@ -245,6 +245,178 @@
       margin-top: 4px;
     }
 
+    /* Cancel buttons（開始／完了の取消） */
+    .btn-cancel {
+      width: 100%;
+      padding: 9px;
+      background: transparent;
+      color: #b71c1c;
+      border: 1.5px solid #ef9a9a;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .btn-cancel:active { background: #ffebee; }
+
+    .btn-cancel-link {
+      background: none;
+      border: none;
+      color: #b71c1c;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-left: auto;
+      padding: 4px;
+    }
+
+    /* ── 自発的な作業報告 ── */
+    .fab-report {
+      position: fixed;
+      right: 18px;
+      bottom: 22px;
+      z-index: 200;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 30px;
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+      cursor: pointer;
+    }
+
+    .fab-report:active { background: #1a3d17; }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 300;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-sheet {
+      background: #fff;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 18px 18px 0 0;
+      padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #1a3d17;
+      margin-bottom: 16px;
+    }
+
+    .modal-group { margin-bottom: 16px; }
+
+    .modal-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .work-type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .work-type-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #f5f5f5;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .work-type-option:has(input:checked) {
+      background: #e8f5e9;
+      border-color: #43a047;
+      color: #1a3d17;
+    }
+
+    .work-type-option input { display: none; }
+
+    .harvest-fields {
+      display: none;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .harvest-fields.open { display: flex; }
+
+    .harvest-fields input[type="number"] {
+      flex: 1;
+      padding: 12px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    .harvest-fields select {
+      flex: 1;
+      padding: 12px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 10px;
+      font-size: 16px;
+      background: #fff;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .btn-modal-cancel {
+      flex: 1;
+      padding: 13px;
+      background: transparent;
+      color: #888;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-modal-submit {
+      flex: 2;
+      padding: 13px;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-modal-submit:disabled { background: #bbb; cursor: not-allowed; }
+
     /* Empty / Loading */
     .empty-state, .loading-state {
       text-align: center;
@@ -274,6 +446,48 @@
 
 <div class="timeline" id="timeline">
   <div class="loading-state">読み込み中...</div>
+</div>
+
+<button class="fab-report" onclick="openReportModal()">📋 作業を報告</button>
+
+<div class="modal-overlay" id="reportModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title">自発的な作業を報告</div>
+    <form id="reportForm" onsubmit="handleReportSubmit(event)">
+      <div class="modal-group">
+        <label>作業内容</label>
+        <div class="work-type-grid">
+          <label class="work-type-option">
+            <input type="radio" name="workType" value="収穫" onchange="onWorkTypeChange()" required>🌾 収穫
+          </label>
+          <label class="work-type-option">
+            <input type="radio" name="workType" value="整理整頓" onchange="onWorkTypeChange()">🧹 整理整頓
+          </label>
+          <label class="work-type-option">
+            <input type="radio" name="workType" value="除草" onchange="onWorkTypeChange()">🌱 除草
+          </label>
+          <label class="work-type-option">
+            <input type="radio" name="workType" value="在庫確認" onchange="onWorkTypeChange()">📦 在庫確認
+          </label>
+        </div>
+      </div>
+      <div class="modal-group" id="harvestGroup" style="display:none">
+        <label>収穫量</label>
+        <div class="harvest-fields" id="harvestFields">
+          <input type="number" id="harvestQty" min="0" max="99" step="1" placeholder="数量">
+          <select id="harvestUnit">
+            <option value="kg">kg</option>
+            <option value="本">本</option>
+            <option value="玉">玉</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-modal-cancel" onclick="closeReportModal()">キャンセル</button>
+        <button type="submit" class="btn-modal-submit" id="reportSubmitBtn">報告する</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -328,6 +542,7 @@
   // ── タスクの状態判定 ───────────────────────────────────
   function getStatus(task) {
     if (task.task_completions?.length) return 'completed';
+    if (task.task_starts?.length)      return 'started';
     const now = getNowMin();
     const s = toMin(task.scheduled_start);
     const e = toMin(task.scheduled_end);
@@ -357,9 +572,13 @@
     let action;
     if (status === 'completed') {
       const at = comp ? `（${fmtHM(new Date(comp.completed_at))}完了）` : '';
-      action = `<div class="completed-info"><span>✅</span><span>完了済み${at}</span></div>`;
+      const cancelLink = (comp && comp.completed_by === currentProfile?.id)
+        ? `<button class="btn-cancel-link" onclick="handleCancelComplete('${task.id}')">取消</button>` : '';
+      action = `<div class="completed-info"><span>✅</span><span>完了済み${at}</span>${cancelLink}</div>`;
     } else if (status === 'started') {
-      action = `<button class="btn-complete" onclick="handleComplete('${task.id}','${task.scheduled_start}')">✓ 完了</button>`;
+      const cancelBtn = (started && started.started_by === currentProfile?.id)
+        ? `<button class="btn-cancel" onclick="handleCancelStart('${task.id}')">開始を取消</button>` : '';
+      action = `<button class="btn-complete" onclick="handleComplete('${task.id}','${task.scheduled_start}')">✓ 完了</button>${cancelBtn}`;
     } else if (status === 'active' || status === 'next') {
       action = `<button class="btn-start" onclick="handleStart('${task.id}')">▶ 開始</button>`;
     } else {
@@ -483,6 +702,43 @@
     // 60秒ごとの定期更新 or 完了ボタン押下時に再読み込みされる。
   }
 
+  // ── 開始キャンセル処理 ─────────────────────────────────
+  async function handleCancelStart(taskId) {
+    if (!confirm('開始を取り消しますか？')) return;
+
+    const { error } = await supabaseClient
+      .from('task_starts')
+      .delete()
+      .eq('task_id', taskId);
+
+    if (error) {
+      alert('取消に失敗しました。すでに完了報告されている場合は取り消せません。');
+      console.error(error);
+      return;
+    }
+
+    localStartedTasks.delete(taskId);
+    await loadTasks();
+  }
+
+  // ── 完了キャンセル処理 ─────────────────────────────────
+  async function handleCancelComplete(taskId) {
+    if (!confirm('完了報告を取り消しますか？')) return;
+
+    const { error } = await supabaseClient
+      .from('task_completions')
+      .delete()
+      .eq('task_id', taskId);
+
+    if (error) {
+      alert('取消に失敗しました。');
+      console.error(error);
+      return;
+    }
+
+    await loadTasks();
+  }
+
   function markTaskStarted(taskId, startedAt) {
     const card = document.getElementById(`task-${taskId}`);
     if (!card) return;
@@ -509,7 +765,7 @@
       badge.insertAdjacentElement('afterend', div);
     }
 
-    // 開始ボタン → 完了ボタンに差し替え
+    // 開始ボタン → 完了ボタン＋キャンセルボタンに差し替え
     const startBtn = card.querySelector('.btn-start');
     if (startBtn) {
       const scheduledStart = card.dataset.scheduledStart;
@@ -518,6 +774,12 @@
       completeBtn.onclick = () => handleComplete(taskId, scheduledStart);
       completeBtn.textContent = '✓ 完了';
       startBtn.replaceWith(completeBtn);
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'btn-cancel';
+      cancelBtn.onclick = () => handleCancelStart(taskId);
+      cancelBtn.textContent = '開始を取消';
+      completeBtn.insertAdjacentElement('afterend', cancelBtn);
     }
   }
 
@@ -532,12 +794,17 @@
     const badge = card.querySelector('.status-badge');
     if (badge) badge.remove();
 
+    // 開始取消ボタンが残っていれば除去
+    const staleCancelBtn = card.querySelector('.btn-cancel');
+    if (staleCancelBtn) staleCancelBtn.remove();
+
     // ボタンを完了情報に差し替え（緑ボタン → ✅表示）
     const btn = card.querySelector('.btn-complete');
     if (btn) {
       const div = document.createElement('div');
       div.className = 'completed-info';
-      div.innerHTML = `<span class="completed-stamp">✅</span><span>完了済み（${fmtHM(completedAt)}完了）</span>`;
+      div.innerHTML = `<span class="completed-stamp">✅</span><span>完了済み（${fmtHM(completedAt)}完了）</span>` +
+        `<button class="btn-cancel-link" onclick="handleCancelComplete('${taskId}')">取消</button>`;
       btn.replaceWith(div);
     }
   }
@@ -594,7 +861,7 @@
       const startsEntry = dbStart
         ? [dbStart]
         : localStart
-          ? [{ task_id: t.id, started_at: localStart.toISOString() }]
+          ? [{ task_id: t.id, started_at: localStart.toISOString(), started_by: currentProfile.id }]
           : [];
       return {
         ...t,
@@ -604,6 +871,66 @@
     });
 
     renderTimeline(merged);
+  }
+
+  // ── 自発的な作業報告 ───────────────────────────────────
+  function openReportModal() {
+    document.getElementById('reportForm').reset();
+    document.getElementById('harvestGroup').style.display = 'none';
+    document.getElementById('harvestFields').classList.remove('open');
+    document.getElementById('reportModalOverlay').classList.add('open');
+  }
+
+  function closeReportModal() {
+    document.getElementById('reportModalOverlay').classList.remove('open');
+  }
+
+  function onWorkTypeChange() {
+    const isHarvest = document.querySelector('input[name="workType"]:checked')?.value === '収穫';
+    document.getElementById('harvestGroup').style.display = isHarvest ? 'block' : 'none';
+    document.getElementById('harvestFields').classList.toggle('open', isHarvest);
+  }
+
+  async function handleReportSubmit(e) {
+    e.preventDefault();
+
+    const workType = document.querySelector('input[name="workType"]:checked')?.value;
+    if (!workType) return;
+
+    let quantity = null;
+    let unit = null;
+    if (workType === '収穫') {
+      const qtyVal = document.getElementById('harvestQty').value;
+      if (qtyVal === '') { alert('収穫量を入力してください'); return; }
+      quantity = Math.min(99, Math.max(0, parseInt(qtyVal, 10)));
+      unit = document.getElementById('harvestUnit').value;
+    }
+
+    const btn = document.getElementById('reportSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = '送信中...';
+
+    const { error } = await supabaseClient
+      .from('work_reports')
+      .insert({
+        date: getToday(),
+        staff_id: currentProfile.id,
+        work_type: workType,
+        quantity,
+        unit,
+      });
+
+    btn.disabled = false;
+    btn.textContent = '報告する';
+
+    if (error) {
+      alert('報告の送信に失敗しました。もう一度お試しください。');
+      console.error(error);
+      return;
+    }
+
+    closeReportModal();
+    alert('作業報告を送信しました');
   }
 
   // ── 初期化 ────────────────────────────────────────────
