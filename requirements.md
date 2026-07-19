@@ -228,10 +228,13 @@ Edge Function（サービスロール）専用のテーブル。クライアン�
 
 ## 通知機能（メール）
 
-- **完了報告の遅延通知（実装済み）**
-  - 完了予定時刻（scheduled_end）から5分経過しても完了ボタンが押されていない場合、管理者へ「作業が遅延、または完了報告忘れです」というメールを送信
-  - 実現方法：Supabase Edge Function（`supabase/functions/check-delayed-tasks`）を pg_cron で5分おきに自動実行し、Resend経由でメール送信
-  - 同じタスクへの二重送信を防ぐため、送信済みタスクは `task_delay_notifications` テーブルに記録
+- **押し忘れ検知メール（実装済み、2026-07-19に休憩前再チェック・開始遅延を追加）**
+  - 実現方法：Supabase Edge Function（`supabase/functions/check-delayed-tasks`）を pg_cron で5分おきに自動実行し、Resend経由で管理者へメール送信
+  - 以下3種類のチェックを毎回まとめて実行：
+    1. **完了遅延通知**：完了予定時刻（scheduled_end）から5分経過しても完了ボタンが押されていない場合に通知
+    2. **休憩直前の再チェック通知（新規）**：9:55/11:55/14:55/16:55（休憩開始10:00/12:00/15:00/17:00の5分前）の時点で、完了予定時刻を過ぎているのにまだ完了報告がない場合に通知。5分後通知を見過ごしたスタッフに対し、休憩時間に管理者が対面で完了ボタンの確認・注意ができるようにするための仕組み
+    3. **開始遅延通知（新規）**：開始予定時刻（scheduled_start）から10分経過しても開始ボタンが押されていない場合に通知
+  - 同じタスク×同じ種類の通知への二重送信を防ぐため、送信済みの組み合わせは `task_delay_notifications` テーブルに `(task_id, notification_type)` の複合主キーで記録（`notification_type`: `completion_delay` / `completion_break_0955`等 / `start_delay`）
   - 送信先は環境変数 `ADMIN_ALERT_EMAIL`（Supabase Edge Functionsのsecrets）で管理。現在は `oshmsakaikufa@gmail.com` 宛
   - **制約**：Resendで独自ドメインを認証登録していないため、Resendアカウント作成時のメールアドレス（`oshmsakaikufa@gmail.com`）以外には送信できない。他の宛先に変更・追加したい場合は、その宛先でResendアカウントを作り直すか、独自ドメインを取得してResendに認証登録する必要がある
   - LINE Notifyは2025年3月末にサービス終了しているため使用不可
