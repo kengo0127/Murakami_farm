@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 - メロン予約管理表</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f7f0;
+      min-height: 100vh;
+      padding-bottom: 90px;
+    }
+
+    header {
+      background: #2e5c28;
+      color: #fff;
+      padding: 13px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 10px; }
+
+    .btn-back { color: #fff; text-decoration: none; font-size: 14px; opacity: 0.85; }
+
+    .header-title { font-size: 16px; font-weight: 800; }
+
+    .header-right { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+
+    .btn-logout {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-tool {
+      background: #fff;
+      color: #1a3d17;
+      border: 1.5px solid #c8e0c4;
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-tool:active { background: #e8f5e9; }
+
+    .btn-tool.primary { background: #2e5c28; color: #fff; border-color: #2e5c28; }
+    .btn-tool.primary:active { background: #1a3d17; }
+
+    .table-wrap {
+      overflow-x: auto;
+      padding: 0 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      border-collapse: collapse;
+      min-width: 1260px;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    thead th {
+      background: #1a3d17;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px 6px;
+      text-align: center;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+    }
+
+    tbody td {
+      border-bottom: 1px solid #eef3ee;
+      border-right: 1px solid #f4f8f4;
+      font-size: 13px;
+      text-align: center;
+      padding: 0;
+      white-space: nowrap;
+    }
+
+    .cell-btn {
+      display: block;
+      width: 100%;
+      min-height: 46px;
+      padding: 6px 8px;
+      background: none;
+      border: none;
+      font-size: 13px;
+      font-family: inherit;
+      color: #222;
+      cursor: pointer;
+      line-height: 1.3;
+    }
+
+    .cell-btn:active { background: #e8f5e9; }
+    .cell-btn.empty { color: #bbb; }
+    .cell-btn.readonly { cursor: default; font-weight: 800; color: #1a3d17; }
+    .cell-btn.readonly:active { background: none; }
+
+    .cell-sub { font-size: 10px; color: #999; }
+
+    .check-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .check-cell:active { background: #e8f5e9; }
+    .check-cell.checked { color: #2e7d32; font-weight: 800; }
+    .check-cell.unchecked { color: #ddd; }
+
+    .btn-del-row {
+      background: none;
+      border: none;
+      color: #c62828;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 10px;
+    }
+
+    .total-cell { font-weight: 800; color: #1a3d17; }
+
+    .empty-state, .loading-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #bbb;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 300;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-sheet {
+      background: #fff;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 18px 18px 0 0;
+      padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-title { font-size: 17px; font-weight: 800; color: #1a3d17; margin-bottom: 16px; }
+
+    .modal-group { margin-bottom: 16px; }
+
+    .modal-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .modal-group input[type="date"],
+    .modal-group input[type="number"],
+    .modal-group input[type="text"],
+    .modal-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: inherit;
+    }
+
+    .modal-group textarea { min-height: 80px; resize: vertical; }
+
+    .weekday-preview { font-size: 13px; color: #2e5c28; font-weight: 700; margin-top: 6px; }
+
+    .tile-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .tile-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f5;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 12px 4px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tile-option.selected {
+      background: #e8f5e9;
+      border-color: #43a047;
+      color: #1a3d17;
+    }
+
+    .name-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+      max-height: 160px;
+      overflow-y: auto;
+      padding: 2px;
+    }
+
+    .name-chip {
+      background: #f5f5f5;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .name-chip.selected { background: #e8f5e9; border-color: #43a047; color: #1a3d17; }
+
+    .price-toggle {
+      background: none;
+      border: none;
+      color: #2e5c28;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-top: 6px;
+      padding: 4px 0;
+    }
+
+    .price-input-row {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .price-input-row.open { display: flex; }
+
+    .price-input-row input {
+      flex: 1;
+      padding: 10px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+
+    .box-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .box-row span { font-size: 14px; color: #555; flex: 1; }
+
+    .box-row input {
+      width: 90px;
+      padding: 10px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 10px;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+
+    .btn-modal-cancel {
+      flex: 1;
+      padding: 13px;
+      background: transparent;
+      color: #888;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-modal-submit {
+      flex: 2;
+      padding: 13px;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-modal-submit:disabled { background: #bbb; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a class="btn-back" href="melon.html">← 戻る</a>
+    <div class="header-title" id="sheetTitle">🍈 メロン予約管理表</div>
+  </div>
+  <div class="header-right">
+    <span id="userName"></span>
+    <button class="btn-logout" onclick="logout()">ログアウト</button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <button class="btn-tool primary" onclick="addRow()">＋ 行を追加</button>
+  <button class="btn-tool" onclick="exportEntriesCSV()">⬇ CSVダウンロード</button>
+</div>
+
+<div class="table-wrap">
+  <table id="entryTable" style="display:none">
+    <thead>
+      <tr>
+        <th>日付</th>
+        <th>お名前</th>
+        <th>3L</th>
+        <th>4L</th>
+        <th>5L</th>
+        <th>その他</th>
+        <th>玉ねぎ(kg)</th>
+        <th>発送</th>
+        <th>箱代</th>
+        <th>送料</th>
+        <th>商品小計</th>
+        <th>総計</th>
+        <th>入金</th>
+        <th>領収書</th>
+        <th>備考</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="entryTbody"></tbody>
+  </table>
+  <div class="loading-state" id="loadingState">読み込み中...</div>
+</div>
+
+<!-- セル編集モーダル -->
+<div class="modal-overlay" id="cellModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title" id="cellModalTitle"></div>
+    <div id="cellModalBody"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" onclick="closeCellModal()">キャンセル</button>
+      <button type="button" class="btn-modal-submit" id="cellModalOkBtn" onclick="handleCellModalOk()">OK</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/melon-common.js"></script>
+<script>
+
+  const params = new URLSearchParams(window.location.search);
+  const YEAR = parseInt(params.get('y'), 10);
+  const MONTH = parseInt(params.get('m'), 10);
+
+  let currentProfile = null;
+  let sheetId = null;
+  let entries = [];
+  let customersByRow = {}; // { 'あ': ['青垣','青木',...], ... }
+
+  // ── 列定義 ──────────────────────────────────────────────
+  const COLUMN_DEFS = {
+    entry_date:     { label: '日付',     type: 'date' },
+    customer_name:  { label: 'お名前',   type: 'customer' },
+    qty_3l:         { label: '3L',       type: 'qty', priceKey: 'unit_price_3l', defaultPrice: DEFAULT_PRICES.qty3l },
+    qty_4l:         { label: '4L',       type: 'qty', priceKey: 'unit_price_4l', defaultPrice: DEFAULT_PRICES.qty4l },
+    qty_5l:         { label: '5L',       type: 'qty', priceKey: 'unit_price_5l', defaultPrice: DEFAULT_PRICES.qty5l },
+    qty_other:      { label: 'その他',   type: 'qty_other' },
+    onion_kg:       { label: '玉ねぎ(kg)', type: 'onion' },
+    box:            { label: '箱代',     type: 'box' },
+    shipping_fee:   { label: '送料',     type: 'number' },
+    note:           { label: '備考',     type: 'text' },
+  };
+
+  // ── ユーティリティ ──────────────────────────────────────
+  function escHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function findEntry(id) {
+    return entries.find(e => e.id === id);
+  }
+
+  // ── シート・明細の読み込み ──────────────────────────────
+  async function ensureSheet() {
+    const { data: existing } = await supabaseClient
+      .from('melon_sheets')
+      .select('id')
+      .eq('year', YEAR)
+      .eq('month', MONTH)
+      .single();
+
+    if (existing) return existing.id;
+
+    const { data: created, error } = await supabaseClient
+      .from('melon_sheets')
+      .insert({ year: YEAR, month: MONTH, created_by: currentProfile.id })
+      .select('id')
+      .single();
+
+    if (error) throw error;
+    return created.id;
+  }
+
+  async function loadEntries() {
+    const { data, error } = await supabaseClient
+      .from('melon_entries')
+      .select('*')
+      .eq('sheet_id', sheetId)
+      .order('sort_order', { ascending: true });
+
+    if (error) { console.error(error); return; }
+    entries = data || [];
+    renderTable();
+  }
+
+  async function loadCustomers() {
+    const { data, error } = await supabaseClient
+      .from('customers')
+      .select('kana_row, name')
+      .order('name', { ascending: true });
+
+    if (error) { console.error(error); return; }
+    customersByRow = {};
+    KANA_ROWS.forEach(r => { customersByRow[r] = []; });
+    (data || []).forEach(c => {
+      if (!customersByRow[c.kana_row]) customersByRow[c.kana_row] = [];
+      customersByRow[c.kana_row].push(c.name);
+    });
+  }
+
+  // ── テーブル描画 ────────────────────────────────────────
+  function cellBtn(label, colKey, entryId, opts = {}) {
+    const cls = ['cell-btn'];
+    if (opts.empty) cls.push('empty');
+    if (opts.readonly) cls.push('readonly');
+    const onclick = opts.readonly ? '' : `onclick="openCellModal(findEntry('${entryId}'), '${colKey}')"`;
+    const sub = opts.sub ? `<div class="cell-sub">${opts.sub}</div>` : '';
+    return `<button type="button" class="${cls.join(' ')}" ${onclick}>${label}${sub}</button>`;
+  }
+
+  function checkCell(entry, colKey, label) {
+    const checked = !!entry[colKey];
+    return `<div class="check-cell ${checked ? 'checked' : 'unchecked'}" onclick="toggleCheckCell(findEntry('${entry.id}'), '${colKey}')">${checked ? '✅' : '—'}</div>`;
+  }
+
+  function rowHTML(entry) {
+    const dateLabel = entry.entry_date ? formatDateJa(entry.entry_date) : '未設定';
+    const nameLabel = entry.customer_name || '(未入力)';
+
+    return `
+      <tr>
+        <td>${cellBtn(dateLabel, 'entry_date', entry.id, { empty: !entry.entry_date })}</td>
+        <td>${cellBtn(escHtml(nameLabel), 'customer_name', entry.id, { empty: !entry.customer_name })}</td>
+        <td>${cellBtn(entry.qty_3l ? `${entry.qty_3l}玉` : '-', 'qty_3l', entry.id, { empty: !entry.qty_3l, sub: entry.qty_3l && entry.unit_price_3l !== DEFAULT_PRICES.qty3l ? `@${entry.unit_price_3l}円` : '' })}</td>
+        <td>${cellBtn(entry.qty_4l ? `${entry.qty_4l}玉` : '-', 'qty_4l', entry.id, { empty: !entry.qty_4l, sub: entry.qty_4l && entry.unit_price_4l !== DEFAULT_PRICES.qty4l ? `@${entry.unit_price_4l}円` : '' })}</td>
+        <td>${cellBtn(entry.qty_5l ? `${entry.qty_5l}玉` : '-', 'qty_5l', entry.id, { empty: !entry.qty_5l, sub: entry.qty_5l && entry.unit_price_5l !== DEFAULT_PRICES.qty5l ? `@${entry.unit_price_5l}円` : '' })}</td>
+        <td>${cellBtn(entry.qty_other ? `${entry.qty_other}` : '-', 'qty_other', entry.id, { empty: !entry.qty_other, sub: entry.other_label ? escHtml(entry.other_label) : '' })}</td>
+        <td>${cellBtn(entry.onion_kg ? `${entry.onion_kg}kg` : '-', 'onion_kg', entry.id, { empty: !entry.onion_kg })}</td>
+        <td>${checkCell(entry, 'shipped')}</td>
+        <td>${cellBtn((entry.box_2 || entry.box_35) ? `2入:${entry.box_2||0} / 3-5入:${entry.box_35||0}` : '-', 'box', entry.id, { empty: !entry.box_2 && !entry.box_35 })}</td>
+        <td>${cellBtn(entry.shipping_fee ? formatYen(entry.shipping_fee) : '-', 'shipping_fee', entry.id, { empty: !entry.shipping_fee })}</td>
+        <td class="total-cell">${cellBtn(formatYen(entry.subtotal_amount), 'subtotal_amount', entry.id, { readonly: true })}</td>
+        <td class="total-cell">${cellBtn(formatYen(entry.total_amount), 'total_amount', entry.id, { readonly: true })}</td>
+        <td>${checkCell(entry, 'paid')}</td>
+        <td>${checkCell(entry, 'receipt_issued')}</td>
+        <td>${cellBtn(entry.note ? escHtml(entry.note) : '-', 'note', entry.id, { empty: !entry.note })}</td>
+        <td><button class="btn-del-row" onclick="deleteRow('${entry.id}')">🗑</button></td>
+      </tr>`;
+  }
+
+  function renderTable() {
+    document.getElementById('loadingState').style.display = 'none';
+    const table = document.getElementById('entryTable');
+    table.style.display = entries.length ? 'table' : 'none';
+    document.getElementById('entryTbody').innerHTML = entries.map(rowHTML).join('');
+    if (!entries.length) {
+      document.getElementById('loadingState').style.display = 'block';
+      document.getElementById('loadingState').textContent = 'まだ行がありません。「＋行を追加」から始めましょう。';
+    }
+  }
+
+  // ── セル保存 ────────────────────────────────────────────
+  async function saveCell(entryId, patch) {
+    const { data, error } = await supabaseClient
+      .from('melon_entries')
+      .update(patch)
+      .eq('id', entryId)
+      .select()
+      .single();
+
+    if (error) {
+      alert('保存に失敗しました。もう一度お試しください。');
+      console.error(error);
+      return;
+    }
+
+    const idx = entries.findIndex(e => e.id === entryId);
+    if (idx !== -1) entries[idx] = data;
+    renderTable();
+  }
+
+  async function toggleCheckCell(entry, colKey) {
+    await saveCell(entry.id, { [colKey]: !entry[colKey] });
+  }
+
+  // ── 行追加・削除 ────────────────────────────────────────
+  async function addRow() {
+    const maxOrder = entries.reduce((m, e) => Math.max(m, e.sort_order), 0);
+    const { data, error } = await supabaseClient
+      .from('melon_entries')
+      .insert({
+        sheet_id: sheetId,
+        sort_order: maxOrder + 1,
+        created_by: currentProfile.id,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      alert('行の追加に失敗しました。');
+      console.error(error);
+      return;
+    }
+
+    entries.push(data);
+    renderTable();
+  }
+
+  async function deleteRow(entryId) {
+    if (!confirm('この行を削除しますか？')) return;
+    const { error } = await supabaseClient.from('melon_entries').delete().eq('id', entryId);
+    if (error) {
+      alert('削除に失敗しました。');
+      console.error(error);
+      return;
+    }
+    entries = entries.filter(e => e.id !== entryId);
+    renderTable();
+  }
+
+  // ── セル編集モーダル ────────────────────────────────────
+  let currentModalOkHandler = null;
+
+  function openCellModal(entry, colKey) {
+    const def = COLUMN_DEFS[colKey];
+    document.getElementById('cellModalTitle').textContent = def.label;
+    const body = document.getElementById('cellModalBody');
+    body.innerHTML = '';
+
+    const renderers = {
+      date: renderDateModal,
+      customer: renderCustomerModal,
+      qty: renderQtyModal,
+      qty_other: renderQtyOtherModal,
+      onion: renderOnionModal,
+      box: renderBoxModal,
+      number: renderNumberModal,
+      text: renderTextModal,
+    };
+
+    currentModalOkHandler = renderers[def.type](body, entry, def);
+    document.getElementById('cellModalOverlay').classList.add('open');
+  }
+
+  function closeCellModal() {
+    document.getElementById('cellModalOverlay').classList.remove('open');
+    currentModalOkHandler = null;
+  }
+
+  async function handleCellModalOk() {
+    if (!currentModalOkHandler) return;
+    const entryId = document.getElementById('cellModalBody').dataset.entryId;
+    const patch = await currentModalOkHandler();
+    if (!patch) return;
+    await saveCell(entryId, patch);
+    closeCellModal();
+  }
+
+  // ── 日付モーダル ────────────────────────────────────────
+  function renderDateModal(body, entry) {
+    body.dataset.entryId = entry.id;
+    body.innerHTML = `
+      <div class="modal-group">
+        <label>日付</label>
+        <input type="date" id="mDate" value="${entry.entry_date || ''}" onchange="updateWeekdayPreview()">
+        <div class="weekday-preview" id="weekdayPreview">${entry.entry_date ? formatDateJa(entry.entry_date) : ''}</div>
+      </div>`;
+    return async () => {
+      const val = document.getElementById('mDate').value;
+      return { entry_date: val || null };
+    };
+  }
+
+  function updateWeekdayPreview() {
+    const val = document.getElementById('mDate').value;
+    document.getElementById('weekdayPreview').textContent = val ? formatDateJa(val) : '';
+  }
+
+  // ── お名前モーダル ──────────────────────────────────────
+  let selectedKanaRow = null;
+
+  function renderCustomerModal(body, entry) {
+    body.dataset.entryId = entry.id;
+    selectedKanaRow = null;
+
+    body.innerHTML = `
+      <div class="modal-group">
+        <label>行を選択</label>
+        <div class="tile-grid" id="kanaRowGrid">
+          ${KANA_ROWS.map(r => `<div class="tile-option" onclick="selectKanaRowInModal('${r}')" data-row="${r}">${r}行</div>`).join('')}
+        </div>
+      </div>
+      <div class="modal-group" id="nameListGroup" style="display:none">
+        <label>お名前を選択</label>
+        <div class="name-list" id="nameList"></div>
+      </div>
+      <div class="modal-group">
+        <label>リストにない場合はこちらに直接入力</label>
+        <input type="text" id="mNameFree" placeholder="お名前" value="${entry.customer_name && !selectedKanaRow ? escHtml(entry.customer_name) : ''}">
+      </div>`;
+
+    return async () => {
+      const freeInput = document.getElementById('mNameFree').value.trim();
+      const selectedChip = document.querySelector('.name-chip.selected');
+      const name = freeInput || (selectedChip ? selectedChip.textContent : '');
+      if (!name) { alert('お名前を入力または選択してください'); return null; }
+
+      if (selectedKanaRow && !freeInput) {
+        // マスタから選んだのでそのまま
+      } else if (freeInput) {
+        // 自由入力 → 顧客マスタに存在しなければ追加
+        const row = selectedKanaRow || guessKanaRow(freeInput);
+        if (row) await ensureCustomer(row, freeInput);
+      }
+      return { customer_name: name };
+    };
+  }
+
+  function selectKanaRowInModal(row) {
+    selectedKanaRow = row;
+    document.querySelectorAll('#kanaRowGrid .tile-option').forEach(el => {
+      el.classList.toggle('selected', el.dataset.row === row);
+    });
+    const names = customersByRow[row] || [];
+    const listGroup = document.getElementById('nameListGroup');
+    const list = document.getElementById('nameList');
+    if (!names.length) {
+      list.innerHTML = '<span style="color:#bbb;font-size:13px;">この行にはまだ登録がありません</span>';
+    } else {
+      list.innerHTML = names.map(n => `<div class="name-chip" onclick="selectNameChip(this)">${escHtml(n)}</div>`).join('');
+    }
+    listGroup.style.display = 'block';
+  }
+
+  function selectNameChip(el) {
+    document.querySelectorAll('.name-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('mNameFree').value = '';
+  }
+
+  function guessKanaRow(name) {
+    // ひらがな・カタカナの先頭文字からおおまかな行を推測（外国人名など判定不能なら null）
+    const c = name.charAt(0);
+    const table = {
+      'あいうえおアイウエオ': 'あ', 'かきくけこがぎぐげごカキクケコガギグゲゴ': 'か',
+      'さしすせそざじずぜぞサシスセソザジズゼゾ': 'さ', 'たちつてとだぢづでどタチツテトダヂヅデド': 'た',
+      'なにぬねのナニヌネノ': 'な', 'はひふへほばびぶべぼぱぴぷぺぽハヒフヘホバビブベボパピプペポ': 'は',
+      'まみむめもマミムメモ': 'ま', 'やゆよャュョやゆよヤユヨ': 'や',
+      'らりるれろラリルレロ': 'ら', 'わをんワヲン': 'わ',
+    };
+    for (const chars in table) {
+      if (chars.includes(c)) return table[chars];
+    }
+    return null;
+  }
+
+  async function ensureCustomer(kanaRow, name) {
+    const { error } = await supabaseClient.from('customers').insert({ kana_row: kanaRow, name });
+    if (error && error.code !== '23505') { console.error(error); return; }
+    if (!customersByRow[kanaRow]) customersByRow[kanaRow] = [];
+    if (!customersByRow[kanaRow].includes(name)) customersByRow[kanaRow].push(name);
+  }
+
+  // ── 数量+単価モーダル(3L/4L/5L) ─────────────────────────
+  function renderQtyModal(body, entry, def) {
+    body.dataset.entryId = entry.id;
+    const colKey = Object.keys(COLUMN_DEFS).find(k => COLUMN_DEFS[k] === def);
+    const currentPrice = entry[def.priceKey] ?? def.defaultPrice;
+    const priceChanged = currentPrice !== def.defaultPrice;
+
+    body.innerHTML = `
+      <div class="modal-group">
+        <label>${def.label} 個数</label>
+        <input type="number" id="mQty" min="0" step="1" value="${entry[colKey] || 0}">
+      </div>
+      <div class="modal-group">
+        <label>単価（基本 ${formatYen(def.defaultPrice)}）</label>
+        <button type="button" class="price-toggle" id="priceToggleBtn" onclick="togglePriceInput()">${priceChanged ? '単価を変更中 ▲' : '単価を変更する ▼'}</button>
+        <div class="price-input-row ${priceChanged ? 'open' : ''}" id="priceInputRow">
+          <input type="number" id="mPrice" min="0" step="1" value="${currentPrice}">
+          <span>円</span>
+        </div>
+      </div>`;
+
+    return async () => {
+      const qtyVal = Math.max(0, parseInt(document.getElementById('mQty').value || '0', 10));
+      const priceRow = document.getElementById('priceInputRow');
+      const patch = { [colKey]: qtyVal };
+      if (priceRow.classList.contains('open')) {
+        const priceVal = Math.max(0, parseInt(document.getElementById('mPrice').value || '0', 10));
+        patch[def.priceKey] = priceVal;
+      }
+      return patch;
+    };
+  }
+
+  function togglePriceInput() {
+    const row = document.getElementById('priceInputRow');
+    const btn = document.getElementById('priceToggleBtn');
+    const open = row.classList.toggle('open');
+    btn.textContent = open ? '単価を変更中 ▲' : '単価を変更する ▼';
+  }
+
+  // ── その他モーダル ──────────────────────────────────────
+  function renderQtyOtherModal(body, entry) {
+    body.dataset.entryId = entry.id;
+    body.innerHTML = `
+      <div class="modal-group">
+        <label>数量</label>
+        <input type="number" id="mOtherQty" min="0" step="1" value="${entry.qty_other || 0}">
+      </div>
+      <div class="modal-group">
+        <label>単価（基本単価なし・都度入力）</label>
+        <input type="number" id="mOtherPrice" min="0" step="1" value="${entry.unit_price_other || 0}">
+      </div>
+      <div class="modal-group">
+        <label>内容メモ（任意）</label>
+        <input type="text" id="mOtherLabel" placeholder="例：パネ、39セット" value="${escHtml(entry.other_label || '')}">
+      </div>`;
+
+    return async () => ({
+      qty_other: Math.max(0, parseInt(document.getElementById('mOtherQty').value || '0', 10)),
+      unit_price_other: Math.max(0, parseInt(document.getElementById('mOtherPrice').value || '0', 10)),
+      other_label: document.getElementById('mOtherLabel').value.trim() || null,
+    });
+  }
+
+  // ── 玉ねぎモーダル ──────────────────────────────────────
+  function renderOnionModal(body, entry) {
+    body.dataset.entryId = entry.id;
+    body.innerHTML = `
+      <div class="modal-group">
+        <label>玉ねぎ（基本 ${formatYen(DEFAULT_PRICES.onion)}/kg）</label>
+        <input type="number" id="mOnion" min="0" step="0.1" value="${entry.onion_kg || 0}">
+      </div>`;
+    return async () => ({ onion_kg: Math.max(0, parseFloat(document.getElementById('mOnion').value || '0')) });
+  }
+
+  // ── 箱代モーダル ────────────────────────────────────────
+  function renderBoxModal(body, entry) {
+    body.dataset.entryId = entry.id;
+    body.innerHTML = `
+      <div class="modal-group">
+        <div class="box-row">
+          <span>2玉入（${formatYen(DEFAULT_PRICES.box2)}）</span>
+          <input type="number" id="mBox2" min="0" step="1" value="${entry.box_2 || 0}">
+        </div>
+        <div class="box-row">
+          <span>3〜5玉入（${formatYen(DEFAULT_PRICES.box35)}）</span>
+          <input type="number" id="mBox35" min="0" step="1" value="${entry.box_35 || 0}">
+        </div>
+      </div>`;
+    return async () => ({
+      box_2: Math.max(0, parseInt(document.getElementById('mBox2').value || '0', 10)),
+      box_35: Math.max(0, parseInt(document.getElementById('mBox35').value || '0', 10)),
+    });
+  }
+
+  // ── 送料モーダル ────────────────────────────────────────
+  function renderNumberModal(body, entry, def) {
+    body.dataset.entryId = entry.id;
+    body.innerHTML = `
+      <div class="modal-group">
+        <label>${def.label}</label>
+        <input type="number" id="mNumber" min="0" step="1" value="${entry.shipping_fee || 0}">
+      </div>`;
+    return async () => ({ shipping_fee: Math.max(0, parseInt(document.getElementById('mNumber').value || '0', 10)) });
+  }
+
+  // ── 備考モーダル ────────────────────────────────────────
+  function renderTextModal(body, entry, def) {
+    body.dataset.entryId = entry.id;
+    body.innerHTML = `
+      <div class="modal-group">
+        <label>${def.label}</label>
+        <textarea id="mNote">${escHtml(entry.note || '')}</textarea>
+      </div>`;
+    return async () => ({ note: document.getElementById('mNote').value.trim() || null });
+  }
+
+  // ── CSVエクスポート ─────────────────────────────────────
+  function exportEntriesCSV() {
+    const headers = [
+      '日付', 'お名前', '3L', '4L', '5L', 'その他数量', 'その他単価', 'その他内容',
+      '玉ねぎ(kg)', '発送', '2玉入箱', '3〜5玉入箱', '送料', '商品小計(円)', '総計(円)', '入金', '領収書', '備考',
+    ];
+    const rows = entries.map(e => [
+      e.entry_date || '', e.customer_name || '',
+      e.qty_3l || 0, e.qty_4l || 0, e.qty_5l || 0,
+      e.qty_other || 0, e.unit_price_other || 0, e.other_label || '',
+      e.onion_kg || 0, e.shipped ? '○' : '',
+      e.box_2 || 0, e.box_35 || 0, e.shipping_fee || 0,
+      e.subtotal_amount || 0, e.total_amount || 0,
+      e.paid ? '○' : '', e.receipt_issued ? '○' : '', e.note || '',
+    ]);
+
+    const csvText = '﻿' + [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\r\n');
+
+    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `村上農園_メロン予約_${YEAR}_${MONTH}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ── 初期化 ──────────────────────────────────────────────
+  (async () => {
+    currentProfile = await requireAuth('admin');
+    if (!currentProfile) return;
+
+    if (!YEAR || !MONTH) {
+      alert('対象月が指定されていません');
+      window.location.href = 'melon.html';
+      return;
+    }
+
+    document.getElementById('userName').textContent = currentProfile.name;
+    document.getElementById('sheetTitle').textContent = `🍈 ${monthLabel(YEAR, MONTH)} メロン予約管理表`;
+
+    await loadCustomers();
+
+    try {
+      sheetId = await ensureSheet();
+    } catch (err) {
+      console.error(err);
+      alert('シートの取得に失敗しました');
+      return;
+    }
+
+    await loadEntries();
+  })();
+
+</script>
+</body>
+</html>

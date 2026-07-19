@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 - メロン予約管理</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f7f0;
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+
+    header {
+      background: #2e5c28;
+      color: #fff;
+      padding: 13px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 10px; }
+
+    .btn-back {
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .header-title { font-size: 17px; font-weight: 800; }
+
+    .header-right { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+
+    .btn-logout {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .content {
+      padding: 18px 14px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .month-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .month-card {
+      display: block;
+      background: #fff;
+      border-radius: 14px;
+      padding: 22px 12px;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform 0.1s;
+    }
+
+    .month-card:active { transform: scale(0.97); }
+
+    .month-icon { font-size: 34px; margin-bottom: 8px; }
+
+    .month-label { font-size: 15px; font-weight: 800; color: #1a3d17; }
+
+    .fab-add {
+      position: fixed;
+      right: 18px;
+      bottom: 22px;
+      z-index: 200;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 30px;
+      padding: 14px 22px;
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+      cursor: pointer;
+    }
+
+    .fab-add:active { background: #1a3d17; }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 300;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-sheet {
+      background: #fff;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 18px 18px 0 0;
+      padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-title { font-size: 17px; font-weight: 800; color: #1a3d17; margin-bottom: 16px; }
+
+    .modal-group { margin-bottom: 16px; }
+
+    .modal-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .modal-group input[type="month"] {
+      width: 100%;
+      padding: 12px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+
+    .btn-modal-cancel {
+      flex: 1;
+      padding: 13px;
+      background: transparent;
+      color: #888;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-modal-submit {
+      flex: 2;
+      padding: 13px;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-modal-submit:disabled { background: #bbb; cursor: not-allowed; }
+
+    .empty-state, .loading-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #bbb;
+    }
+
+    .empty-state .icon { font-size: 52px; margin-bottom: 14px; }
+    .empty-state p { font-size: 15px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a class="btn-back" href="admin.html">← 戻る</a>
+    <div class="header-title">🍈 メロン予約管理</div>
+  </div>
+  <div class="header-right">
+    <span id="userName"></span>
+    <button class="btn-logout" onclick="logout()">ログアウト</button>
+  </div>
+</header>
+
+<div class="content">
+  <div class="month-grid" id="monthGrid">
+    <div class="loading-state">読み込み中...</div>
+  </div>
+</div>
+
+<button class="fab-add" onclick="openAddMonthModal()">＋ 新しい月を追加</button>
+
+<div class="modal-overlay" id="addMonthOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title">新しい月次シートを追加</div>
+    <form id="addMonthForm" onsubmit="handleAddMonth(event)">
+      <div class="modal-group">
+        <label>対象月</label>
+        <input type="month" id="monthInput" required>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-modal-cancel" onclick="closeAddMonthModal()">キャンセル</button>
+        <button type="submit" class="btn-modal-submit" id="addMonthSubmitBtn">追加する</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/melon-common.js"></script>
+<script>
+
+  let currentProfile = null;
+
+  function monthCardHTML(sheet) {
+    return `
+      <a class="month-card" href="melon_sheet.html?y=${sheet.year}&m=${sheet.month}">
+        <div class="month-icon">🍈</div>
+        <div class="month-label">${monthLabel(sheet.year, sheet.month)}</div>
+      </a>`;
+  }
+
+  function renderMonthGrid(sheets) {
+    const el = document.getElementById('monthGrid');
+    if (!sheets.length) {
+      el.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="icon">🍈</div>
+          <p>まだ月次シートがありません<br>右下の「＋新しい月を追加」から始めましょう</p>
+        </div>`;
+      return;
+    }
+    el.innerHTML = sheets.map(monthCardHTML).join('');
+  }
+
+  async function loadMonths() {
+    const { data, error } = await supabaseClient
+      .from('melon_sheets')
+      .select('id, year, month')
+      .order('year', { ascending: false })
+      .order('month', { ascending: false });
+
+    if (error) {
+      console.error(error);
+      document.getElementById('monthGrid').innerHTML = '<div class="empty-state">読み込みに失敗しました</div>';
+      return;
+    }
+
+    renderMonthGrid(data || []);
+  }
+
+  function openAddMonthModal() {
+    document.getElementById('addMonthForm').reset();
+    document.getElementById('addMonthOverlay').classList.add('open');
+  }
+
+  function closeAddMonthModal() {
+    document.getElementById('addMonthOverlay').classList.remove('open');
+  }
+
+  async function handleAddMonth(e) {
+    e.preventDefault();
+    const val = document.getElementById('monthInput').value; // "2026-08"
+    if (!val) return;
+    const [year, month] = val.split('-').map(Number);
+
+    const btn = document.getElementById('addMonthSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = '追加中...';
+
+    let sheetId = null;
+    const { data, error } = await supabaseClient
+      .from('melon_sheets')
+      .insert({ year, month, created_by: currentProfile.id })
+      .select('id')
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        // すでに存在する月 → その月のシートを取得して遷移
+        const { data: existing } = await supabaseClient
+          .from('melon_sheets')
+          .select('id')
+          .eq('year', year)
+          .eq('month', month)
+          .single();
+        sheetId = existing?.id;
+      } else {
+        alert('追加に失敗しました。もう一度お試しください。');
+        console.error(error);
+        btn.disabled = false;
+        btn.textContent = '追加する';
+        return;
+      }
+    } else {
+      sheetId = data.id;
+    }
+
+    window.location.href = `melon_sheet.html?y=${year}&m=${month}`;
+  }
+
+  (async () => {
+    currentProfile = await requireAuth('admin');
+    if (!currentProfile) return;
+
+    document.getElementById('userName').textContent = currentProfile.name;
+    await loadMonths();
+  })();
+
+</script>
+</body>
+</html>

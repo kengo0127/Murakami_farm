@@ -2,6 +2,9 @@
 supabaseのURLとか.txt
 supabase/.temp/
 
+# 顧客個人情報を含むため公開リポジトリにコミットしない
+seed_customers.sql
+
 # Python
 __pycache__/
 *.pyc
