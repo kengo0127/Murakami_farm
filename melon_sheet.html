@@ -7,20 +7,21 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html, body { height: 100%; }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
       background: #f0f7f0;
-      min-height: 100vh;
-      padding-bottom: 90px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     header {
       background: #2e5c28;
       color: #fff;
       padding: 13px 16px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      flex-shrink: 0;
       box-shadow: 0 2px 10px rgba(0,0,0,0.25);
       display: flex;
       align-items: center;
@@ -53,6 +54,7 @@
       gap: 8px;
       padding: 10px 12px;
       flex-wrap: wrap;
+      flex-shrink: 0;
     }
 
     .btn-tool {
@@ -72,8 +74,9 @@
     .btn-tool.primary:active { background: #1a3d17; }
 
     .table-wrap {
-      overflow-x: auto;
-      padding: 0 12px;
+      flex: 1;
+      overflow: auto;
+      padding: 0 12px 24px;
       -webkit-overflow-scrolling: touch;
     }
 
@@ -81,8 +84,6 @@
       border-collapse: collapse;
       min-width: 1260px;
       background: #fff;
-      border-radius: 10px;
-      overflow: hidden;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
 
@@ -96,7 +97,11 @@
       white-space: nowrap;
       position: sticky;
       top: 0;
+      z-index: 10;
     }
+
+    thead th:first-child { border-top-left-radius: 10px; }
+    thead th:last-child { border-top-right-radius: 10px; }
 
     tbody td {
       border-bottom: 1px solid #eef3ee;
@@ -106,6 +111,9 @@
       padding: 0;
       white-space: nowrap;
     }
+
+    tbody tr:last-child td:first-child { border-bottom-left-radius: 10px; }
+    tbody tr:last-child td:last-child { border-bottom-right-radius: 10px; }
 
     .cell-btn {
       display: block;
