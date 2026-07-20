@@ -357,6 +357,7 @@
 
 <div class="toolbar">
   <button class="btn-tool primary" onclick="addRow()">＋ 行を追加</button>
+  <button class="btn-tool" id="sortDateBtn" onclick="sortByDateAsc()">📅 日付順に並べ替え</button>
   <button class="btn-tool" onclick="exportEntriesCSV()">⬇ CSVダウンロード</button>
 </div>
 
@@ -470,10 +471,12 @@
   }
 
   async function loadCustomers() {
+    // 顧客リスト.xlsx（B列）の記載順を保つため、名前のあいうえお順ではなく
+    // sort_order（元のExcel行順）で並べる
     const { data, error } = await supabaseClient
       .from('customers')
-      .select('kana_row, name')
-      .order('name', { ascending: true });
+      .select('kana_row, name, sort_order')
+      .order('sort_order', { ascending: true });
 
     if (error) { console.error(error); return; }
     customersByRow = {};
@@ -591,6 +594,41 @@
       return;
     }
     entries = entries.filter(e => e.id !== entryId);
+    renderTable();
+  }
+
+  // ── 日付順に並べ替え ────────────────────────────────────
+  async function sortByDateAsc() {
+    if (!entries.length) return;
+
+    // 日付未設定の行は末尾に送る
+    const sorted = [...entries].sort((a, b) => {
+      if (!a.entry_date && !b.entry_date) return 0;
+      if (!a.entry_date) return 1;
+      if (!b.entry_date) return -1;
+      return a.entry_date < b.entry_date ? -1 : a.entry_date > b.entry_date ? 1 : 0;
+    });
+
+    const btn = document.getElementById('sortDateBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '並べ替え中...'; }
+
+    const results = await Promise.all(
+      sorted.map((e, idx) =>
+        supabaseClient.from('melon_entries').update({ sort_order: idx + 1 }).eq('id', e.id)
+      )
+    );
+
+    if (btn) { btn.disabled = false; btn.textContent = '📅 日付順に並べ替え'; }
+
+    const failed = results.find(r => r.error);
+    if (failed) {
+      alert('並べ替えに失敗しました。もう一度お試しください。');
+      console.error(failed.error);
+      return;
+    }
+
+    sorted.forEach((e, idx) => { e.sort_order = idx + 1; });
+    entries = sorted;
     renderTable();
   }
 
