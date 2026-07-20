@@ -263,6 +263,14 @@
       cursor: pointer;
     }
 
+    /* B列（あ・い・う…の細かい区分）ごとに淡い色を交互に付けて見分けやすくする */
+    .name-chip.group-0 { background: #fdf3e7; border-color: #f0dab3; }
+    .name-chip.group-1 { background: #e7f3fd; border-color: #b3d4f0; }
+    .name-chip.group-2 { background: #f3e7fd; border-color: #d4b3f0; }
+    .name-chip.group-3 { background: #e7fdf0; border-color: #b3f0c8; }
+    .name-chip.group-4 { background: #fde7ef; border-color: #f0b3cb; }
+    .name-chip.group-5 { background: #fdfbe7; border-color: #f0e9b3; }
+
     .name-chip.selected { background: #e8f5e9; border-color: #43a047; color: #1a3d17; }
 
     .price-toggle {
@@ -412,7 +420,8 @@
   let currentProfile = null;
   let sheetId = null;
   let entries = [];
-  let customersByRow = {}; // { 'あ': ['青垣','青木',...], ... }
+  let customersByRow = {}; // { 'あ': [{name:'青垣', group:0}, {name:'青木', group:0}, ...], ... }
+  const NAME_CHIP_GROUP_COLORS = 6; // .name-chip.group-0 〜 group-5 のCSSクラス数
 
   // ── 列定義 ──────────────────────────────────────────────
   const COLUMN_DEFS = {
@@ -475,15 +484,26 @@
     // sort_order（元のExcel行順）で並べる
     const { data, error } = await supabaseClient
       .from('customers')
-      .select('kana_row, name, sort_order')
+      .select('kana_row, name, kana_detail, sort_order')
       .order('sort_order', { ascending: true });
 
     if (error) { console.error(error); return; }
     customersByRow = {};
     KANA_ROWS.forEach(r => { customersByRow[r] = []; });
+
+    // B列（kana_detail）の値が変わるたびに色グループを1つ進める
+    // （sort_order順に取得しているので、同じ区分は必ず連続して並んでいる）
+    let lastRow = null, lastDetail = null, groupIdx = -1;
     (data || []).forEach(c => {
       if (!customersByRow[c.kana_row]) customersByRow[c.kana_row] = [];
-      customersByRow[c.kana_row].push(c.name);
+      if (c.kana_row !== lastRow) {
+        groupIdx = 0;
+      } else if (c.kana_detail !== lastDetail) {
+        groupIdx += 1;
+      }
+      lastRow = c.kana_row;
+      lastDetail = c.kana_detail;
+      customersByRow[c.kana_row].push({ name: c.name, group: groupIdx });
     });
   }
 
@@ -741,7 +761,7 @@
     if (!names.length) {
       list.innerHTML = '<span style="color:#bbb;font-size:13px;">この行にはまだ登録がありません</span>';
     } else {
-      list.innerHTML = names.map(n => `<div class="name-chip" onclick="selectNameChip(this)">${escHtml(n)}</div>`).join('');
+      list.innerHTML = names.map(n => `<div class="name-chip group-${n.group % NAME_CHIP_GROUP_COLORS}" onclick="selectNameChip(this)">${escHtml(n.name)}</div>`).join('');
     }
     listGroup.style.display = 'block';
   }
@@ -772,7 +792,12 @@
     const { error } = await supabaseClient.from('customers').insert({ kana_row: kanaRow, name });
     if (error && error.code !== '23505') { console.error(error); return; }
     if (!customersByRow[kanaRow]) customersByRow[kanaRow] = [];
-    if (!customersByRow[kanaRow].includes(name)) customersByRow[kanaRow].push(name);
+    if (!customersByRow[kanaRow].some(c => c.name === name)) {
+      const lastGroup = customersByRow[kanaRow].length
+        ? customersByRow[kanaRow][customersByRow[kanaRow].length - 1].group
+        : -1;
+      customersByRow[kanaRow].push({ name, group: lastGroup + 1 });
+    }
   }
 
   // ── 数量+単価モーダル(3L/4L/5L) ─────────────────────────

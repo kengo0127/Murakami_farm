@@ -26,10 +26,11 @@ def main() -> None:
     rows = []
     seen = set()
     for row in ws.iter_rows(values_only=True):
-        kana, _kana_detail, name = row[0], row[1], row[2]
+        kana, kana_detail, name = row[0], row[1], row[2]
         if kana is None or name is None:
             continue
         kana = str(kana).strip()
+        kana_detail = str(kana_detail).strip() if kana_detail is not None else ""
         name = str(name).strip()
         if not kana or not name:
             continue
@@ -37,7 +38,7 @@ def main() -> None:
         if key in seen:
             continue  # 完全重複行はExcel記載順で先に登場した方を優先
         seen.add(key)
-        rows.append((kana, name, len(rows)))
+        rows.append((kana, name, kana_detail, len(rows)))
 
     lines = [
         "-- ============================================================",
@@ -46,9 +47,9 @@ def main() -> None:
         "-- SupabaseのSQL Editorに貼り付けて「Run」を押してください",
         "-- ============================================================",
         "",
-        "insert into public.customers (kana_row, name, sort_order) values",
-        ",\n".join(f"  ('{esc(k)}', '{esc(n)}', {o})" for k, n, o in rows),
-        "on conflict (kana_row, name) do update set sort_order = excluded.sort_order;",
+        "insert into public.customers (kana_row, name, kana_detail, sort_order) values",
+        ",\n".join(f"  ('{esc(k)}', '{esc(n)}', '{esc(d)}', {o})" for k, n, d, o in rows),
+        "on conflict (kana_row, name) do update set sort_order = excluded.sort_order, kana_detail = excluded.kana_detail;",
         "",
     ]
 
