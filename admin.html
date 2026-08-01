@@ -587,47 +587,6 @@
 
     .s-chip.done { background: #e8f5e9; color: #1a3d17; }
 
-    /* ── 自発報告 ── */
-    .report-item {
-      background: #fff;
-      border-radius: 12px;
-      padding: 12px 16px;
-      margin-bottom: 8px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .report-time {
-      font-size: 12px;
-      color: #999;
-      width: 48px;
-      flex-shrink: 0;
-    }
-
-    .report-type-badge {
-      background: #e8f5e9;
-      color: #1a3d17;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 20px;
-      flex-shrink: 0;
-    }
-
-    .report-staff {
-      font-size: 14px;
-      font-weight: 700;
-      color: #222;
-      flex: 1;
-    }
-
-    .report-qty {
-      font-size: 13px;
-      font-weight: 700;
-      color: #2e5c28;
-    }
   </style>
 </head>
 <body>
@@ -783,8 +742,8 @@
     <div class="form-card">
       <h2>📋 自発報告のエクスポート</h2>
       <p style="font-size:13px;color:#888;margin-bottom:16px;">
-        上記と同じ期間で、自発的な作業報告（収穫・整理整頓・除草・在庫確認）をCSV出力します。<br>
-        出力項目：日付 / 時刻 / スタッフ名 / 作業内容 / 数量 / 単位
+        上記と同じ期間で、スタッフが自発的に報告した作業をCSV出力します。<br>
+        出力項目：日付 / 報告時刻 / スタッフ名 / 作物 / 作業内容 / 開始時刻 / 終了時刻 / 作業人数 / 作業場所 / メモ
       </p>
       <button class="btn-submit" id="exportReportsBtn" onclick="exportReportsCSV()">CSVダウンロード（Excel対応）</button>
       <div id="exportReportsMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
@@ -1013,7 +972,7 @@
 
     const { data: reports, error } = await supabaseClient
       .from('work_reports')
-      .select('date, reported_at, work_type, quantity, unit, profiles(name)')
+      .select('date, reported_at, crop, task_name, scheduled_start, scheduled_end, worker_count, note, profiles(name), report_locations(location_type, location_code)')
       .gte('date', from)
       .lte('date', to)
       .order('date')
@@ -1026,17 +985,25 @@
       return;
     }
 
-    const header = ['日付', '時刻', 'スタッフ名', '作業内容', '数量', '単位'];
+    const header = ['日付', '報告時刻', 'スタッフ名', '作物', '作業内容', '開始時刻', '終了時刻', '作業人数', '作業場所', 'メモ'];
     const rows = [header];
 
     reports.forEach(r => {
+      const locations = r.report_locations ?? [];
+      const locationText = locations.length
+        ? (locations[0].location_type === 'house' ? 'ハウス' : '露地') + ' ' + locations.map(l => l.location_code).join('・')
+        : '';
       rows.push([
         r.date,
         fmtHM(new Date(r.reported_at)),
         r.profiles?.name ?? '—',
-        r.work_type,
-        r.quantity ?? '',
-        r.unit ?? '',
+        r.crop ?? '',
+        r.task_name ?? '',
+        fmt(r.scheduled_start),
+        fmt(r.scheduled_end),
+        r.worker_count ?? '',
+        locationText,
+        r.note ?? '',
       ]);
     });
 
@@ -1487,15 +1454,13 @@
   }
 
   // ── 自発報告一覧 ─────────────────────────────────────────
-  const WORK_TYPE_ICON = { '収穫': '🌾', '整理整頓': '🧹', '除草': '🌱', '在庫確認': '📦' };
-
   async function loadReports() {
     const date = document.getElementById('reportsDate').value;
     document.getElementById('reportsListTitle').textContent = `自発的な作業報告（${date}）`;
 
     const { data: reports, error } = await supabaseClient
       .from('work_reports')
-      .select('id, reported_at, work_type, quantity, unit, profiles(name)')
+      .select('id, reported_at, crop, task_name, scheduled_start, scheduled_end, worker_count, note, profiles(name), report_locations(location_type, location_code)')
       .eq('date', date)
       .order('reported_at', { ascending: false });
 
@@ -1512,13 +1477,24 @@
     }
 
     el.innerHTML = reports.map(r => {
-      const qty = (r.quantity != null && r.unit) ? `<span class="report-qty">${r.quantity}${r.unit}</span>` : '';
+      const locations = r.report_locations ?? [];
+      const locationLabel = locations.length
+        ? (locations[0].location_type === 'house' ? 'ハウス' : '露地') + ' ' + locations.map(l => l.location_code).join('・')
+        : null;
+      const noteHtml = r.note ? `<div class="task-item-meta">${r.note}</div>` : '';
       return `
-        <div class="report-item">
-          <span class="report-time">${fmtHM(new Date(r.reported_at))}</span>
-          <span class="report-type-badge">${WORK_TYPE_ICON[r.work_type] ?? ''} ${r.work_type}</span>
-          <span class="report-staff">${r.profiles?.name ?? '—'}</span>
-          ${qty}
+        <div class="task-item">
+          <div class="task-item-left">
+            <div class="task-item-header">
+              <span class="crop-badge">${r.crop ?? ''}</span>
+              <span class="task-item-name">${r.task_name ?? ''}</span>
+              ${locationLabel ? `<span class="location-badge">${locationLabel}</span>` : ''}
+            </div>
+            <div class="task-item-meta">
+              ${fmt(r.scheduled_start)} 〜 ${fmt(r.scheduled_end)}　作業人数：${r.worker_count ?? '—'}人　報告者：${r.profiles?.name ?? '—'}（${fmtHM(new Date(r.reported_at))}）
+            </div>
+            ${noteHtml}
+          </div>
         </div>`;
     }).join('');
   }
