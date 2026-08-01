@@ -160,6 +160,69 @@
       line-height: 1.5;
     }
 
+    .location-badge {
+      background: #fff3e0;
+      color: #8a4b00;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+
+    .btn-map-check {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 9px;
+      background: #f5f5f5;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #444;
+      cursor: pointer;
+    }
+
+    /* 露地マップ（読み取り専用） */
+    .field-grid-section { margin-bottom: 14px; }
+
+    .field-grid-title {
+      background: #4472c4;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 6px 6px 0 0;
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 2px;
+      background: #d9dfef;
+      border: 1px solid #d9dfef;
+      border-radius: 0 0 6px 6px;
+      overflow-x: auto;
+      padding: 2px;
+    }
+
+    .field-cell {
+      aspect-ratio: 1;
+      min-width: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 3px;
+    }
+
+    .field-cell.empty { background: transparent; }
+    .field-cell.landmark { background: #fff; color: #222; font-size: 14px; }
+    .field-cell.house-marker { background: #cfd6e8; color: #445; }
+    .field-cell.plot { background: #e8edfa; color: #223; }
+    .field-cell.plot.highlighted { background: #4caf50; color: #fff; }
+
     .status-badge {
       display: inline-block;
       font-size: 12px;
@@ -450,6 +513,23 @@
 
 <button class="fab-report" onclick="openReportModal()">📋 作業を報告</button>
 
+<div class="modal-overlay" id="fieldMapModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title">作業場所（露地）</div>
+    <div class="field-grid-section">
+      <div class="field-grid-title">村上農園の北側</div>
+      <div id="fieldMapModalNorth" class="field-grid"></div>
+    </div>
+    <div class="field-grid-section">
+      <div class="field-grid-title">村上農園の南側</div>
+      <div id="fieldMapModalSouth" class="field-grid"></div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" onclick="closeFieldMapModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="reportModalOverlay">
   <div class="modal-sheet">
     <div class="modal-title">自発的な作業を報告</div>
@@ -504,6 +584,7 @@
   let currentProfile = null;
   // DBが追いつく前に再描画されても「開始済み」状態を保持するローカルキャッシュ
   const localStartedTasks = new Map(); // taskId -> Date
+  let fieldPlotsCache = []; // 露地マップ表示用（field_plots全件）
 
   // ── 時刻ユーティリティ ──────────────────────────────────
   function getToday() {
@@ -569,6 +650,19 @@
     const note = task.note
       ? `<div class="task-note">${task.note}</div>` : '';
 
+    const locations = task.task_locations ?? [];
+    const houseLocations = locations.filter(l => l.location_type === 'house');
+    const fieldLocations = locations.filter(l => l.location_type === 'field');
+    const locationBadge = houseLocations.length
+      ? `<span class="location-badge">🏠 ハウス ${houseLocations.map(l => l.location_code).join('・')}</span>`
+      : fieldLocations.length
+        ? `<span class="location-badge">🌾 露地</span>`
+        : '';
+    const fieldCodesJson = JSON.stringify(fieldLocations.map(l => l.location_code)).replace(/"/g, '&quot;');
+    const mapCheckBtn = fieldLocations.length
+      ? `<button type="button" class="btn-map-check" onclick="openFieldMapModal(${fieldCodesJson})">🗺 mapを確認</button>`
+      : '';
+
     let action;
     if (status === 'completed') {
       const at = comp ? `（${fmtHM(new Date(comp.completed_at))}完了）` : '';
@@ -590,13 +684,79 @@
         <div class="task-header">
           <span class="crop-badge">${task.crop}</span>
           <span class="task-name">${task.task_name}</span>
+          ${locationBadge}
         </div>
         ${badge}
         ${startedInfo}
         <div class="task-time">${start} 〜 ${end}</div>
         ${note}
+        ${mapCheckBtn}
         ${action}
       </div>`;
+  }
+
+  // ── 露地マップ（読み取り専用） ──────────────────────────
+  const FIELD_GRID_LAYOUT = {
+    north: {
+      rows: 5, cols: 13,
+      special: [
+        { row: 0, col: 0,  type: 'landmark' },
+        { row: 2, col: 1,  type: 'house-marker' },
+        { row: 2, col: 2,  type: 'house-marker' },
+        { row: 2, col: 7,  type: 'house-marker' },
+        { row: 3, col: 2,  type: 'house-marker' },
+      ],
+    },
+    south: {
+      rows: 2, cols: 22,
+      special: [
+        { row: 0, col: 21, type: 'landmark' },
+      ],
+    },
+  };
+
+  async function loadFieldPlotsCache() {
+    const { data, error } = await supabaseClient
+      .from('field_plots')
+      .select('id, label, section, row_index, col_index');
+    if (error) { console.error(error); return; }
+    fieldPlotsCache = data ?? [];
+  }
+
+  function renderReadonlyFieldGrid(section, highlightedIds) {
+    const layout = FIELD_GRID_LAYOUT[section];
+    const el = document.getElementById(section === 'north' ? 'fieldMapModalNorth' : 'fieldMapModalSouth');
+    el.style.gridTemplateColumns = `repeat(${layout.cols}, 1fr)`;
+
+    const plotAt = (r, c) => fieldPlotsCache.find(p => p.section === section && p.row_index === r && p.col_index === c);
+    const specialAt = (r, c) => layout.special.find(s => s.row === r && s.col === c);
+
+    let html = '';
+    for (let r = 0; r < layout.rows; r++) {
+      for (let c = 0; c < layout.cols; c++) {
+        const special = specialAt(r, c);
+        if (special?.type === 'landmark') { html += `<div class="field-cell landmark">★</div>`; continue; }
+        if (special?.type === 'house-marker') { html += `<div class="field-cell house-marker">H</div>`; continue; }
+        const plot = plotAt(r, c);
+        if (plot) {
+          const hi = highlightedIds.includes(plot.id) ? 'highlighted' : '';
+          html += `<div class="field-cell plot ${hi}">${plot.label}</div>`;
+          continue;
+        }
+        html += `<div class="field-cell empty"></div>`;
+      }
+    }
+    el.innerHTML = html;
+  }
+
+  function openFieldMapModal(fieldCodes) {
+    renderReadonlyFieldGrid('north', fieldCodes);
+    renderReadonlyFieldGrid('south', fieldCodes);
+    document.getElementById('fieldMapModalOverlay').classList.add('open');
+  }
+
+  function closeFieldMapModal() {
+    document.getElementById('fieldMapModalOverlay').classList.remove('open');
   }
 
   // ── タイムライン描画 ───────────────────────────────────
@@ -845,12 +1005,21 @@
       .select('task_id, started_at, started_by')
       .in('task_id', taskIds);
 
-    // ⑤ タスクに完了・開始データを結合
+    // ⑤ 作業場所を別クエリで取得
+    const { data: locations } = await supabaseClient
+      .from('task_locations')
+      .select('task_id, location_type, location_code')
+      .in('task_id', taskIds);
+
+    // ⑥ タスクに完了・開始・作業場所データを結合
     const compMap = {};
     completions?.forEach(c => { compMap[c.task_id] = c; });
 
     const startsMap = {};
     starts?.forEach(s => { startsMap[s.task_id] = s; });
+
+    const locationsMap = {};
+    locations?.forEach(l => { (locationsMap[l.task_id] ??= []).push(l); });
 
     const merged = tasks.map(t => {
       const dbStart = startsMap[t.id];
@@ -867,6 +1036,7 @@
         ...t,
         task_completions: compMap[t.id] ? [compMap[t.id]] : [],
         task_starts:      startsEntry,
+        task_locations:   locationsMap[t.id] ?? [],
       };
     });
 
@@ -947,6 +1117,7 @@
     // 1分ごとに再描画（作業中/次の作業の切り替えのため）
     setInterval(loadTasks, 60000);
 
+    await loadFieldPlotsCache();
     await loadTasks();
 
     // 他スタッフが完了・開始ボタンを押したらリアルタイムで反映
