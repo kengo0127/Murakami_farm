@@ -223,6 +223,74 @@
     .field-cell.plot { background: #e8edfa; color: #223; }
     .field-cell.plot.highlighted { background: #4caf50; color: #fff; }
 
+    /* 作業報告フォーム：作業場所ピッカー（選択可） */
+    .field-cell.plot.selectable { cursor: pointer; }
+    .field-cell.plot.selectable.selected { background: #4caf50; color: #fff; }
+
+    .location-type-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .loc-type-btn {
+      flex: 1;
+      background: #f5f5f5;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .loc-type-btn.active {
+      background: #e8f5e9;
+      border-color: #4caf50;
+      color: #1a3d17;
+    }
+
+    .house-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+      gap: 6px;
+    }
+
+    .house-btn {
+      background: #f5f5f5;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 6px 0;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .house-btn.selected {
+      background: #e8f5e9;
+      border-color: #4caf50;
+      color: #1a3d17;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 12px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 10px;
+      font-size: 16px;
+      background: #fff;
+    }
+
+    .modal-input[list] { background: #fff; }
+    textarea.modal-input { resize: vertical; }
+
+    .report-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .report-row > div { flex: 1; }
+
     .status-badge {
       display: inline-block;
       font-size: 12px;
@@ -394,60 +462,6 @@
       margin-bottom: 8px;
     }
 
-    .work-type-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .work-type-option {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: #f5f5f5;
-      border: 1.5px solid #e0e0e0;
-      border-radius: 10px;
-      padding: 12px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .work-type-option:has(input:checked) {
-      background: #e8f5e9;
-      border-color: #43a047;
-      color: #1a3d17;
-    }
-
-    .work-type-option input { display: none; }
-
-    .harvest-fields {
-      display: none;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .harvest-fields.open { display: flex; }
-
-    .harvest-fields input[type="number"] {
-      flex: 1;
-      padding: 12px;
-      border: 1.5px solid #dde8dd;
-      border-radius: 10px;
-      font-size: 16px;
-    }
-
-    .harvest-fields select {
-      flex: 1;
-      padding: 12px;
-      border: 1.5px solid #dde8dd;
-      border-radius: 10px;
-      font-size: 16px;
-      background: #fff;
-    }
-
     .modal-actions {
       display: flex;
       gap: 10px;
@@ -535,33 +549,61 @@
     <div class="modal-title">自発的な作業を報告</div>
     <form id="reportForm" onsubmit="handleReportSubmit(event)">
       <div class="modal-group">
+        <label>作物</label>
+        <input list="reportCropList" id="reportCrop" class="modal-input" placeholder="例：スイカ" required>
+        <datalist id="reportCropList">
+          <option value="スイカ">
+          <option value="メロン">
+        </datalist>
+      </div>
+
+      <div class="modal-group">
         <label>作業内容</label>
-        <div class="work-type-grid">
-          <label class="work-type-option">
-            <input type="radio" name="workType" value="収穫" onchange="onWorkTypeChange()" required>🌾 収穫
-          </label>
-          <label class="work-type-option">
-            <input type="radio" name="workType" value="整理整頓" onchange="onWorkTypeChange()">🧹 整理整頓
-          </label>
-          <label class="work-type-option">
-            <input type="radio" name="workType" value="除草" onchange="onWorkTypeChange()">🌱 除草
-          </label>
-          <label class="work-type-option">
-            <input type="radio" name="workType" value="在庫確認" onchange="onWorkTypeChange()">📦 在庫確認
-          </label>
+        <input type="text" id="reportTaskName" class="modal-input" placeholder="例：除草" required>
+      </div>
+
+      <div class="modal-group">
+        <label>作業場所</label>
+        <div class="location-type-toggle">
+          <button type="button" class="loc-type-btn" data-type="house" onclick="setReportLocationType('house')">🏠 ハウス</button>
+          <button type="button" class="loc-type-btn" data-type="field" onclick="setReportLocationType('field')">🌾 露地</button>
+        </div>
+        <div id="reportHouseGrid" class="house-grid" style="display:none"></div>
+        <div id="reportFieldMapWrap" style="display:none">
+          <div class="field-grid-section">
+            <div class="field-grid-title">村上農園の北側</div>
+            <div id="reportFieldGridNorth" class="field-grid"></div>
+          </div>
+          <div class="field-grid-section">
+            <div class="field-grid-title">村上農園の南側</div>
+            <div id="reportFieldGridSouth" class="field-grid"></div>
+          </div>
         </div>
       </div>
-      <div class="modal-group" id="harvestGroup" style="display:none">
-        <label>収穫量</label>
-        <div class="harvest-fields" id="harvestFields">
-          <input type="number" id="harvestQty" min="0" max="99" step="1" placeholder="数量">
-          <select id="harvestUnit">
-            <option value="kg">kg</option>
-            <option value="本">本</option>
-            <option value="玉">玉</option>
-          </select>
+
+      <div class="modal-group">
+        <div class="report-row">
+          <div>
+            <label>開始時刻</label>
+            <select id="reportStartTime" class="modal-input" required></select>
+          </div>
+          <div>
+            <label>終了時刻</label>
+            <select id="reportEndTime" class="modal-input" required></select>
+          </div>
         </div>
       </div>
+
+      <div class="modal-group">
+        <label>作業人数</label>
+        <input type="number" id="reportWorkerCount" class="modal-input" min="1" max="99" step="1" value="1" required>
+      </div>
+
+      <div class="modal-group">
+        <label>メモ（任意）</label>
+        <textarea id="reportNote" class="modal-input" rows="2" placeholder="補足事項があれば"></textarea>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="btn-modal-cancel" onclick="closeReportModal()">キャンセル</button>
         <button type="submit" class="btn-modal-submit" id="reportSubmitBtn">報告する</button>
@@ -1044,10 +1086,102 @@
   }
 
   // ── 自発的な作業報告 ───────────────────────────────────
+  // ── 作業報告：時刻セレクト（6:00〜20:00 を15分刻み） ────
+  function populateReportTimeSelects() {
+    const options = ['<option value="">-- 選択 --</option>'];
+    for (let h = 6; h <= 20; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        options.push(`<option value="${hh}:${mm}">${hh}:${mm}</option>`);
+      }
+    }
+    const html = options.join('');
+    document.getElementById('reportStartTime').innerHTML = html;
+    document.getElementById('reportEndTime').innerHTML   = html;
+  }
+
+  // ── 作業報告：作業場所ピッカー ──────────────────────────
+  let reportLocationType = 'house';
+  let reportSelectedHouseNumbers = new Set();
+  let reportSelectedFieldPlotIds = new Set();
+
+  function setReportLocationType(type) {
+    reportLocationType = type;
+    document.querySelectorAll('#reportForm .loc-type-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.type === type);
+    });
+    document.getElementById('reportHouseGrid').style.display    = type === 'house' ? 'grid' : 'none';
+    document.getElementById('reportFieldMapWrap').style.display = type === 'field' ? 'block' : 'none';
+  }
+
+  function renderReportHouseGrid() {
+    const el = document.getElementById('reportHouseGrid');
+    let html = '';
+    for (let n = 1; n <= 83; n++) {
+      html += `<button type="button" class="house-btn ${reportSelectedHouseNumbers.has(n) ? 'selected' : ''}" onclick="toggleReportHouseNumber(${n})">${n}</button>`;
+    }
+    el.innerHTML = html;
+  }
+
+  function toggleReportHouseNumber(n) {
+    if (reportSelectedHouseNumbers.has(n)) reportSelectedHouseNumbers.delete(n);
+    else reportSelectedHouseNumbers.add(n);
+    renderReportHouseGrid();
+  }
+
+  function renderReportFieldGrid(section) {
+    const layout = FIELD_GRID_LAYOUT[section];
+    const el = document.getElementById(section === 'north' ? 'reportFieldGridNorth' : 'reportFieldGridSouth');
+    el.style.gridTemplateColumns = `repeat(${layout.cols}, 1fr)`;
+
+    const plotAt = (r, c) => fieldPlotsCache.find(p => p.section === section && p.row_index === r && p.col_index === c);
+    const specialAt = (r, c) => layout.special.find(s => s.row === r && s.col === c);
+
+    let html = '';
+    for (let r = 0; r < layout.rows; r++) {
+      for (let c = 0; c < layout.cols; c++) {
+        const special = specialAt(r, c);
+        if (special?.type === 'landmark') { html += `<div class="field-cell landmark">★</div>`; continue; }
+        if (special?.type === 'house-marker') { html += `<div class="field-cell house-marker">H</div>`; continue; }
+        const plot = plotAt(r, c);
+        if (plot) {
+          const sel = reportSelectedFieldPlotIds.has(plot.id) ? 'selected' : '';
+          html += `<div class="field-cell plot selectable ${sel}" onclick="onReportFieldPlotClick('${plot.id}')">${plot.label}</div>`;
+          continue;
+        }
+        html += `<div class="field-cell empty"></div>`;
+      }
+    }
+    el.innerHTML = html;
+  }
+
+  function onReportFieldPlotClick(id) {
+    if (reportSelectedFieldPlotIds.has(id)) reportSelectedFieldPlotIds.delete(id);
+    else reportSelectedFieldPlotIds.add(id);
+    renderReportFieldGrid('north');
+    renderReportFieldGrid('south');
+  }
+
+  function resetReportLocationPicker() {
+    reportSelectedHouseNumbers = new Set();
+    reportSelectedFieldPlotIds = new Set();
+    renderReportHouseGrid();
+    renderReportFieldGrid('north');
+    renderReportFieldGrid('south');
+    setReportLocationType('house');
+  }
+
+  function getReportSelectedLocations() {
+    if (reportLocationType === 'house') {
+      return [...reportSelectedHouseNumbers].map(n => ({ location_type: 'house', location_code: String(n) }));
+    }
+    return [...reportSelectedFieldPlotIds].map(id => ({ location_type: 'field', location_code: id }));
+  }
+
   function openReportModal() {
     document.getElementById('reportForm').reset();
-    document.getElementById('harvestGroup').style.display = 'none';
-    document.getElementById('harvestFields').classList.remove('open');
+    resetReportLocationPicker();
     document.getElementById('reportModalOverlay').classList.add('open');
   }
 
@@ -1055,40 +1189,42 @@
     document.getElementById('reportModalOverlay').classList.remove('open');
   }
 
-  function onWorkTypeChange() {
-    const isHarvest = document.querySelector('input[name="workType"]:checked')?.value === '収穫';
-    document.getElementById('harvestGroup').style.display = isHarvest ? 'block' : 'none';
-    document.getElementById('harvestFields').classList.toggle('open', isHarvest);
-  }
-
   async function handleReportSubmit(e) {
     e.preventDefault();
 
-    const workType = document.querySelector('input[name="workType"]:checked')?.value;
-    if (!workType) return;
-
-    let quantity = null;
-    let unit = null;
-    if (workType === '収穫') {
-      const qtyVal = document.getElementById('harvestQty').value;
-      if (qtyVal === '') { alert('収穫量を入力してください'); return; }
-      quantity = Math.min(99, Math.max(0, parseInt(qtyVal, 10)));
-      unit = document.getElementById('harvestUnit').value;
-    }
+    const crop      = document.getElementById('reportCrop').value.trim();
+    const taskName  = document.getElementById('reportTaskName').value.trim();
+    const startTime = document.getElementById('reportStartTime').value;
+    const endTime   = document.getElementById('reportEndTime').value;
+    if (!startTime || !endTime) { alert('時刻を選択してください'); return; }
+    const workerCount = parseInt(document.getElementById('reportWorkerCount').value, 10);
+    const note      = document.getElementById('reportNote').value.trim();
+    const locations = getReportSelectedLocations();
 
     const btn = document.getElementById('reportSubmitBtn');
     btn.disabled = true;
     btn.textContent = '送信中...';
 
-    const { error } = await supabaseClient
+    const { data: report, error } = await supabaseClient
       .from('work_reports')
       .insert({
         date: getToday(),
         staff_id: currentProfile.id,
-        work_type: workType,
-        quantity,
-        unit,
-      });
+        crop,
+        task_name: taskName,
+        scheduled_start: startTime + ':00',
+        scheduled_end: endTime + ':00',
+        worker_count: workerCount,
+        note,
+      })
+      .select('id')
+      .single();
+
+    if (!error && locations.length) {
+      await supabaseClient
+        .from('report_locations')
+        .insert(locations.map(l => ({ report_id: report.id, ...l })));
+    }
 
     btn.disabled = false;
     btn.textContent = '報告する';
@@ -1117,6 +1253,7 @@
     // 1分ごとに再描画（作業中/次の作業の切り替えのため）
     setInterval(loadTasks, 60000);
 
+    populateReportTimeSelects();
     await loadFieldPlotsCache();
     await loadTasks();
 
