@@ -3,3 +3,7 @@ project_id = "wquwvkjnngqkiepthstq"
 [functions.check-delayed-tasks]
 # pg_cronからの定期呼び出しのみで使うため、JWT検証を無効化する
 verify_jwt = false
+
+[functions.line-webhook]
+# LINEプラットフォームからの呼び出しのみで使うため、JWT検証を無効化する（署名検証は関数内で行う）
+verify_jwt = false
