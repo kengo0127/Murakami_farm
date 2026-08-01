@@ -1,14 +1,15 @@
-// 以下3種類の押し忘れを検出し、管理者宛てにResend経由でメール通知する。
+// 以下3種類の押し忘れを検出し、管理者宛てにGmail SMTP経由でメール通知する。
 // pg_cronから5分おきに呼び出される想定。
 //   A. 完了予定時刻(scheduled_end)から5分経過しても完了報告がない
 //   B. 休憩直前(9:55/11:55/14:55/16:55)の時点で、完了予定時刻を過ぎているのに
 //      まだ完了報告がない（休憩時間に管理者が対面で確認・注意できるようにするため）
 //   C. 開始予定時刻(scheduled_start)から10分経過しても開始報告がない
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
 
-const RESEND_API_KEY    = Deno.env.get('RESEND_API_KEY')!
-const ADMIN_ALERT_EMAIL = Deno.env.get('ADMIN_ALERT_EMAIL')!
-const RESEND_FROM       = Deno.env.get('RESEND_FROM') ?? 'onboarding@resend.dev'
+const GMAIL_USER         = Deno.env.get('GMAIL_USER')!
+const GMAIL_APP_PASSWORD = Deno.env.get('GMAIL_APP_PASSWORD')!
+const ADMIN_ALERT_EMAIL  = Deno.env.get('ADMIN_ALERT_EMAIL')!
 
 const COMPLETION_DELAY_MINUTES = 5
 const START_DELAY_MINUTES      = 10
@@ -21,25 +22,32 @@ const supabase = createClient(
 )
 
 async function sendMail(subject: string, text: string): Promise<boolean> {
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
+  const client = new SMTPClient({
+    connection: {
+      hostname: 'smtp.gmail.com',
+      port: 465,
+      tls: true,
+      auth: {
+        username: GMAIL_USER,
+        password: GMAIL_APP_PASSWORD,
+      },
     },
-    body: JSON.stringify({
-      from: RESEND_FROM,
-      to: ADMIN_ALERT_EMAIL,
-      subject,
-      text,
-    }),
   })
 
-  if (!res.ok) {
-    console.error('Resend送信失敗', await res.text())
+  try {
+    await client.send({
+      from: GMAIL_USER,
+      to: ADMIN_ALERT_EMAIL,
+      subject,
+      content: text,
+    })
+    return true
+  } catch (err) {
+    console.error('Gmail送信失敗', err)
     return false
+  } finally {
+    await client.close()
   }
-  return true
 }
 
 // 送信に成功した場合のみ notification_type ごとに記録する（1タスク×1種類につき1回）
