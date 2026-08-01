@@ -222,6 +222,150 @@
       padding: 8px 0;
     }
 
+    /* 作業場所 */
+    .location-type-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .loc-type-btn {
+      flex: 1;
+      background: #f5f5f5;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .loc-type-btn.active {
+      background: #e8f5e9;
+      border-color: #4caf50;
+      color: #1a3d17;
+    }
+
+    .house-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+      gap: 6px;
+    }
+
+    .house-btn {
+      background: #f5f5f5;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 6px 0;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .house-btn.selected {
+      background: #e8f5e9;
+      border-color: #4caf50;
+      color: #1a3d17;
+    }
+
+    .field-map-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 6px;
+    }
+
+    .field-edit-toggle {
+      background: #f5f5f5;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .field-edit-toggle.active {
+      background: #fff3e0;
+      border-color: #ff9800;
+      color: #8a4b00;
+    }
+
+    .field-map {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #eef3ea;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: default;
+    }
+
+    .field-map.edit-mode { cursor: crosshair; }
+
+    .field-map-road {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .field-map-road path {
+      fill: none;
+      stroke: #c9c2b3;
+      stroke-width: 3;
+    }
+
+    .field-map-label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #555;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .field-pin {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #90caf9;
+      border: 2px solid #1976d2;
+      color: #0d3a63;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+
+    .field-pin.selected {
+      background: #4caf50;
+      border-color: #2e5c28;
+      color: #fff;
+    }
+
+    .location-badge {
+      background: #fff3e0;
+      color: #8a4b00;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+
     /* Form actions */
     .form-actions {
       display: flex;
@@ -566,6 +710,31 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label>作業場所</label>
+          <div class="location-type-toggle">
+            <button type="button" class="loc-type-btn" data-type="house" onclick="setLocationType('house')">🏠 ハウス</button>
+            <button type="button" class="loc-type-btn" data-type="field" onclick="setLocationType('field')">🌾 露地</button>
+          </div>
+
+          <div id="houseGrid" class="house-grid" style="display:none"></div>
+
+          <div id="fieldMapWrap" style="display:none">
+            <div class="field-map-toolbar">
+              <button type="button" class="field-edit-toggle" id="fieldEditToggle" onclick="toggleFieldEditMode()">📍 区画を編集</button>
+            </div>
+            <div id="fieldMap" class="field-map" onclick="onFieldMapClick(event)">
+              <svg class="field-map-road" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M 0 8 L 55 2 L 100 50 L 100 100" />
+              </svg>
+              <div class="field-map-label" style="left:10%;top:10%">村上農園</div>
+            </div>
+            <p style="font-size:12px;color:#888;margin-top:6px;">
+              簡易的な地図です。「区画を編集」から実際の区画に合わせてピンを配置してください。
+            </p>
+          </div>
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label>開始時刻</label>
@@ -660,6 +829,13 @@
   let staffList = [];
   let editingTaskId = null;
   let currentTab = 'register';
+
+  // 作業場所
+  let locationType = 'house';       // 'house' | 'field'
+  let selectedHouseNumbers = new Set();
+  let selectedFieldPlotIds = new Set();
+  let fieldPlots = [];
+  let fieldEditMode = false;
 
   // 6:00〜20:00 を15分刻みでselectに設定
   function populateTimeSelects() {
@@ -928,6 +1104,126 @@
     `).join('');
   }
 
+  // ── 作業場所：種別切り替え ──────────────────────────────
+  function setLocationType(type) {
+    locationType = type;
+    document.querySelectorAll('.loc-type-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.type === type);
+    });
+    document.getElementById('houseGrid').style.display   = type === 'house' ? 'grid' : 'none';
+    document.getElementById('fieldMapWrap').style.display = type === 'field' ? 'block' : 'none';
+  }
+
+  // ── 作業場所：ハウス番号グリッド ────────────────────────
+  function renderHouseGrid() {
+    const el = document.getElementById('houseGrid');
+    let html = '';
+    for (let n = 1; n <= 83; n++) {
+      html += `<button type="button" class="house-btn ${selectedHouseNumbers.has(n) ? 'selected' : ''}" onclick="toggleHouseNumber(${n})">${n}</button>`;
+    }
+    el.innerHTML = html;
+  }
+
+  function toggleHouseNumber(n) {
+    if (selectedHouseNumbers.has(n)) selectedHouseNumbers.delete(n);
+    else selectedHouseNumbers.add(n);
+    renderHouseGrid();
+  }
+
+  // ── 作業場所：露地マップ ────────────────────────────────
+  async function loadFieldPlots() {
+    const { data, error } = await supabaseClient
+      .from('field_plots')
+      .select('id, label, x_percent, y_percent')
+      .order('label');
+    if (error) { console.error(error); return; }
+    fieldPlots = data ?? [];
+    renderFieldPins();
+  }
+
+  function renderFieldPins() {
+    const map = document.getElementById('fieldMap');
+    map.querySelectorAll('.field-pin').forEach(pin => pin.remove());
+    fieldPlots.forEach(plot => {
+      const pin = document.createElement('div');
+      pin.className = `field-pin ${selectedFieldPlotIds.has(plot.id) ? 'selected' : ''}`;
+      pin.style.left = plot.x_percent + '%';
+      pin.style.top  = plot.y_percent + '%';
+      pin.textContent = plot.label;
+      pin.onclick = (e) => { e.stopPropagation(); onFieldPinClick(plot); };
+      map.appendChild(pin);
+    });
+  }
+
+  function onFieldPinClick(plot) {
+    if (fieldEditMode) {
+      const action = prompt(`区画「${plot.label}」を編集します。\n新しい番号を入力（削除する場合は「削除」と入力）`, plot.label);
+      if (action === null) return;
+      if (action === '削除') {
+        deleteFieldPlot(plot.id);
+      } else if (action.trim()) {
+        renameFieldPlot(plot.id, action.trim());
+      }
+      return;
+    }
+    if (selectedFieldPlotIds.has(plot.id)) selectedFieldPlotIds.delete(plot.id);
+    else selectedFieldPlotIds.add(plot.id);
+    renderFieldPins();
+  }
+
+  async function onFieldMapClick(e) {
+    if (!fieldEditMode) return;
+    if (e.target.closest('.field-pin')) return; // ピンのクリックは別ハンドラで処理済み
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+    const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+
+    const label = prompt('新しい区画の番号を入力してください');
+    if (!label || !label.trim()) return;
+
+    const { error } = await supabaseClient
+      .from('field_plots')
+      .insert({ id: label.trim(), label: label.trim(), x_percent: xPercent, y_percent: yPercent });
+
+    if (error) { alert('区画の追加に失敗しました（同じ番号が既に存在する可能性があります）'); console.error(error); return; }
+    await loadFieldPlots();
+  }
+
+  async function renameFieldPlot(id, newLabel) {
+    const { error } = await supabaseClient.from('field_plots').update({ label: newLabel }).eq('id', id);
+    if (error) { alert('更新に失敗しました'); console.error(error); return; }
+    await loadFieldPlots();
+  }
+
+  async function deleteFieldPlot(id) {
+    await supabaseClient.from('field_plots').delete().eq('id', id);
+    selectedFieldPlotIds.delete(id);
+    await loadFieldPlots();
+  }
+
+  function toggleFieldEditMode() {
+    fieldEditMode = !fieldEditMode;
+    document.getElementById('fieldEditToggle').classList.toggle('active', fieldEditMode);
+    document.getElementById('fieldEditToggle').textContent = fieldEditMode ? '📍 編集を終了' : '📍 区画を編集';
+    document.getElementById('fieldMap').classList.toggle('edit-mode', fieldEditMode);
+  }
+
+  function resetLocationPicker() {
+    selectedHouseNumbers = new Set();
+    selectedFieldPlotIds = new Set();
+    renderHouseGrid();
+    renderFieldPins();
+    setLocationType('house');
+  }
+
+  function getSelectedLocations() {
+    if (locationType === 'house') {
+      return [...selectedHouseNumbers].map(n => ({ location_type: 'house', location_code: String(n) }));
+    }
+    return [...selectedFieldPlotIds].map(id => ({ location_type: 'field', location_code: id }));
+  }
+
   // ── タスク一覧描画 ──────────────────────────────────────
   function renderTaskList(tasks) {
     const el = document.getElementById('taskList');
@@ -944,12 +1240,17 @@
       const staffNames = task.task_assignments
         ?.map(a => a.profiles?.name ?? '—')
         .join('、') || '担当なし';
+      const locations = task.task_locations ?? [];
+      const locationLabel = locations.length
+        ? (locations[0].location_type === 'house' ? 'ハウス' : '露地') + ' ' + locations.map(l => l.location_code).join('・')
+        : null;
       return `
         <div class="task-item">
           <div class="task-item-left">
             <div class="task-item-header">
               <span class="crop-badge">${task.crop}</span>
               <span class="task-item-name">${task.task_name}</span>
+              ${locationLabel ? `<span class="location-badge">${locationLabel}</span>` : ''}
             </div>
             <div class="task-item-meta">
               ${fmt(task.scheduled_start)} 〜 ${fmt(task.scheduled_end)}　担当：${staffNames}
@@ -972,7 +1273,8 @@
       .select(`
         id, crop, task_name, scheduled_start, scheduled_end, note,
         task_assignments(staff_id, profiles(id, name)),
-        task_completions(id, completed_at)
+        task_completions(id, completed_at),
+        task_locations(location_type, location_code)
       `)
       .eq('date', date)
       .order('scheduled_start');
@@ -993,6 +1295,7 @@
     const note      = document.getElementById('note').value.trim();
     const date      = document.getElementById('selectedDate').value;
     const staffIds  = [...document.querySelectorAll('.staff-cb:checked')].map(c => c.value);
+    const locations = getSelectedLocations();
 
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
@@ -1000,16 +1303,16 @@
 
     try {
       if (editingTaskId) {
-        await updateTask(editingTaskId, { crop, task_name: taskName, scheduled_start: startTime, scheduled_end: endTime, note }, staffIds);
+        await updateTask(editingTaskId, { crop, task_name: taskName, scheduled_start: startTime, scheduled_end: endTime, note }, staffIds, locations);
       } else {
-        await createTask({ date, crop, task_name: taskName, scheduled_start: startTime, scheduled_end: endTime, note }, staffIds);
+        await createTask({ date, crop, task_name: taskName, scheduled_start: startTime, scheduled_end: endTime, note }, staffIds, locations);
       }
     } finally {
       btn.disabled = false;
     }
   }
 
-  async function createTask(taskData, staffIds) {
+  async function createTask(taskData, staffIds, locations) {
     const { data: task, error } = await supabaseClient
       .from('tasks')
       .insert({ ...taskData, created_by: currentProfile.id })
@@ -1024,11 +1327,17 @@
         .insert(staffIds.map(sid => ({ task_id: task.id, staff_id: sid })));
     }
 
+    if (locations.length) {
+      await supabaseClient
+        .from('task_locations')
+        .insert(locations.map(l => ({ task_id: task.id, ...l })));
+    }
+
     resetForm();
     await loadTasks();
   }
 
-  async function updateTask(taskId, updates, staffIds) {
+  async function updateTask(taskId, updates, staffIds, locations) {
     const { error } = await supabaseClient
       .from('tasks')
       .update(updates)
@@ -1042,6 +1351,14 @@
       await supabaseClient
         .from('task_assignments')
         .insert(staffIds.map(sid => ({ task_id: taskId, staff_id: sid })));
+    }
+
+    // 作業場所を一旦全削除して再登録
+    await supabaseClient.from('task_locations').delete().eq('task_id', taskId);
+    if (locations.length) {
+      await supabaseClient
+        .from('task_locations')
+        .insert(locations.map(l => ({ task_id: taskId, ...l })));
     }
 
     resetForm();
@@ -1062,6 +1379,17 @@
     const assignedIds = task.task_assignments?.map(a => a.staff_id) ?? [];
     renderStaffCheckboxes(assignedIds);
 
+    const locations = task.task_locations ?? [];
+    selectedHouseNumbers = new Set(
+      locations.filter(l => l.location_type === 'house').map(l => Number(l.location_code))
+    );
+    selectedFieldPlotIds = new Set(
+      locations.filter(l => l.location_type === 'field').map(l => l.location_code)
+    );
+    setLocationType(locations[0]?.location_type ?? 'house');
+    renderHouseGrid();
+    renderFieldPins();
+
     document.getElementById('formTitle').textContent = '✏️ タスクを編集';
     document.getElementById('submitBtn').textContent = '更新する';
     document.getElementById('cancelBtn').style.display = 'block';
@@ -1081,6 +1409,7 @@
     editingTaskId = null;
     document.getElementById('taskForm').reset();
     renderStaffCheckboxes();
+    resetLocationPicker();
     document.getElementById('formTitle').textContent = '＋ タスクを登録';
     document.getElementById('submitBtn').textContent = '登録する';
     document.getElementById('cancelBtn').style.display = 'none';
@@ -1268,6 +1597,10 @@
       .order('name');
     staffList = data ?? [];
     renderStaffCheckboxes();
+
+    renderHouseGrid();
+    await loadFieldPlots();
+    setLocationType('house');
 
     await loadTasks();
 
