@@ -1,15 +1,14 @@
-// 以下3種類の押し忘れを検出し、管理者宛てにGmail SMTP経由でメール通知する。
+// 以下3種類の押し忘れを検出し、管理者宛てにLINEで通知する。
 // pg_cronから5分おきに呼び出される想定。
 //   A. 完了予定時刻(scheduled_end)から5分経過しても完了報告がない
 //   B. 休憩直前(9:55/11:55/14:55/16:55)の時点で、完了予定時刻を過ぎているのに
 //      まだ完了報告がない（休憩時間に管理者が対面で確認・注意できるようにするため）
 //   C. 開始予定時刻(scheduled_start)から10分経過しても開始報告がない
+// 通知先は line_recipients テーブルに保存されたLINEユーザーID(line-webhookが
+// 友だち追加イベントを受けて保存する)を使う。
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
 
-const GMAIL_USER         = Deno.env.get('GMAIL_USER')!
-const GMAIL_APP_PASSWORD = Deno.env.get('GMAIL_APP_PASSWORD')!
-const ADMIN_ALERT_EMAIL  = Deno.env.get('ADMIN_ALERT_EMAIL')!
+const LINE_CHANNEL_ACCESS_TOKEN = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN')!
 
 const COMPLETION_DELAY_MINUTES = 5
 const START_DELAY_MINUTES      = 10
@@ -21,38 +20,40 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
 )
 
-async function sendMail(subject: string, text: string): Promise<boolean> {
-  const client = new SMTPClient({
-    connection: {
-      hostname: 'smtp.gmail.com',
-      port: 465,
-      tls: true,
-      auth: {
-        username: GMAIL_USER,
-        password: GMAIL_APP_PASSWORD,
-      },
+async function sendLineMessage(subject: string, text: string): Promise<boolean> {
+  const { data: recipient } = await supabase
+    .from('line_recipients')
+    .select('line_user_id')
+    .eq('label', 'admin_alert')
+    .maybeSingle()
+
+  if (!recipient) {
+    console.error('LINE通知先が未登録です（友だち追加が完了していない可能性があります）')
+    return false
+  }
+
+  const res = await fetch('https://api.line.me/v2/bot/message/push', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
     },
+    body: JSON.stringify({
+      to: recipient.line_user_id,
+      messages: [{ type: 'text', text: `${subject}\n${text}` }],
+    }),
   })
 
-  try {
-    await client.send({
-      from: GMAIL_USER,
-      to: ADMIN_ALERT_EMAIL,
-      subject,
-      content: text,
-    })
-    return true
-  } catch (err) {
-    console.error('Gmail送信失敗', err)
+  if (!res.ok) {
+    console.error('LINE送信失敗', await res.text())
     return false
-  } finally {
-    await client.close()
   }
+  return true
 }
 
 // 送信に成功した場合のみ notification_type ごとに記録する（1タスク×1種類につき1回）
 async function notifyOnce(taskId: string, notificationType: string, subject: string, text: string) {
-  const ok = await sendMail(subject, text)
+  const ok = await sendLineMessage(subject, text)
   if (!ok) return // 失敗時は記録を残さず、次回また再試行させる
   await supabase.from('task_delay_notifications').insert({ task_id: taskId, notification_type: notificationType })
 }
