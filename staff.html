@@ -575,6 +575,10 @@
       margin-bottom: 14px;
     }
 
+    .onion-block.block-china  { background: #fdeaf0; border-color: #f3c8d8; }
+    .onion-block.block-japan  { background: #e9f2fb; border-color: #c6dcf2; }
+    .onion-block.block-rainbow { background: #eaf7ee; border-color: #c6e7cf; }
+
     .onion-block-title {
       font-size: 15px;
       font-weight: 800;
@@ -676,6 +680,18 @@
       color: #c9752e;
       font-weight: 700;
       font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-onion-delete {
+      flex: 1;
+      padding: 13px;
+      background: #fff0ef;
+      color: #c0392b;
+      border: 1.5px solid #f3c3bd;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
       cursor: pointer;
     }
 
@@ -909,7 +925,10 @@
     <div id="onionExportList"></div>
     <div class="modal-actions">
       <button type="button" class="btn-modal-cancel" id="onionExportCloseBtn" onclick="closeOnionExportModal()">閉じる</button>
-      <button type="button" class="btn-modal-submit" id="onionExportBtn" onclick="exportOnionReportsExcel()">選択した日をExcel出力</button>
+      <button type="button" class="btn-onion-delete" id="onionDeleteBtn" onclick="deleteSelectedOnionReports()">削除する</button>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-submit" id="onionExportBtn" style="flex:1;" onclick="exportOnionReportsExcel()">選択した日をExcel出力</button>
     </div>
   </div>
 </div>
@@ -1191,11 +1210,11 @@
 
   // ── 玉ねぎ作業日報 ──────────────────────────────────────
   const ONION_BLOCK_TEMPLATES = [
-    { destination: 'ベスト中国', sizeEditable: true,  sizeLabels: ['', '', ''],
+    { destination: 'ベスト中国', colorClass: 'block-china',   sizeEditable: true,  sizeLabels: ['', '', ''],
       producedLabels: ['619', '615', '', ''], producedEditable: [false, false, true, true] },
-    { destination: 'ベスト日本', sizeEditable: false, sizeLabels: ['M', 'L', '-'],
+    { destination: 'ベスト日本', colorClass: 'block-japan',   sizeEditable: false, sizeLabels: ['M', 'L', '-'],
       producedLabels: ['619', '615', '', ''], producedEditable: [false, false, true, true] },
-    { destination: 'レインボー', sizeEditable: false, sizeLabels: ['M', 'L', '-'],
+    { destination: 'レインボー', colorClass: 'block-rainbow', sizeEditable: false, sizeLabels: ['M', 'L', '-'],
       producedLabels: ['村上', '', ''], producedEditable: [false, true, true] },
   ];
 
@@ -1233,6 +1252,9 @@
       selectExportDate: '出力する日付を選択してください', exporting: '出力中...',
       exportBtnLabel: '選択した日をExcel出力', fetchFailed: 'データの取得に失敗しました',
       openLink: '開く', editTitle: date => `玉ねぎ作業日報（${formatDateJa(date)}）`,
+      deleteBtnLabel: '削除する', deleting: '削除中...', deleteFailed: '削除に失敗しました',
+      selectDeleteDate: '削除する日付を選択してください',
+      deleteConfirm: n => `${n}件の日報を削除しますか？\nこの操作は取り消せません。`,
     },
     id: {
       menuTitle: 'Laporan Kerja Bawang', createBtn: '📝 Buat Laporan', exportBtn: '📤 Ekspor Laporan',
@@ -1250,6 +1272,9 @@
       selectExportDate: 'Silakan pilih tanggal untuk diekspor', exporting: 'Mengekspor...',
       exportBtnLabel: 'Ekspor Excel untuk tanggal terpilih', fetchFailed: 'Gagal mengambil data',
       openLink: 'Buka', editTitle: date => `Laporan Kerja Bawang（${formatDateJa(date)}）`,
+      deleteBtnLabel: 'Hapus', deleting: 'Menghapus...', deleteFailed: 'Gagal menghapus',
+      selectDeleteDate: 'Silakan pilih tanggal untuk dihapus',
+      deleteConfirm: n => `Hapus ${n} laporan? Tindakan ini tidak dapat dibatalkan.`,
     },
     km: {
       menuTitle: 'របាយការណ៍ការងារខ្ទឹមប្រចាំថ្ងៃ', createBtn: '📝 បង្កើតរបាយការណ៍', exportBtn: '📤 នាំចេញរបាយការណ៍',
@@ -1267,6 +1292,9 @@
       selectExportDate: 'សូមជ្រើសរើសកាលបរិច្ឆេទសម្រាប់នាំចេញ', exporting: 'កំពុងនាំចេញ...',
       exportBtnLabel: 'នាំចេញ Excel សម្រាប់ថ្ងៃដែលបានជ្រើសរើស', fetchFailed: 'ទាញយកទិន្នន័យមិនជោគជ័យ',
       openLink: 'បើក', editTitle: date => `របាយការណ៍ខ្ទឹម（${formatDateJa(date)}）`,
+      deleteBtnLabel: 'លុប', deleting: 'កំពុងលុប...', deleteFailed: 'លុបមិនជោគជ័យ',
+      selectDeleteDate: 'សូមជ្រើសរើសកាលបរិច្ឆេទសម្រាប់លុប',
+      deleteConfirm: n => `លុបរបាយការណ៍ ${n} ចំនួន? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។`,
     },
   };
 
@@ -1344,7 +1372,7 @@
     const signIsKnown = ONION_KNOWN_SIGNS.includes(block.sign);
 
     return `
-      <div class="onion-block" id="onion-block-${bi}">
+      <div class="onion-block ${t.colorClass}" id="onion-block-${bi}">
         <div class="onion-block-title">${['①', '②', '③'][bi]} ${t.destination}</div>
 
         <div class="onion-field">
@@ -1577,8 +1605,8 @@
         <div class="onion-efficiency-nice">${r.achieved ? 'Nice work !!' : 'Almost there ...!'}</div>
         <div class="onion-efficiency-block">${r.destination}</div>
         <div class="onion-efficiency-compare">
-          <div class="onion-efficiency-row"><span>実績</span><span class="onion-efficiency-value">${r.efficiency.toFixed(1)}</span></div>
-          <div class="onion-efficiency-row"><span>目標</span><span class="onion-efficiency-value onion-efficiency-target-value">${r.target}</span></div>
+          <div class="onion-efficiency-row"><span>your score</span><span class="onion-efficiency-value">${r.efficiency.toFixed(1)}</span></div>
+          <div class="onion-efficiency-row"><span>target</span><span class="onion-efficiency-value onion-efficiency-target-value">${r.target}</span></div>
         </div>
         <div class="onion-efficiency-unit">kg/人時</div>
       </div>`).join('');
@@ -1602,6 +1630,7 @@
     document.getElementById('onionExportTitle').textContent = ot('exportTitle');
     document.getElementById('onionExportCloseBtn').textContent = ot('close');
     document.getElementById('onionExportBtn').textContent = ot('exportBtnLabel');
+    document.getElementById('onionDeleteBtn').textContent = ot('deleteBtnLabel');
 
     const el = document.getElementById('onionExportList');
     if (error || !data?.length) {
@@ -1724,6 +1753,28 @@
       XLSX.utils.book_append_sheet(wb, ws, r.date);
     });
     XLSX.writeFile(wb, `玉ねぎ作業日報_${dates[0]}_${dates[dates.length - 1]}.xlsx`);
+  }
+
+  async function deleteSelectedOnionReports() {
+    const dates = [...document.querySelectorAll('.onion-export-cb:checked')].map(cb => cb.value);
+    if (!dates.length) { alert(ot('selectDeleteDate')); return; }
+    if (!confirm(ot('deleteConfirm')(dates.length))) return;
+
+    const btn = document.getElementById('onionDeleteBtn');
+    btn.disabled = true;
+    btn.textContent = ot('deleting');
+
+    const { error } = await supabaseClient
+      .from('onion_reports')
+      .delete()
+      .in('date', dates);
+
+    btn.disabled = false;
+    btn.textContent = ot('deleteBtnLabel');
+
+    if (error) { alert(ot('deleteFailed')); console.error(error); return; }
+
+    await openOnionExportModal();
   }
 
   // ── タイムライン描画 ───────────────────────────────────
