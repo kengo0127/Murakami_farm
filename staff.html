@@ -442,6 +442,33 @@
     .fab-onion:active { background: #a35c1f; }
 
     /* ── 玉ねぎ日報 ── */
+    .onion-lang-switch {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .onion-lang-btn {
+      flex: 1;
+      background: #f5f5f5;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 8px 4px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .onion-lang-btn.active {
+      background: #fff3e8;
+      border-color: #c9752e;
+      color: #7a3f13;
+    }
+
+    .onion-sign-other {
+      margin-top: 6px;
+    }
+
     .onion-menu-btn {
       display: block;
       width: 100%;
@@ -739,19 +766,24 @@
 
 <div class="modal-overlay" id="onionMenuModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title">玉ねぎ作業日報</div>
-    <button type="button" class="onion-menu-btn" onclick="showOnionDatePicker()">📝 日報をつくる</button>
-    <button type="button" class="onion-menu-btn" onclick="openOnionExportModal()">📤 日報を出力する</button>
+    <div class="onion-lang-switch">
+      <button type="button" class="onion-lang-btn" data-lang="none" onclick="setOnionLang('none')">日本語のみ</button>
+      <button type="button" class="onion-lang-btn" data-lang="id" onclick="setOnionLang('id')">+ Indonesia</button>
+      <button type="button" class="onion-lang-btn" data-lang="km" onclick="setOnionLang('km')">+ ខ្មែរ</button>
+    </div>
+    <div class="modal-title" id="onionMenuTitle">玉ねぎ作業日報</div>
+    <button type="button" class="onion-menu-btn" id="onionCreateBtnLabel" onclick="showOnionDatePicker()">📝 日報をつくる</button>
+    <button type="button" class="onion-menu-btn" id="onionExportBtnLabel" onclick="openOnionExportModal()">📤 日報を出力する</button>
 
     <div id="onionDatePickerArea" style="display:none">
       <div class="onion-date-row">
         <input type="date" id="onionCreateDate" class="modal-input">
-        <button type="button" class="btn-modal-submit" style="flex:0 0 auto;padding:12px 18px;" onclick="openOnionEditModal(document.getElementById('onionCreateDate').value)">開く</button>
+        <button type="button" class="btn-modal-submit" id="onionDateOpenBtn" style="flex:0 0 auto;padding:12px 18px;" onclick="openOnionEditModal(document.getElementById('onionCreateDate').value)">開く</button>
       </div>
     </div>
 
     <div class="modal-actions">
-      <button type="button" class="btn-modal-cancel" onclick="closeOnionMenuModal()">閉じる</button>
+      <button type="button" class="btn-modal-cancel" id="onionMenuCloseBtn" onclick="closeOnionMenuModal()">閉じる</button>
     </div>
   </div>
 </div>
@@ -761,7 +793,7 @@
     <div class="modal-title" id="onionEditTitle">玉ねぎ作業日報</div>
     <div id="onionEditBlocks"></div>
     <div class="modal-actions">
-      <button type="button" class="btn-modal-cancel" onclick="closeOnionEditModal()">閉じる</button>
+      <button type="button" class="btn-modal-cancel" id="onionEditCloseBtn" onclick="closeOnionEditModal()">閉じる</button>
       <button type="button" class="btn-modal-submit" id="onionSaveBtn" onclick="saveOnionReport()">保存する</button>
     </div>
   </div>
@@ -769,10 +801,10 @@
 
 <div class="modal-overlay" id="onionExportModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title">日報を出力する</div>
+    <div class="modal-title" id="onionExportTitle">日報を出力する</div>
     <div id="onionExportList"></div>
     <div class="modal-actions">
-      <button type="button" class="btn-modal-cancel" onclick="closeOnionExportModal()">閉じる</button>
+      <button type="button" class="btn-modal-cancel" id="onionExportCloseBtn" onclick="closeOnionExportModal()">閉じる</button>
       <button type="button" class="btn-modal-submit" id="onionExportBtn" onclick="exportOnionReportsExcel()">選択した日をExcel出力</button>
     </div>
   </div>
@@ -1063,10 +1095,116 @@
       producedLabels: ['村上', '', ''], producedEditable: [false, true, true] },
   ];
 
+  const ONION_KNOWN_SIGNS = ['ヴィチェカー', 'ソピアン', 'アンドレ', 'ダン', 'トゥティ'];
+
+  // 時刻セレクト用の選択肢（6:00〜20:00、10分刻み）
+  function onionTimeOptionsHtml(selected) {
+    let html = `<option value="">--</option>`;
+    for (let h = 6; h <= 20; h++) {
+      for (let m = 0; m < 60; m += 10) {
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        const v = `${hh}:${mm}`;
+        html += `<option value="${v}" ${v === selected ? 'selected' : ''}>${v}</option>`;
+      }
+    }
+    return html;
+  }
+
+  // ── 多言語対応（日本語 / インドネシア語 / クメール語） ──
+  const ONION_I18N = {
+    ja: {
+      menuTitle: '玉ねぎ作業日報', createBtn: '📝 日報をつくる', exportBtn: '📤 日報を出力する',
+      close: '閉じる', save: '保存する', saving: '保存中...', saved: '保存しました',
+      saveFailed: '保存に失敗しました', loadFailed: '読み込みに失敗しました',
+      selectDate: '日付を選択してください', dateOpen: '開く', selectPlaceholder: '-- 選択 --',
+      sign: 'サイン', signOtherPlaceholder: '上記にない場合はこちらに直接記入',
+      sizeSection: '使ったサイズ・しゅるい・おもさ', sizePlaceholder: 'サイズ',
+      weightOtherPlaceholder: 'その他kg', usedCount: 'つかったかず',
+      timeSection: '時間と人数', start: '開始', end: '終了', people: '人数',
+      addRow: '＋ 行を追加', condition: 'きょうのようす',
+      produced: 'できたもの（つうじょう／やりなおし／ざいこ）', otherLabelPlaceholder: 'そのほか',
+      usual: 'つうじょう', redo: 'やりなおし', stock: 'ざいこ',
+      exportTitle: '日報を出力する', exportListEmpty: 'まだ日報がありません',
+      selectExportDate: '出力する日付を選択してください', exporting: '出力中...',
+      exportBtnLabel: '選択した日をExcel出力', fetchFailed: 'データの取得に失敗しました',
+      openLink: '開く', editTitle: date => `玉ねぎ作業日報（${formatDateJa(date)}）`,
+    },
+    id: {
+      menuTitle: 'Laporan Kerja Bawang', createBtn: '📝 Buat Laporan', exportBtn: '📤 Ekspor Laporan',
+      close: 'Tutup', save: 'Simpan', saving: 'Menyimpan...', saved: 'Berhasil disimpan',
+      saveFailed: 'Gagal menyimpan', loadFailed: 'Gagal memuat data',
+      selectDate: 'Silakan pilih tanggal', dateOpen: 'Buka', selectPlaceholder: '-- Pilih --',
+      sign: 'Tanda tangan', signOtherPlaceholder: 'Jika tidak ada di atas, tulis di sini',
+      sizeSection: 'Ukuran, Jenis, Berat yang digunakan', sizePlaceholder: 'Ukuran',
+      weightOtherPlaceholder: 'Berat lain (kg)', usedCount: 'Jumlah yang digunakan',
+      timeSection: 'Waktu dan Jumlah orang', start: 'Mulai', end: 'Selesai', people: 'Orang',
+      addRow: '＋ Tambah baris', condition: 'Kondisi hari ini',
+      produced: 'Hasil (Biasa／Ulang／Stok)', otherLabelPlaceholder: 'Lainnya',
+      usual: 'Biasa', redo: 'Diulang', stock: 'Stok',
+      exportTitle: 'Ekspor Laporan', exportListEmpty: 'Belum ada laporan',
+      selectExportDate: 'Silakan pilih tanggal untuk diekspor', exporting: 'Mengekspor...',
+      exportBtnLabel: 'Ekspor Excel untuk tanggal terpilih', fetchFailed: 'Gagal mengambil data',
+      openLink: 'Buka', editTitle: date => `Laporan Kerja Bawang（${formatDateJa(date)}）`,
+    },
+    km: {
+      menuTitle: 'របាយការណ៍ការងារខ្ទឹមប្រចាំថ្ងៃ', createBtn: '📝 បង្កើតរបាយការណ៍', exportBtn: '📤 នាំចេញរបាយការណ៍',
+      close: 'បិទ', save: 'រក្សាទុក', saving: 'កំពុងរក្សាទុក...', saved: 'បានរក្សាទុករួចរាល់',
+      saveFailed: 'រក្សាទុកមិនជោគជ័យ', loadFailed: 'ផ្ទុកទិន្នន័យមិនជោគជ័យ',
+      selectDate: 'សូមជ្រើសរើសកាលបរិច្ឆេទ', dateOpen: 'បើក', selectPlaceholder: '-- ជ្រើសរើស --',
+      sign: 'ហត្ថលេខា', signOtherPlaceholder: 'ប្រសិនបើមិនមានខាងលើ សូមសរសេរនៅទីនេះ',
+      sizeSection: 'ទំហំ, ប្រភេទ, ទម្ងន់ដែលបានប្រើ', sizePlaceholder: 'ទំហំ',
+      weightOtherPlaceholder: 'ទម្ងន់ផ្សេង (គីឡូក្រាម)', usedCount: 'ចំនួនដែលបានប្រើ',
+      timeSection: 'ពេលវេលា និង ចំនួនមនុស្ស', start: 'ចាប់ផ្តើម', end: 'បញ្ចប់', people: 'ចំនួនមនុស្ស',
+      addRow: '＋ បន្ថែមជួរ', condition: 'ស្ថានភាពថ្ងៃនេះ',
+      produced: 'លទ្ធផល (ធម្មតា／ធ្វើឡើងវិញ／ស្តុក)', otherLabelPlaceholder: 'ផ្សេងទៀត',
+      usual: 'ធម្មតា', redo: 'ធ្វើឡើងវិញ', stock: 'ស្តុក',
+      exportTitle: 'នាំចេញរបាយការណ៍', exportListEmpty: 'មិនទាន់មានរបាយការណ៍ទេ',
+      selectExportDate: 'សូមជ្រើសរើសកាលបរិច្ឆេទសម្រាប់នាំចេញ', exporting: 'កំពុងនាំចេញ...',
+      exportBtnLabel: 'នាំចេញ Excel សម្រាប់ថ្ងៃដែលបានជ្រើសរើស', fetchFailed: 'ទាញយកទិន្នន័យមិនជោគជ័យ',
+      openLink: 'បើក', editTitle: date => `របាយការណ៍ខ្ទឹម（${formatDateJa(date)}）`,
+    },
+  };
+
+  // onionLang: 'none'（日本語のみ）| 'id'（+インドネシア語）| 'km'（+クメール語）
+  // 日本語は常に表示し、選択した言語があればそれを併記する。
+  let onionLang = localStorage.getItem('onionLang') || 'none';
+
+  function ot(key) {
+    const jaVal = ONION_I18N.ja[key];
+    if (onionLang === 'none' || !ONION_I18N[onionLang]) return jaVal;
+
+    const secVal = ONION_I18N[onionLang][key] ?? jaVal;
+    if (typeof jaVal === 'function') {
+      return (arg) => `${jaVal(arg)} / ${secVal(arg)}`;
+    }
+    return secVal === jaVal ? jaVal : `${jaVal} / ${secVal}`;
+  }
+
+  function setOnionLang(lang) {
+    onionLang = lang;
+    localStorage.setItem('onionLang', lang);
+    applyOnionStaticText();
+  }
+
+  function applyOnionStaticText() {
+    document.querySelectorAll('.onion-lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === onionLang));
+    document.getElementById('onionMenuTitle').textContent      = ot('menuTitle');
+    document.getElementById('onionCreateBtnLabel').textContent = ot('createBtn');
+    document.getElementById('onionExportBtnLabel').textContent = ot('exportBtn');
+    document.getElementById('onionDateOpenBtn').textContent    = ot('dateOpen');
+    document.getElementById('onionMenuCloseBtn').textContent   = ot('close');
+    document.getElementById('onionEditCloseBtn').textContent   = ot('close');
+    document.getElementById('onionExportCloseBtn').textContent = ot('close');
+    document.getElementById('onionExportTitle').textContent    = ot('exportTitle');
+    document.getElementById('onionExportBtn').textContent      = ot('exportBtnLabel');
+  }
+
   let onionCurrentDate = null;
 
   function openOnionMenuModal() {
     document.getElementById('onionDatePickerArea').style.display = 'none';
+    applyOnionStaticText();
     document.getElementById('onionMenuModalOverlay').classList.add('open');
   }
 
@@ -1088,8 +1226,8 @@
   function addOnionTimeRow(bi) {
     const rowHtml = `
       <div class="onion-time-row">
-        <input type="time" class="t-start">
-        <input type="time" class="t-end">
+        <select class="t-start">${onionTimeOptionsHtml('')}</select>
+        <select class="t-end">${onionTimeOptionsHtml('')}</select>
         <input type="number" class="t-people" min="0" max="99">
         <button type="button" class="btn-onion-remove-row" onclick="this.closest('.onion-time-row').remove()">×</button>
       </div>`;
@@ -1099,32 +1237,37 @@
   function renderOnionBlock(bi, block) {
     const t = ONION_BLOCK_TEMPLATES[bi];
     const timeRows = block.timeRows?.length ? block.timeRows : [{}, {}, {}];
+    const signIsKnown = ONION_KNOWN_SIGNS.includes(block.sign);
 
     return `
       <div class="onion-block" id="onion-block-${bi}">
         <div class="onion-block-title">${['①', '②', '③'][bi]} ${t.destination}</div>
 
         <div class="onion-field">
-          <label>サイン</label>
-          <input class="modal-input onion-sign" value="${block.sign ?? ''}">
+          <label>${ot('sign')}</label>
+          <select class="modal-input onion-sign-select">
+            <option value="">${ot('selectPlaceholder')}</option>
+            ${ONION_KNOWN_SIGNS.map(s => `<option value="${s}" ${signIsKnown && block.sign === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+          <input class="modal-input onion-sign-other" placeholder="${ot('signOtherPlaceholder')}" value="${!signIsKnown ? (block.sign ?? '') : ''}">
         </div>
 
         <div class="onion-field">
-          <label>使ったサイズ・しゅるい・おもさ</label>
+          <label>${ot('sizeSection')}</label>
           <div class="onion-size-cols">
             ${t.sizeLabels.map((label, si) => {
               const col = block.sizeColumns?.[si] ?? {};
               return `
               <div class="onion-size-col">
                 ${t.sizeEditable
-                  ? `<input class="modal-input s-label" placeholder="サイズ" value="${col.label ?? ''}">`
+                  ? `<input class="modal-input s-label" placeholder="${ot('sizePlaceholder')}" value="${col.label ?? ''}">`
                   : `<div style="text-align:center;font-weight:800;margin-bottom:6px;">${label}</div>`}
                 <div class="onion-toggle-group">
                   ${['DB', 'ネット', '鉄コン'].map(v => `<button type="button" class="onion-toggle-btn ${col.kind === v ? 'active' : ''}" onclick="selectOnionToggle(this,'${v}')">${v}</button>`).join('')}
                 </div>
                 <div class="onion-weight-row">
                   <button type="button" class="onion-toggle-btn ${col.weightMode === '20kg' ? 'active' : ''}" style="flex:0 0 48px;" onclick="this.classList.toggle('active')">20kg</button>
-                  <input type="number" class="w-custom" placeholder="その他kg" value="${col.weightCustom ?? ''}">
+                  <input type="number" class="w-custom" placeholder="${ot('weightOtherPlaceholder')}" value="${col.weightCustom ?? ''}">
                 </div>
               </div>`;
             }).join('')}
@@ -1132,46 +1275,46 @@
         </div>
 
         <div class="onion-field">
-          <label>つかったかず</label>
+          <label>${ot('usedCount')}</label>
           <input class="modal-input onion-usedcount" value="${block.usedCount ?? ''}">
         </div>
 
         <div class="onion-field">
-          <label>時間と人数</label>
-          <div class="onion-time-header"><span>開始</span><span>終了</span><span>人数</span><span></span></div>
+          <label>${ot('timeSection')}</label>
+          <div class="onion-time-header"><span>${ot('start')}</span><span>${ot('end')}</span><span>${ot('people')}</span><span></span></div>
           <div id="onion-b${bi}-timerows-list">
             ${timeRows.map(r => `
               <div class="onion-time-row">
-                <input type="time" class="t-start" value="${r.start ?? ''}">
-                <input type="time" class="t-end" value="${r.end ?? ''}">
+                <select class="t-start">${onionTimeOptionsHtml(r.start ?? '')}</select>
+                <select class="t-end">${onionTimeOptionsHtml(r.end ?? '')}</select>
                 <input type="number" class="t-people" min="0" max="99" value="${r.people ?? ''}">
                 <button type="button" class="btn-onion-remove-row" onclick="this.closest('.onion-time-row').remove()">×</button>
               </div>`).join('')}
           </div>
-          <button type="button" class="btn-onion-add-row" onclick="addOnionTimeRow(${bi})">＋ 行を追加</button>
+          <button type="button" class="btn-onion-add-row" onclick="addOnionTimeRow(${bi})">${ot('addRow')}</button>
         </div>
 
         <div class="onion-field">
-          <label>きょうのようす</label>
+          <label>${ot('condition')}</label>
           <textarea class="modal-input onion-condition" rows="2">${block.todayCondition ?? ''}</textarea>
         </div>
 
         <div class="onion-field">
-          <label>できたもの（つうじょう／やりなおし／ざいこ）</label>
+          <label>${ot('produced')}</label>
           <div class="onion-produced-table">
             <div class="onion-produced-grid" style="grid-template-columns: 70px repeat(${t.producedLabels.length}, 1fr);">
               <div class="cell label-cell"></div>
               ${t.producedLabels.map((label, pi) => {
                 const col = block.producedColumns?.[pi] ?? {};
                 return t.producedEditable[pi]
-                  ? `<div class="cell label-cell"><input class="p-label" placeholder="そのほか" value="${col.label ?? ''}"></div>`
+                  ? `<div class="cell label-cell"><input class="p-label" placeholder="${ot('otherLabelPlaceholder')}" value="${col.label ?? ''}"></div>`
                   : `<div class="cell label-cell">${label}</div>`;
               }).join('')}
-              <div class="cell label-cell">つうじょう</div>
+              <div class="cell label-cell">${ot('usual')}</div>
               ${t.producedLabels.map((_, pi) => `<div class="cell"><input class="p-usual" value="${block.producedColumns?.[pi]?.usual ?? ''}"></div>`).join('')}
-              <div class="cell label-cell">やりなおし</div>
+              <div class="cell label-cell">${ot('redo')}</div>
               ${t.producedLabels.map((_, pi) => `<div class="cell"><input class="p-redo" value="${block.producedColumns?.[pi]?.redo ?? ''}"></div>`).join('')}
-              <div class="cell label-cell">ざいこ</div>
+              <div class="cell label-cell">${ot('stock')}</div>
               ${t.producedLabels.map((_, pi) => `<div class="cell"><input class="p-stock" value="${block.producedColumns?.[pi]?.stock ?? ''}"></div>`).join('')}
             </div>
           </div>
@@ -1180,7 +1323,7 @@
   }
 
   async function openOnionEditModal(dateStr) {
-    if (!dateStr) { alert('日付を選択してください'); return; }
+    if (!dateStr) { alert(ot('selectDate')); return; }
     onionCurrentDate = dateStr;
 
     const { data, error } = await supabaseClient
@@ -1189,11 +1332,13 @@
       .eq('date', dateStr)
       .maybeSingle();
 
-    if (error) { alert('読み込みに失敗しました'); console.error(error); return; }
+    if (error) { alert(ot('loadFailed')); console.error(error); return; }
 
     const state = data?.data ?? { blocks: ONION_BLOCK_TEMPLATES.map(() => ({})) };
 
-    document.getElementById('onionEditTitle').textContent = `玉ねぎ作業日報（${formatDateJa(dateStr)}）`;
+    document.getElementById('onionEditTitle').textContent = ot('editTitle')(dateStr);
+    document.getElementById('onionEditCloseBtn').textContent = ot('close');
+    document.getElementById('onionSaveBtn').textContent = ot('save');
     document.getElementById('onionEditBlocks').innerHTML = state.blocks.map((b, bi) => renderOnionBlock(bi, b)).join('');
 
     closeOnionMenuModal();
@@ -1235,8 +1380,11 @@
           stock: stockInputs[pi]?.value ?? '',
         }));
 
+        const signOther = root.querySelector('.onion-sign-other')?.value?.trim() ?? '';
+        const signSelect = root.querySelector('.onion-sign-select')?.value ?? '';
+
         return {
-          sign: root.querySelector('.onion-sign')?.value?.trim() ?? '',
+          sign: signOther || signSelect,
           sizeColumns,
           usedCount: root.querySelector('.onion-usedcount')?.value?.trim() ?? '',
           timeRows,
@@ -1251,7 +1399,7 @@
     const state = collectOnionState();
     const btn = document.getElementById('onionSaveBtn');
     btn.disabled = true;
-    btn.textContent = '保存中...';
+    btn.textContent = ot('saving');
 
     const { error } = await supabaseClient
       .from('onion_reports')
@@ -1263,11 +1411,11 @@
       }, { onConflict: 'date' });
 
     btn.disabled = false;
-    btn.textContent = '保存する';
+    btn.textContent = ot('save');
 
-    if (error) { alert('保存に失敗しました'); console.error(error); return; }
+    if (error) { alert(ot('saveFailed')); console.error(error); return; }
 
-    alert('保存しました');
+    alert(ot('saved'));
     closeOnionEditModal();
   }
 
@@ -1277,15 +1425,19 @@
       .select('id, date')
       .order('date', { ascending: false });
 
+    document.getElementById('onionExportTitle').textContent = ot('exportTitle');
+    document.getElementById('onionExportCloseBtn').textContent = ot('close');
+    document.getElementById('onionExportBtn').textContent = ot('exportBtnLabel');
+
     const el = document.getElementById('onionExportList');
     if (error || !data?.length) {
-      el.innerHTML = '<div class="empty-state" style="padding:30px 10px;"><p>まだ日報がありません</p></div>';
+      el.innerHTML = `<div class="empty-state" style="padding:30px 10px;"><p>${ot('exportListEmpty')}</p></div>`;
     } else {
       el.innerHTML = data.map(r => `
         <label class="onion-list-item">
           <input type="checkbox" class="onion-export-cb" value="${r.date}">
           <span class="onion-list-date">${formatDateJa(r.date)}</span>
-          <span class="onion-list-open" onclick="event.preventDefault(); openOnionEditModal('${r.date}')">開く</span>
+          <span class="onion-list-open" onclick="event.preventDefault(); openOnionEditModal('${r.date}')">${ot('openLink')}</span>
         </label>`).join('');
     }
 
@@ -1353,11 +1505,11 @@
 
   async function exportOnionReportsExcel() {
     const dates = [...document.querySelectorAll('.onion-export-cb:checked')].map(cb => cb.value);
-    if (!dates.length) { alert('出力する日付を選択してください'); return; }
+    if (!dates.length) { alert(ot('selectExportDate')); return; }
 
     const btn = document.getElementById('onionExportBtn');
     btn.disabled = true;
-    btn.textContent = '出力中...';
+    btn.textContent = ot('exporting');
 
     const { data, error } = await supabaseClient
       .from('onion_reports')
@@ -1366,9 +1518,9 @@
       .order('date');
 
     btn.disabled = false;
-    btn.textContent = '選択した日をExcel出力';
+    btn.textContent = ot('exportBtnLabel');
 
-    if (error || !data?.length) { alert('データの取得に失敗しました'); console.error(error); return; }
+    if (error || !data?.length) { alert(ot('fetchFailed')); console.error(error); return; }
 
     const wb = XLSX.utils.book_new();
     data.forEach(r => {
