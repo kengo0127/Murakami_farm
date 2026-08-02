@@ -469,6 +469,81 @@
       margin-top: 6px;
     }
 
+    .onion-efficiency-sheet { text-align: center; }
+
+    .onion-efficiency-card {
+      border-radius: 16px;
+      padding: 26px 16px 20px;
+      margin-bottom: 14px;
+      color: #fff;
+      animation: onionPop 0.4s ease;
+    }
+
+    .onion-efficiency-card.achieved {
+      background: linear-gradient(135deg, #ffd54f, #ff8a65);
+      box-shadow: 0 6px 18px rgba(255, 138, 101, 0.4);
+    }
+
+    .onion-efficiency-card.not-achieved {
+      background: linear-gradient(135deg, #4fc3f7, #4dd0b1);
+      box-shadow: 0 6px 18px rgba(79, 195, 247, 0.4);
+    }
+
+    @keyframes onionPop {
+      0%   { transform: scale(0.7); opacity: 0; }
+      70%  { transform: scale(1.06); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+
+    .onion-efficiency-emoji { font-size: 42px; line-height: 1; margin-bottom: 6px; }
+
+    .onion-efficiency-nice {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .onion-efficiency-block {
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 10px;
+      opacity: 0.95;
+    }
+
+    .onion-efficiency-compare {
+      display: flex;
+      justify-content: center;
+      gap: 22px;
+      margin-top: 12px;
+    }
+
+    .onion-efficiency-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .onion-efficiency-row > span:first-child {
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0.85;
+      margin-bottom: 2px;
+    }
+
+    .onion-efficiency-value {
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .onion-efficiency-target-value { opacity: 0.85; }
+
+    .onion-efficiency-unit {
+      font-size: 11px;
+      opacity: 0.85;
+      margin-top: 6px;
+    }
+
     .onion-menu-btn {
       display: block;
       width: 100%;
@@ -644,20 +719,40 @@
 
     .onion-produced-grid input:focus { outline: 1px solid #c9752e; border-radius: 3px; }
 
-    .onion-list-item {
-      display: flex;
+    .onion-export-table-wrap { overflow-x: auto; }
+
+    .onion-export-table { min-width: 460px; }
+
+    .onion-export-row {
+      display: grid;
+      grid-template-columns: 26px 1fr 56px 56px 56px 40px;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
       background: #fff;
       border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 8px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
       box-shadow: 0 1px 6px rgba(0,0,0,0.06);
     }
 
-    .onion-list-item input[type="checkbox"] { width: 20px; height: 20px; }
-    .onion-list-item .onion-list-date { font-size: 15px; font-weight: 700; flex: 1; }
-    .onion-list-item .onion-list-open { font-size: 13px; color: #c9752e; font-weight: 700; cursor: pointer; }
+    .onion-export-row.onion-export-header {
+      background: transparent;
+      box-shadow: none;
+      padding: 0 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #777;
+      text-align: center;
+    }
+
+    .onion-export-row input[type="checkbox"] { width: 20px; height: 20px; }
+    .onion-export-row .onion-list-date { font-size: 14px; font-weight: 700; }
+    .onion-export-row .onion-list-open { font-size: 12px; color: #c9752e; font-weight: 700; cursor: pointer; text-align: center; }
+
+    .onion-eff-cell { font-size: 13px; font-weight: 700; text-align: center; }
+    .onion-eff-cell.ok { color: #2e7d32; }
+    .onion-eff-cell.ng { color: #444; }
+    .onion-eff-cell.na { color: #ccc; }
 
     .modal-overlay {
       display: none;
@@ -795,6 +890,15 @@
     <div class="modal-actions">
       <button type="button" class="btn-modal-cancel" id="onionEditCloseBtn" onclick="closeOnionEditModal()">閉じる</button>
       <button type="button" class="btn-modal-submit" id="onionSaveBtn" onclick="saveOnionReport()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="onionEfficiencyModalOverlay">
+  <div class="modal-sheet onion-efficiency-sheet">
+    <div id="onionEfficiencyCards"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-submit" onclick="closeOnionEfficiencyModal()">OK</button>
     </div>
   </div>
 </div>
@@ -1275,7 +1379,7 @@
         </div>
 
         <div class="onion-field">
-          <label>${ot('usedCount')}</label>
+          <label>${ot('usedCount')} (kg)</label>
           <input class="modal-input onion-usedcount" value="${block.usedCount ?? ''}">
         </div>
 
@@ -1310,7 +1414,7 @@
                   ? `<div class="cell label-cell"><input class="p-label" placeholder="${ot('otherLabelPlaceholder')}" value="${col.label ?? ''}"></div>`
                   : `<div class="cell label-cell">${label}</div>`;
               }).join('')}
-              <div class="cell label-cell">${ot('usual')}</div>
+              <div class="cell label-cell">${ot('usual')}(kg)</div>
               ${t.producedLabels.map((_, pi) => `<div class="cell"><input class="p-usual" value="${block.producedColumns?.[pi]?.usual ?? ''}"></div>`).join('')}
               <div class="cell label-cell">${ot('redo')}</div>
               ${t.producedLabels.map((_, pi) => `<div class="cell"><input class="p-redo" value="${block.producedColumns?.[pi]?.redo ?? ''}"></div>`).join('')}
@@ -1415,14 +1519,84 @@
 
     if (error) { alert(ot('saveFailed')); console.error(error); return; }
 
-    alert(ot('saved'));
     closeOnionEditModal();
+    showOnionEfficiencyFeedback(state);
   }
+
+  // ── 作業効率フィードバック ──────────────────────────────
+  // 中国・日本：作業効率(kg/人時) = つかったかず(kg) / (作業時間h × 作業人数)
+  // レインボー：作業効率(kg/人時) = できたもの(kg・つうじょう合計) / (作業時間h × 作業人数)
+  const ONION_EFFICIENCY_TARGETS = { 'ベスト日本': 60, 'ベスト中国': 120, 'レインボー': 70 };
+
+  function parseOnionNumber(text) {
+    const m = String(text ?? '').match(/[\d.]+/);
+    return m ? parseFloat(m[0]) : 0;
+  }
+
+  function calcOnionPersonHours(block) {
+    let total = 0;
+    (block.timeRows ?? []).forEach(r => {
+      if (!r.start || !r.end || !r.people) return;
+      const [sh, sm] = r.start.split(':').map(Number);
+      const [eh, em] = r.end.split(':').map(Number);
+      const hours = (eh * 60 + em - (sh * 60 + sm)) / 60;
+      const people = parseFloat(r.people) || 0;
+      if (hours > 0 && people > 0) total += hours * people;
+    });
+    return total;
+  }
+
+  function calcOnionEfficiency(bi, block) {
+    const t = ONION_BLOCK_TEMPLATES[bi];
+    const personHours = calcOnionPersonHours(block);
+    if (personHours <= 0) return null;
+
+    const amountKg = t.destination === 'レインボー'
+      ? (block.producedColumns ?? []).reduce((sum, c) => sum + parseOnionNumber(c.usual), 0)
+      : parseOnionNumber(block.usedCount);
+    if (amountKg <= 0) return null;
+
+    const target = ONION_EFFICIENCY_TARGETS[t.destination];
+    const efficiency = amountKg / personHours;
+    return { destination: t.destination, efficiency, target, achieved: efficiency > target };
+  }
+
+  function showOnionEfficiencyFeedback(state) {
+    const results = ONION_BLOCK_TEMPLATES
+      .map((t, bi) => calcOnionEfficiency(bi, state.blocks?.[bi] ?? {}))
+      .filter(r => r);
+
+    if (!results.length) {
+      alert(ot('saved'));
+      return;
+    }
+
+    document.getElementById('onionEfficiencyCards').innerHTML = results.map(r => `
+      <div class="onion-efficiency-card ${r.achieved ? 'achieved' : 'not-achieved'}">
+        <div class="onion-efficiency-emoji">${r.achieved ? '🎉' : '💪'}</div>
+        <div class="onion-efficiency-nice">${r.achieved ? 'Nice work !!' : 'Almost there ...!'}</div>
+        <div class="onion-efficiency-block">${r.destination}</div>
+        <div class="onion-efficiency-compare">
+          <div class="onion-efficiency-row"><span>実績</span><span class="onion-efficiency-value">${r.efficiency.toFixed(1)}</span></div>
+          <div class="onion-efficiency-row"><span>目標</span><span class="onion-efficiency-value onion-efficiency-target-value">${r.target}</span></div>
+        </div>
+        <div class="onion-efficiency-unit">kg/人時</div>
+      </div>`).join('');
+
+    document.getElementById('onionEfficiencyModalOverlay').classList.add('open');
+  }
+
+  function closeOnionEfficiencyModal() {
+    document.getElementById('onionEfficiencyModalOverlay').classList.remove('open');
+  }
+
+  // 一覧表示の列順：ベスト日本・ベスト中国・レインボー（ONION_BLOCK_TEMPLATESの並びとは異なる）
+  const ONION_EXPORT_COLUMN_ORDER = [1, 0, 2];
 
   async function openOnionExportModal() {
     const { data, error } = await supabaseClient
       .from('onion_reports')
-      .select('id, date')
+      .select('id, date, data')
       .order('date', { ascending: false });
 
     document.getElementById('onionExportTitle').textContent = ot('exportTitle');
@@ -1433,12 +1607,34 @@
     if (error || !data?.length) {
       el.innerHTML = `<div class="empty-state" style="padding:30px 10px;"><p>${ot('exportListEmpty')}</p></div>`;
     } else {
-      el.innerHTML = data.map(r => `
-        <label class="onion-list-item">
-          <input type="checkbox" class="onion-export-cb" value="${r.date}">
-          <span class="onion-list-date">${formatDateJa(r.date)}</span>
-          <span class="onion-list-open" onclick="event.preventDefault(); openOnionEditModal('${r.date}')">${ot('openLink')}</span>
-        </label>`).join('');
+      const headerCells = ONION_EXPORT_COLUMN_ORDER
+        .map(bi => `<span>${ONION_BLOCK_TEMPLATES[bi].destination}</span>`).join('');
+
+      const rows = data.map(r => {
+        const effByBi = ONION_BLOCK_TEMPLATES.map((t, bi) => calcOnionEfficiency(bi, r.data?.blocks?.[bi] ?? {}));
+        const cells = ONION_EXPORT_COLUMN_ORDER.map(bi => {
+          const e = effByBi[bi];
+          if (!e) return '<span class="onion-eff-cell na">-</span>';
+          return `<span class="onion-eff-cell ${e.achieved ? 'ok' : 'ng'}">${e.efficiency.toFixed(1)}</span>`;
+        }).join('');
+        return `
+          <div class="onion-export-row">
+            <input type="checkbox" class="onion-export-cb" value="${r.date}">
+            <span class="onion-list-date">${formatDateJa(r.date)}</span>
+            ${cells}
+            <span class="onion-list-open" onclick="event.preventDefault(); openOnionEditModal('${r.date}')">${ot('openLink')}</span>
+          </div>`;
+      }).join('');
+
+      el.innerHTML = `
+        <div class="onion-export-table-wrap">
+          <div class="onion-export-table">
+            <div class="onion-export-row onion-export-header">
+              <span></span><span></span>${headerCells}<span></span>
+            </div>
+            ${rows}
+          </div>
+        </div>`;
     }
 
     closeOnionMenuModal();
