@@ -149,6 +149,11 @@
     .check-cell.checked { color: #2e7d32; font-weight: 800; }
     .check-cell.unchecked { color: #ddd; }
 
+    tr.row-paid td { background: #e6e6e6; }
+    tr.row-paid .cell-btn { color: #888; }
+    tr.row-paid .cell-btn.readonly { color: #5a5a5a; }
+    tr.row-paid .check-cell.checked { color: #4a7a48; }
+
     .btn-del-row {
       background: none;
       border: none;
@@ -156,6 +161,53 @@
       font-size: 16px;
       cursor: pointer;
       padding: 10px;
+    }
+
+    /* ── サマリーパネル（単価表・当日前日表） ── */
+    .summary-panel {
+      flex-shrink: 0;
+      margin: 10px 12px 0;
+      padding: 10px 14px 12px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      overflow-x: auto;
+    }
+
+    .summary-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #1a3d17;
+      margin-bottom: 6px;
+    }
+
+    .mini-table {
+      border-collapse: collapse;
+      min-width: 100%;
+    }
+
+    .mini-table th, .mini-table td {
+      padding: 6px 12px;
+      font-size: 12px;
+      text-align: center;
+      white-space: nowrap;
+      border-bottom: 1px solid #eef3ee;
+    }
+
+    .mini-table th {
+      background: #f0f7ee;
+      color: #1a3d17;
+      font-weight: 700;
+    }
+
+    .mini-table td:first-child, .mini-table th:first-child { text-align: left; }
+    .mini-table tr:last-child td { border-bottom: none; }
+    .mini-table .amount-cell { font-weight: 800; color: #1a3d17; }
+
+    .summary-note {
+      font-size: 10px;
+      color: #999;
+      margin-top: 6px;
     }
 
     .total-cell { font-weight: 800; color: #1a3d17; }
@@ -363,9 +415,30 @@
   </div>
 </header>
 
+<div class="summary-panel">
+  <div class="summary-title">💴 単価一覧（基本価格）</div>
+  <table class="mini-table">
+    <thead>
+      <tr><th>3L</th><th>4L</th><th>5L</th><th>玉ねぎ(kg)</th><th>2玉入箱</th><th>3〜5玉入箱</th></tr>
+    </thead>
+    <tbody id="priceTableBody"></tbody>
+  </table>
+  <p class="summary-note">※ 基本価格の一覧です（この表では編集できません）。行ごとに異なる単価にしたい場合は、これまで通り各セルの編集からご変更ください。</p>
+</div>
+
+<div class="summary-panel">
+  <div class="summary-title">📊 当日・前日の出荷状況</div>
+  <table class="mini-table">
+    <thead>
+      <tr><th></th><th>3L</th><th>4L</th><th>5L</th><th>その他</th><th>売上合計</th></tr>
+    </thead>
+    <tbody id="dailySummaryBody"></tbody>
+  </table>
+</div>
+
 <div class="toolbar">
   <button class="btn-tool primary" onclick="addRow()">＋ 行を追加</button>
-  <button class="btn-tool" id="sortDateBtn" onclick="sortByDateAsc()">📅 日付順に並べ替え</button>
+  <button class="btn-tool" id="sortDateBtn" onclick="toggleAutoSort()">⏸ 自動並べ替え停止</button>
   <button class="btn-tool" onclick="exportEntriesCSV()">⬇ CSVダウンロード</button>
 </div>
 
@@ -421,6 +494,7 @@
   let sheetId = null;
   let entries = [];
   let customersByRow = {}; // { 'あ': [{name:'青垣', group:0}, {name:'青木', group:0}, ...], ... }
+  let autoSortByDate = true; // 自動で日付順に並べ替えるか
   const NAME_CHIP_GROUP_COLORS = 6; // .name-chip.group-0 〜 group-5 のCSSクラス数
 
   // ── 列定義 ──────────────────────────────────────────────
@@ -527,7 +601,7 @@
     const nameLabel = entry.customer_name || '(未入力)';
 
     return `
-      <tr>
+      <tr class="${entry.paid ? 'row-paid' : ''}">
         <td>${cellBtn(dateLabel, 'entry_date', entry.id, { empty: !entry.entry_date })}</td>
         <td>${cellBtn(escHtml(nameLabel), 'customer_name', entry.id, { empty: !entry.customer_name })}</td>
         <td>${cellBtn(entry.qty_3l ? `${entry.qty_3l}玉` : '-', 'qty_3l', entry.id, { empty: !entry.qty_3l, sub: entry.qty_3l && entry.unit_price_3l !== DEFAULT_PRICES.qty3l ? `@${entry.unit_price_3l}円` : '' })}</td>
@@ -547,15 +621,82 @@
       </tr>`;
   }
 
+  // 日付未設定の行は末尾に送る
+  function sortEntriesByDate(list) {
+    return [...list].sort((a, b) => {
+      if (!a.entry_date && !b.entry_date) return 0;
+      if (!a.entry_date) return 1;
+      if (!b.entry_date) return -1;
+      return a.entry_date < b.entry_date ? -1 : a.entry_date > b.entry_date ? 1 : 0;
+    });
+  }
+
+  function getDisplayEntries() {
+    return autoSortByDate ? sortEntriesByDate(entries) : entries;
+  }
+
   function renderTable() {
     document.getElementById('loadingState').style.display = 'none';
     const table = document.getElementById('entryTable');
+    const displayEntries = getDisplayEntries();
     table.style.display = entries.length ? 'table' : 'none';
-    document.getElementById('entryTbody').innerHTML = entries.map(rowHTML).join('');
+    document.getElementById('entryTbody').innerHTML = displayEntries.map(rowHTML).join('');
     if (!entries.length) {
       document.getElementById('loadingState').style.display = 'block';
       document.getElementById('loadingState').textContent = 'まだ行がありません。「＋行を追加」から始めましょう。';
     }
+    renderPriceTable();
+    renderDailySummary();
+  }
+
+  // ── 単価一覧（基本価格） ────────────────────────────────
+  function renderPriceTable() {
+    document.getElementById('priceTableBody').innerHTML = `
+      <tr>
+        <td>${formatYen(DEFAULT_PRICES.qty3l)}</td>
+        <td>${formatYen(DEFAULT_PRICES.qty4l)}</td>
+        <td>${formatYen(DEFAULT_PRICES.qty5l)}</td>
+        <td>${formatYen(DEFAULT_PRICES.onion)}</td>
+        <td>${formatYen(DEFAULT_PRICES.box2)}</td>
+        <td>${formatYen(DEFAULT_PRICES.box35)}</td>
+      </tr>`;
+  }
+
+  // ── 当日・前日の出荷状況 ────────────────────────────────
+  function shiftedDateStr(offsetDays) {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    return d.toISOString().split('T')[0];
+  }
+
+  function summarizeByDate(dateStr) {
+    const rows = entries.filter(e => e.entry_date === dateStr);
+    return {
+      qty3l: rows.reduce((s, e) => s + (e.qty_3l || 0), 0),
+      qty4l: rows.reduce((s, e) => s + (e.qty_4l || 0), 0),
+      qty5l: rows.reduce((s, e) => s + (e.qty_5l || 0), 0),
+      qtyOther: rows.reduce((s, e) => s + (e.qty_other || 0), 0),
+      totalSales: rows.reduce((s, e) => s + (e.total_amount || 0), 0),
+    };
+  }
+
+  function renderDailySummary() {
+    const todayStr = shiftedDateStr(0);
+    const yesterdayStr = shiftedDateStr(-1);
+    const t = summarizeByDate(todayStr);
+    const y = summarizeByDate(yesterdayStr);
+
+    document.getElementById('dailySummaryBody').innerHTML = `
+      <tr>
+        <td>当日（${formatDateJa(todayStr)}）</td>
+        <td>${t.qty3l}</td><td>${t.qty4l}</td><td>${t.qty5l}</td><td>${t.qtyOther}</td>
+        <td class="amount-cell">${formatYen(t.totalSales)}</td>
+      </tr>
+      <tr>
+        <td>前日（${formatDateJa(yesterdayStr)}）</td>
+        <td>${y.qty3l}</td><td>${y.qty4l}</td><td>${y.qty5l}</td><td>${y.qtyOther}</td>
+        <td class="amount-cell">${formatYen(y.totalSales)}</td>
+      </tr>`;
   }
 
   // ── セル保存 ────────────────────────────────────────────
@@ -617,38 +758,13 @@
     renderTable();
   }
 
-  // ── 日付順に並べ替え ────────────────────────────────────
-  async function sortByDateAsc() {
-    if (!entries.length) return;
-
-    // 日付未設定の行は末尾に送る
-    const sorted = [...entries].sort((a, b) => {
-      if (!a.entry_date && !b.entry_date) return 0;
-      if (!a.entry_date) return 1;
-      if (!b.entry_date) return -1;
-      return a.entry_date < b.entry_date ? -1 : a.entry_date > b.entry_date ? 1 : 0;
-    });
-
+  // ── 自動並べ替えの切り替え ──────────────────────────────
+  // ONの間は表示のたびに日付順で並べ替える（DBのsort_orderは変更しない）。
+  // OFFにすると、これまで通りsort_order（登録順）で表示される。
+  function toggleAutoSort() {
+    autoSortByDate = !autoSortByDate;
     const btn = document.getElementById('sortDateBtn');
-    if (btn) { btn.disabled = true; btn.textContent = '並べ替え中...'; }
-
-    const results = await Promise.all(
-      sorted.map((e, idx) =>
-        supabaseClient.from('melon_entries').update({ sort_order: idx + 1 }).eq('id', e.id)
-      )
-    );
-
-    if (btn) { btn.disabled = false; btn.textContent = '📅 日付順に並べ替え'; }
-
-    const failed = results.find(r => r.error);
-    if (failed) {
-      alert('並べ替えに失敗しました。もう一度お試しください。');
-      console.error(failed.error);
-      return;
-    }
-
-    sorted.forEach((e, idx) => { e.sort_order = idx + 1; });
-    entries = sorted;
+    if (btn) btn.textContent = autoSortByDate ? '⏸ 自動並べ替え停止' : '▶ 自動並べ替えを再開';
     renderTable();
   }
 
@@ -923,7 +1039,7 @@
       '日付', 'お名前', '3L', '4L', '5L', 'その他数量', 'その他単価', 'その他内容',
       '玉ねぎ(kg)', '発送', '2玉入箱', '3〜5玉入箱', '送料', '商品小計(円)', '総計(円)', '入金', '領収書', '備考',
     ];
-    const rows = entries.map(e => [
+    const rows = getDisplayEntries().map(e => [
       e.entry_date || '', e.customer_name || '',
       e.qty_3l || 0, e.qty_4l || 0, e.qty_5l || 0,
       e.qty_other || 0, e.unit_price_other || 0, e.other_label || '',
