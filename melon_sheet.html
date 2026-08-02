@@ -204,6 +204,32 @@
     .mini-table tr:last-child td { border-bottom: none; }
     .mini-table .amount-cell { font-weight: 800; color: #1a3d17; }
 
+    .price-cell-btn {
+      background: none;
+      border: 1.5px dashed #c8e0c4;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1a3d17;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .price-cell-btn:active { background: #e8f5e9; }
+
+    .mini-table input[type="date"] {
+      border: 1.5px solid #dde8dd;
+      border-radius: 6px;
+      padding: 3px 4px;
+      font-size: 11px;
+      font-family: inherit;
+      color: #333;
+    }
+
+    tr.price-row-active { background: #f2f9f0; }
+    tr.price-row-active td:first-child { border-left: 3px solid #4caf50; }
+
     .summary-note {
       font-size: 10px;
       color: #999;
@@ -416,14 +442,15 @@
 </header>
 
 <div class="summary-panel">
-  <div class="summary-title">💴 単価一覧（基本価格）</div>
+  <div class="summary-title">💴 単価一覧（このシート専用・適用期間ごと）</div>
   <table class="mini-table">
     <thead>
-      <tr><th>3L</th><th>4L</th><th>5L</th><th>玉ねぎ(kg)</th><th>2玉入箱</th><th>3〜5玉入箱</th></tr>
+      <tr><th>開始日</th><th>終了日</th><th>3L</th><th>4L</th><th>5L</th><th>玉ねぎ(kg)</th><th>2玉入箱</th><th>3〜5玉入箱</th><th></th></tr>
     </thead>
     <tbody id="priceTableBody"></tbody>
   </table>
-  <p class="summary-note">※ 基本価格の一覧です（この表では編集できません）。行ごとに異なる単価にしたい場合は、これまで通り各セルの編集からご変更ください。</p>
+  <button type="button" class="btn-tool" style="margin-top:8px;" onclick="addPricePeriod()">＋ 価格期間を追加</button>
+  <p class="summary-note">※ 価格をタップすると変更できます。開始日以降（終了日を設定していれば終了日まで）に登録した行に、その価格が使われます。過去に登録済みの行の単価は、期間の価格を変更しても遡って変わりません。緑色の行が本日時点で適用中の期間です。</p>
 </div>
 
 <div class="summary-panel">
@@ -495,15 +522,43 @@
   let entries = [];
   let customersByRow = {}; // { 'あ': [{name:'青垣', group:0}, {name:'青木', group:0}, ...], ... }
   let autoSortByDate = true; // 自動で日付順に並べ替えるか
+  let pricePeriods = []; // このシート(月)専用の価格期間一覧（melon_price_periods）
   const NAME_CHIP_GROUP_COLORS = 6; // .name-chip.group-0 〜 group-5 のCSSクラス数
+
+  const PRICE_KEY_MAP = { qty_3l: 'qty3l', qty_4l: 'qty4l', qty_5l: 'qty5l' };
+
+  // 指定日時点で有効な価格期間を返す（開始日が指定日以前で最も新しいもの。
+  // 終了日が指定日より前の「期限切れ」期間より、終了日内/未設定の期間を優先する）
+  function getActivePricePeriod(dateStr) {
+    const target = dateStr || shiftedDateStr(0);
+    const inRange = pricePeriods.filter(p => p.start_date <= target && (!p.end_date || p.end_date >= target));
+    const pool = inRange.length ? inRange : pricePeriods.filter(p => p.start_date <= target);
+    if (!pool.length) return null;
+    return pool.reduce((latest, p) => (p.start_date > latest.start_date ? p : latest));
+  }
+
+  function getPricesForDate(dateStr) {
+    const period = getActivePricePeriod(dateStr);
+    if (period) {
+      return {
+        qty3l: period.price_3l, qty4l: period.price_4l, qty5l: period.price_5l,
+        onion: period.price_onion, box2: period.price_box2, box35: period.price_box35,
+      };
+    }
+    return { qty3l: DEFAULT_PRICES.qty3l, qty4l: DEFAULT_PRICES.qty4l, qty5l: DEFAULT_PRICES.qty5l, onion: DEFAULT_PRICES.onion, box2: DEFAULT_PRICES.box2, box35: DEFAULT_PRICES.box35 };
+  }
+
+  function getDefaultPrice(colKey, entry) {
+    return getPricesForDate(entry?.entry_date)[PRICE_KEY_MAP[colKey]];
+  }
 
   // ── 列定義 ──────────────────────────────────────────────
   const COLUMN_DEFS = {
     entry_date:     { label: '日付',     type: 'date' },
     customer_name:  { label: 'お名前',   type: 'customer' },
-    qty_3l:         { label: '3L',       type: 'qty', priceKey: 'unit_price_3l', defaultPrice: DEFAULT_PRICES.qty3l },
-    qty_4l:         { label: '4L',       type: 'qty', priceKey: 'unit_price_4l', defaultPrice: DEFAULT_PRICES.qty4l },
-    qty_5l:         { label: '5L',       type: 'qty', priceKey: 'unit_price_5l', defaultPrice: DEFAULT_PRICES.qty5l },
+    qty_3l:         { label: '3L',       type: 'qty', priceKey: 'unit_price_3l' },
+    qty_4l:         { label: '4L',       type: 'qty', priceKey: 'unit_price_4l' },
+    qty_5l:         { label: '5L',       type: 'qty', priceKey: 'unit_price_5l' },
     qty_other:      { label: 'その他',   type: 'qty_other' },
     onion_kg:       { label: '玉ねぎ(kg)', type: 'onion' },
     box:            { label: '箱代',     type: 'box' },
@@ -599,14 +654,15 @@
   function rowHTML(entry) {
     const dateLabel = entry.entry_date ? formatDateJa(entry.entry_date) : '未設定';
     const nameLabel = entry.customer_name || '(未入力)';
+    const rowPrices = getPricesForDate(entry.entry_date);
 
     return `
       <tr class="${entry.paid ? 'row-paid' : ''}">
         <td>${cellBtn(dateLabel, 'entry_date', entry.id, { empty: !entry.entry_date })}</td>
         <td>${cellBtn(escHtml(nameLabel), 'customer_name', entry.id, { empty: !entry.customer_name })}</td>
-        <td>${cellBtn(entry.qty_3l ? `${entry.qty_3l}玉` : '-', 'qty_3l', entry.id, { empty: !entry.qty_3l, sub: entry.qty_3l && entry.unit_price_3l !== DEFAULT_PRICES.qty3l ? `@${entry.unit_price_3l}円` : '' })}</td>
-        <td>${cellBtn(entry.qty_4l ? `${entry.qty_4l}玉` : '-', 'qty_4l', entry.id, { empty: !entry.qty_4l, sub: entry.qty_4l && entry.unit_price_4l !== DEFAULT_PRICES.qty4l ? `@${entry.unit_price_4l}円` : '' })}</td>
-        <td>${cellBtn(entry.qty_5l ? `${entry.qty_5l}玉` : '-', 'qty_5l', entry.id, { empty: !entry.qty_5l, sub: entry.qty_5l && entry.unit_price_5l !== DEFAULT_PRICES.qty5l ? `@${entry.unit_price_5l}円` : '' })}</td>
+        <td>${cellBtn(entry.qty_3l ? `${entry.qty_3l}玉` : '-', 'qty_3l', entry.id, { empty: !entry.qty_3l, sub: entry.qty_3l && entry.unit_price_3l !== rowPrices.qty3l ? `@${entry.unit_price_3l}円` : '' })}</td>
+        <td>${cellBtn(entry.qty_4l ? `${entry.qty_4l}玉` : '-', 'qty_4l', entry.id, { empty: !entry.qty_4l, sub: entry.qty_4l && entry.unit_price_4l !== rowPrices.qty4l ? `@${entry.unit_price_4l}円` : '' })}</td>
+        <td>${cellBtn(entry.qty_5l ? `${entry.qty_5l}玉` : '-', 'qty_5l', entry.id, { empty: !entry.qty_5l, sub: entry.qty_5l && entry.unit_price_5l !== rowPrices.qty5l ? `@${entry.unit_price_5l}円` : '' })}</td>
         <td>${cellBtn(entry.qty_other ? `${entry.qty_other}` : '-', 'qty_other', entry.id, { empty: !entry.qty_other, sub: entry.other_label ? escHtml(entry.other_label) : '' })}</td>
         <td>${cellBtn(entry.onion_kg ? `${entry.onion_kg}kg` : '-', 'onion_kg', entry.id, { empty: !entry.onion_kg })}</td>
         <td>${checkCell(entry, 'shipped')}</td>
@@ -649,17 +705,121 @@
     renderDailySummary();
   }
 
-  // ── 単価一覧（基本価格） ────────────────────────────────
+  // ── 単価一覧（このシート専用・期間ごとに編集可） ────────
+  const PRICE_TABLE_COLS = [
+    { key: 'qty3l',  dbCol: 'price_3l',    label: '3L' },
+    { key: 'qty4l',  dbCol: 'price_4l',    label: '4L' },
+    { key: 'qty5l',  dbCol: 'price_5l',    label: '5L' },
+    { key: 'onion',  dbCol: 'price_onion', label: '玉ねぎ(kg)' },
+    { key: 'box2',   dbCol: 'price_box2',  label: '2玉入箱' },
+    { key: 'box35',  dbCol: 'price_box35', label: '3〜5玉入箱' },
+  ];
+
+  async function loadPricePeriods() {
+    const { data, error } = await supabaseClient
+      .from('melon_price_periods')
+      .select('*')
+      .eq('sheet_id', sheetId)
+      .order('start_date', { ascending: true });
+
+    if (error) { console.error(error); return; }
+    pricePeriods = data || [];
+
+    // このシートにまだ価格期間がなければ、月初日付・基本価格で1件だけ作成しておく
+    if (!pricePeriods.length) {
+      const monthStart = `${YEAR}-${String(MONTH).padStart(2, '0')}-01`;
+      const { data: created, error: insErr } = await supabaseClient
+        .from('melon_price_periods')
+        .insert({
+          sheet_id: sheetId,
+          start_date: monthStart,
+          price_3l: DEFAULT_PRICES.qty3l, price_4l: DEFAULT_PRICES.qty4l, price_5l: DEFAULT_PRICES.qty5l,
+          price_onion: DEFAULT_PRICES.onion, price_box2: DEFAULT_PRICES.box2, price_box35: DEFAULT_PRICES.box35,
+        })
+        .select()
+        .single();
+      if (!insErr && created) pricePeriods = [created];
+    }
+  }
+
   function renderPriceTable() {
-    document.getElementById('priceTableBody').innerHTML = `
-      <tr>
-        <td>${formatYen(DEFAULT_PRICES.qty3l)}</td>
-        <td>${formatYen(DEFAULT_PRICES.qty4l)}</td>
-        <td>${formatYen(DEFAULT_PRICES.qty5l)}</td>
-        <td>${formatYen(DEFAULT_PRICES.onion)}</td>
-        <td>${formatYen(DEFAULT_PRICES.box2)}</td>
-        <td>${formatYen(DEFAULT_PRICES.box35)}</td>
-      </tr>`;
+    const activeId = getActivePricePeriod(shiftedDateStr(0))?.id;
+    document.getElementById('priceTableBody').innerHTML = pricePeriods.map(p => `
+      <tr class="${p.id === activeId ? 'price-row-active' : ''}">
+        <td><input type="date" value="${p.start_date || ''}" onchange="updatePricePeriodDate('${p.id}','start_date',this.value)"></td>
+        <td><input type="date" value="${p.end_date || ''}" onchange="updatePricePeriodDate('${p.id}','end_date',this.value)"></td>
+        ${PRICE_TABLE_COLS.map(c => `
+          <td><button type="button" class="price-cell-btn" onclick="editPricePeriodAmount('${p.id}','${c.key}')">${formatYen(p[c.dbCol])}</button></td>
+        `).join('')}
+        <td><button type="button" class="btn-del-row" onclick="deletePricePeriod('${p.id}')">🗑</button></td>
+      </tr>`).join('');
+  }
+
+  async function addPricePeriod() {
+    const base = getActivePricePeriod(shiftedDateStr(0)) || pricePeriods[pricePeriods.length - 1];
+    const { data, error } = await supabaseClient
+      .from('melon_price_periods')
+      .insert({
+        sheet_id: sheetId,
+        start_date: shiftedDateStr(0),
+        price_3l: base ? base.price_3l : DEFAULT_PRICES.qty3l,
+        price_4l: base ? base.price_4l : DEFAULT_PRICES.qty4l,
+        price_5l: base ? base.price_5l : DEFAULT_PRICES.qty5l,
+        price_onion: base ? base.price_onion : DEFAULT_PRICES.onion,
+        price_box2: base ? base.price_box2 : DEFAULT_PRICES.box2,
+        price_box35: base ? base.price_box35 : DEFAULT_PRICES.box35,
+      })
+      .select()
+      .single();
+
+    if (error) { alert('価格期間の追加に失敗しました。'); console.error(error); return; }
+    pricePeriods.push(data);
+    pricePeriods.sort((a, b) => a.start_date < b.start_date ? -1 : 1);
+    renderPriceTable();
+  }
+
+  async function updatePricePeriodDate(id, field, value) {
+    const { error } = await supabaseClient
+      .from('melon_price_periods')
+      .update({ [field]: value || null })
+      .eq('id', id);
+
+    if (error) { alert('更新に失敗しました。'); console.error(error); renderPriceTable(); return; }
+
+    const period = pricePeriods.find(p => p.id === id);
+    if (period) period[field] = value || null;
+    pricePeriods.sort((a, b) => a.start_date < b.start_date ? -1 : 1);
+    renderPriceTable();
+  }
+
+  async function editPricePeriodAmount(id, key) {
+    const period = pricePeriods.find(p => p.id === id);
+    const col = PRICE_TABLE_COLS.find(c => c.key === key);
+    const input = prompt(`${col.label} の単価を入力してください（円）`, period[col.dbCol]);
+    if (input === null) return;
+    const newPrice = Math.max(0, parseInt(input, 10));
+    if (Number.isNaN(newPrice)) { alert('数値を入力してください'); return; }
+
+    const { error } = await supabaseClient
+      .from('melon_price_periods')
+      .update({ [col.dbCol]: newPrice })
+      .eq('id', id);
+
+    if (error) { alert('単価の更新に失敗しました。'); console.error(error); return; }
+
+    period[col.dbCol] = newPrice;
+    renderPriceTable();
+  }
+
+  async function deletePricePeriod(id) {
+    if (pricePeriods.length <= 1) { alert('価格期間は最低1件必要です。'); return; }
+    if (!confirm('この価格期間を削除しますか？')) return;
+
+    const { error } = await supabaseClient.from('melon_price_periods').delete().eq('id', id);
+    if (error) { alert('削除に失敗しました。'); console.error(error); return; }
+
+    pricePeriods = pricePeriods.filter(p => p.id !== id);
+    renderPriceTable();
   }
 
   // ── 当日・前日の出荷状況 ────────────────────────────────
@@ -726,12 +886,19 @@
   // ── 行追加・削除 ────────────────────────────────────────
   async function addRow() {
     const maxOrder = entries.reduce((m, e) => Math.max(m, e.sort_order), 0);
+    const prices = getPricesForDate(shiftedDateStr(0));
     const { data, error } = await supabaseClient
       .from('melon_entries')
       .insert({
         sheet_id: sheetId,
         sort_order: maxOrder + 1,
         created_by: currentProfile.id,
+        unit_price_3l: prices.qty3l,
+        unit_price_4l: prices.qty4l,
+        unit_price_5l: prices.qty5l,
+        onion_unit_price: prices.onion,
+        box_unit_price_2: prices.box2,
+        box_unit_price_35: prices.box35,
       })
       .select()
       .single();
@@ -920,8 +1087,9 @@
   function renderQtyModal(body, entry, def) {
     body.dataset.entryId = entry.id;
     const colKey = Object.keys(COLUMN_DEFS).find(k => COLUMN_DEFS[k] === def);
-    const currentPrice = entry[def.priceKey] ?? def.defaultPrice;
-    const priceChanged = currentPrice !== def.defaultPrice;
+    const defaultPrice = getDefaultPrice(colKey, entry);
+    const currentPrice = entry[def.priceKey] ?? defaultPrice;
+    const priceChanged = currentPrice !== defaultPrice;
 
     body.innerHTML = `
       <div class="modal-group">
@@ -929,7 +1097,7 @@
         <input type="number" id="mQty" min="0" step="1" value="${entry[colKey] || 0}">
       </div>
       <div class="modal-group">
-        <label>単価（基本 ${formatYen(def.defaultPrice)}）</label>
+        <label>単価（基本 ${formatYen(defaultPrice)}）</label>
         <button type="button" class="price-toggle" id="priceToggleBtn" onclick="togglePriceInput()">${priceChanged ? '単価を変更中 ▲' : '単価を変更する ▼'}</button>
         <div class="price-input-row ${priceChanged ? 'open' : ''}" id="priceInputRow">
           <input type="number" id="mPrice" min="0" step="1" value="${currentPrice}">
@@ -983,9 +1151,10 @@
   // ── 玉ねぎモーダル ──────────────────────────────────────
   function renderOnionModal(body, entry) {
     body.dataset.entryId = entry.id;
+    const prices = getPricesForDate(entry.entry_date);
     body.innerHTML = `
       <div class="modal-group">
-        <label>玉ねぎ（基本 ${formatYen(DEFAULT_PRICES.onion)}/kg）</label>
+        <label>玉ねぎ（基本 ${formatYen(prices.onion)}/kg）</label>
         <input type="number" id="mOnion" min="0" step="0.1" value="${entry.onion_kg || 0}">
       </div>`;
     return async () => ({ onion_kg: Math.max(0, parseFloat(document.getElementById('mOnion').value || '0')) });
@@ -994,14 +1163,15 @@
   // ── 箱代モーダル ────────────────────────────────────────
   function renderBoxModal(body, entry) {
     body.dataset.entryId = entry.id;
+    const prices = getPricesForDate(entry.entry_date);
     body.innerHTML = `
       <div class="modal-group">
         <div class="box-row">
-          <span>2玉入（${formatYen(DEFAULT_PRICES.box2)}）</span>
+          <span>2玉入（${formatYen(prices.box2)}）</span>
           <input type="number" id="mBox2" min="0" step="1" value="${entry.box_2 || 0}">
         </div>
         <div class="box-row">
-          <span>3〜5玉入（${formatYen(DEFAULT_PRICES.box35)}）</span>
+          <span>3〜5玉入（${formatYen(prices.box35)}）</span>
           <input type="number" id="mBox35" min="0" step="1" value="${entry.box_35 || 0}">
         </div>
       </div>`;
@@ -1088,6 +1258,7 @@
       return;
     }
 
+    await loadPricePeriods();
     await loadEntries();
   })();
 
