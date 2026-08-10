@@ -1032,11 +1032,12 @@
 
   async function loadBreakSettings() {
     const { data, error } = await supabaseClient
-      .from('break_settings')
+      .from('staff_break_settings')
       .select('am_start, am_end, lunch_start, lunch_end, pm_start, pm_end')
-      .eq('id', 1)
-      .single();
-    if (error || !data) { console.error(error); return; }
+      .eq('staff_id', currentProfile.id)
+      .maybeSingle();
+    if (error) console.error(error);
+    if (!data) return; // 未設定の場合は初期値のまま
     BREAKS = [
       { type: 'break', label: '☕ 休憩（きゅうけい）',   start: fmt(data.am_start),    end: fmt(data.am_end) },
       { type: 'break', label: '🍱 昼休憩（ひるきゅうけい）', start: fmt(data.lunch_start), end: fmt(data.lunch_end) },
