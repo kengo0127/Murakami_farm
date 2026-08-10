@@ -686,7 +686,6 @@
     <div class="header-right">
       <span id="userName"></span>
       <span class="admin-badge">管理者</span>
-      <button class="btn-logout" onclick="openBreakSettingsModal()">休憩時間変更</button>
       <button class="btn-logout" onclick="logout()">ログアウト</button>
     </div>
   </div>
@@ -706,6 +705,15 @@
     <div class="date-bar">
       <label>対象日</label>
       <input type="date" id="selectedDate" onchange="onDateChange()">
+    </div>
+
+    <div class="form-card">
+      <h2>⏱ 休憩時間変更</h2>
+      <div class="form-group">
+        <label>対象スタッフ</label>
+        <select id="breakStaffSelect"></select>
+      </div>
+      <button type="button" class="btn-submit" onclick="openBreakSettingsModal()">休憩時間を編集</button>
     </div>
 
     <div class="form-card">
@@ -843,7 +851,7 @@
 
 <div class="modal-overlay" id="breakSettingsModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title">休憩時間変更</div>
+    <div class="modal-title" id="breakSettingsModalTitle">休憩時間変更</div>
 
     <div class="break-edit-block">
       <div class="break-edit-label">☕ AM休憩</div>
@@ -1483,13 +1491,21 @@
     document.getElementById('nowDisplay').textContent = '現在 ' + fmtHM(new Date());
   }
 
-  let PROGRESS_BREAKS = [
+  const PROGRESS_BREAKS = [
     { label: '☕ 休憩',   start: '10:00', end: '10:30' },
     { label: '🍱 昼休憩', start: '12:00', end: '13:00' },
     { label: '☕ 休憩',   start: '15:00', end: '15:30' },
   ];
 
-  // ── 休憩時間設定 ────────────────────────────────────────
+  // ── 休憩時間設定（スタッフ／グループごと） ────────────────
+  const BREAK_DEFAULTS = {
+    am_start: '10:00', am_end: '10:30',
+    lunch_start: '12:00', lunch_end: '13:00',
+    pm_start: '15:00', pm_end: '15:30',
+  };
+
+  let breakEditingStaffId = null;
+
   // 4:00〜20:00 を15分刻みの<option>群として返す
   function breakTimeOptionsHtml(selected) {
     let html = '';
@@ -1504,33 +1520,36 @@
     return html;
   }
 
-  function applyBreakSettingsToProgressBreaks(s) {
-    PROGRESS_BREAKS = [
-      { label: '☕ 休憩',   start: fmt(s.am_start),    end: fmt(s.am_end) },
-      { label: '🍱 昼休憩', start: fmt(s.lunch_start), end: fmt(s.lunch_end) },
-      { label: '☕ 休憩',   start: fmt(s.pm_start),    end: fmt(s.pm_end) },
-    ];
+  function renderBreakStaffSelect() {
+    const el = document.getElementById('breakStaffSelect');
+    el.innerHTML = staffList.length
+      ? staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('')
+      : '<option value="">スタッフが登録されていません</option>';
   }
 
-  async function loadBreakSettings() {
-    const { data, error } = await supabaseClient
-      .from('break_settings')
-      .select('am_start, am_end, lunch_start, lunch_end, pm_start, pm_end')
-      .eq('id', 1)
-      .single();
-    if (error || !data) { console.error(error); return; }
-    applyBreakSettingsToProgressBreaks(data);
-  }
+  async function openBreakSettingsModal() {
+    const staffId = document.getElementById('breakStaffSelect').value;
+    if (!staffId) { alert('スタッフを選択してください'); return; }
+    breakEditingStaffId = staffId;
 
-  function openBreakSettingsModal() {
+    const staffName = staffList.find(s => s.id === staffId)?.name ?? '';
+    document.getElementById('breakSettingsModalTitle').textContent = `休憩時間変更（${staffName}）`;
     document.getElementById('breakSettingsMsg').textContent = '';
-    const b = PROGRESS_BREAKS;
-    document.getElementById('breakAmStart').innerHTML    = breakTimeOptionsHtml(b[0].start);
-    document.getElementById('breakAmEnd').innerHTML      = breakTimeOptionsHtml(b[0].end);
-    document.getElementById('breakLunchStart').innerHTML = breakTimeOptionsHtml(b[1].start);
-    document.getElementById('breakLunchEnd').innerHTML   = breakTimeOptionsHtml(b[1].end);
-    document.getElementById('breakPmStart').innerHTML    = breakTimeOptionsHtml(b[2].start);
-    document.getElementById('breakPmEnd').innerHTML      = breakTimeOptionsHtml(b[2].end);
+
+    const { data, error } = await supabaseClient
+      .from('staff_break_settings')
+      .select('am_start, am_end, lunch_start, lunch_end, pm_start, pm_end')
+      .eq('staff_id', staffId)
+      .maybeSingle();
+    if (error) console.error(error);
+
+    const s = data ?? BREAK_DEFAULTS;
+    document.getElementById('breakAmStart').innerHTML    = breakTimeOptionsHtml(fmt(s.am_start));
+    document.getElementById('breakAmEnd').innerHTML      = breakTimeOptionsHtml(fmt(s.am_end));
+    document.getElementById('breakLunchStart').innerHTML = breakTimeOptionsHtml(fmt(s.lunch_start));
+    document.getElementById('breakLunchEnd').innerHTML   = breakTimeOptionsHtml(fmt(s.lunch_end));
+    document.getElementById('breakPmStart').innerHTML    = breakTimeOptionsHtml(fmt(s.pm_start));
+    document.getElementById('breakPmEnd').innerHTML      = breakTimeOptionsHtml(fmt(s.pm_end));
     document.getElementById('breakSettingsModalOverlay').classList.add('open');
   }
 
@@ -1557,28 +1576,22 @@
     btn.textContent = '保存中...';
 
     const { error } = await supabaseClient
-      .from('break_settings')
-      .update({
+      .from('staff_break_settings')
+      .upsert({
+        staff_id: breakEditingStaffId,
         am_start: amStart, am_end: amEnd,
         lunch_start: lunchStart, lunch_end: lunchEnd,
         pm_start: pmStart, pm_end: pmEnd,
         updated_by: currentProfile.id,
         updated_at: new Date().toISOString(),
-      })
-      .eq('id', 1);
+      }, { onConflict: 'staff_id' });
 
     btn.disabled = false;
     btn.textContent = '保存する';
 
     if (error) { msg.textContent = '保存に失敗しました'; console.error(error); return; }
 
-    applyBreakSettingsToProgressBreaks({
-      am_start: amStart, am_end: amEnd,
-      lunch_start: lunchStart, lunch_end: lunchEnd,
-      pm_start: pmStart, pm_end: pmEnd,
-    });
     closeBreakSettingsModal();
-    if (currentTab === 'progress') loadProgress();
   }
 
   async function loadProgress() {
@@ -1750,7 +1763,6 @@
     document.getElementById('selectedDate').value = getToday();
     document.getElementById('reportsDate').value = getToday();
     populateTimeSelects();
-    await loadBreakSettings();
 
     // スタッフ一覧取得
     const { data } = await supabaseClient
@@ -1760,6 +1772,7 @@
       .order('name');
     staffList = data ?? [];
     renderStaffCheckboxes();
+    renderBreakStaffSelect();
 
     renderHouseGrid();
     await loadFieldPlots();
