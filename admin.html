@@ -186,6 +186,95 @@
 
     .form-group textarea { resize: vertical; }
 
+    /* ── 休憩時間変更モーダル ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-sheet {
+      background: #fff;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 16px;
+      padding: 22px 20px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #1a3d17;
+      margin-bottom: 16px;
+    }
+
+    .break-edit-block { margin-bottom: 18px; }
+
+    .break-edit-block .break-edit-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a3d17;
+      margin-bottom: 8px;
+    }
+
+    .break-edit-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .break-edit-row select {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 8px;
+      font-size: 15px;
+      color: #222;
+      background: #fafffe;
+      font-family: inherit;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .btn-modal-cancel {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      color: #888;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-modal-submit {
+      flex: 2;
+      padding: 12px;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-modal-submit:disabled { background: #bbb; cursor: not-allowed; }
+
     /* Staff checkboxes */
     .staff-grid {
       display: flex;
@@ -597,6 +686,7 @@
     <div class="header-right">
       <span id="userName"></span>
       <span class="admin-badge">管理者</span>
+      <button class="btn-logout" onclick="openBreakSettingsModal()">休憩時間変更</button>
       <button class="btn-logout" onclick="logout()">ログアウト</button>
     </div>
   </div>
@@ -751,6 +841,46 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="breakSettingsModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title">休憩時間変更</div>
+
+    <div class="break-edit-block">
+      <div class="break-edit-label">☕ AM休憩</div>
+      <div class="break-edit-row">
+        <select id="breakAmStart"></select>
+        <span>〜</span>
+        <select id="breakAmEnd"></select>
+      </div>
+    </div>
+
+    <div class="break-edit-block">
+      <div class="break-edit-label">🍱 昼休憩</div>
+      <div class="break-edit-row">
+        <select id="breakLunchStart"></select>
+        <span>〜</span>
+        <select id="breakLunchEnd"></select>
+      </div>
+    </div>
+
+    <div class="break-edit-block">
+      <div class="break-edit-label">☕ PM休憩</div>
+      <div class="break-edit-row">
+        <select id="breakPmStart"></select>
+        <span>〜</span>
+        <select id="breakPmEnd"></select>
+      </div>
+    </div>
+
+    <div id="breakSettingsMsg" style="font-size:13px;color:#c0392b;margin-bottom:10px;"></div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" onclick="closeBreakSettingsModal()">キャンセル</button>
+      <button type="button" class="btn-modal-submit" id="breakSettingsSaveBtn" onclick="saveBreakSettings()">保存する</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script>
@@ -766,10 +896,10 @@
   let selectedFieldPlotIds = new Set();
   let fieldPlots = [];
 
-  // 6:00〜20:00 を15分刻みでselectに設定
+  // 4:00〜20:00 を15分刻みでselectに設定
   function populateTimeSelects() {
     const options = ['<option value="">-- 選択 --</option>'];
-    for (let h = 6; h <= 20; h++) {
+    for (let h = 4; h <= 20; h++) {
       for (let m = 0; m < 60; m += 15) {
         const hh = String(h).padStart(2, '0');
         const mm = String(m).padStart(2, '0');
@@ -1353,11 +1483,103 @@
     document.getElementById('nowDisplay').textContent = '現在 ' + fmtHM(new Date());
   }
 
-  const PROGRESS_BREAKS = [
+  let PROGRESS_BREAKS = [
     { label: '☕ 休憩',   start: '10:00', end: '10:30' },
     { label: '🍱 昼休憩', start: '12:00', end: '13:00' },
     { label: '☕ 休憩',   start: '15:00', end: '15:30' },
   ];
+
+  // ── 休憩時間設定 ────────────────────────────────────────
+  // 4:00〜20:00 を15分刻みの<option>群として返す
+  function breakTimeOptionsHtml(selected) {
+    let html = '';
+    for (let h = 4; h <= 20; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        const v = `${hh}:${mm}`;
+        html += `<option value="${v}" ${v === selected ? 'selected' : ''}>${v}</option>`;
+      }
+    }
+    return html;
+  }
+
+  function applyBreakSettingsToProgressBreaks(s) {
+    PROGRESS_BREAKS = [
+      { label: '☕ 休憩',   start: fmt(s.am_start),    end: fmt(s.am_end) },
+      { label: '🍱 昼休憩', start: fmt(s.lunch_start), end: fmt(s.lunch_end) },
+      { label: '☕ 休憩',   start: fmt(s.pm_start),    end: fmt(s.pm_end) },
+    ];
+  }
+
+  async function loadBreakSettings() {
+    const { data, error } = await supabaseClient
+      .from('break_settings')
+      .select('am_start, am_end, lunch_start, lunch_end, pm_start, pm_end')
+      .eq('id', 1)
+      .single();
+    if (error || !data) { console.error(error); return; }
+    applyBreakSettingsToProgressBreaks(data);
+  }
+
+  function openBreakSettingsModal() {
+    document.getElementById('breakSettingsMsg').textContent = '';
+    const b = PROGRESS_BREAKS;
+    document.getElementById('breakAmStart').innerHTML    = breakTimeOptionsHtml(b[0].start);
+    document.getElementById('breakAmEnd').innerHTML      = breakTimeOptionsHtml(b[0].end);
+    document.getElementById('breakLunchStart').innerHTML = breakTimeOptionsHtml(b[1].start);
+    document.getElementById('breakLunchEnd').innerHTML   = breakTimeOptionsHtml(b[1].end);
+    document.getElementById('breakPmStart').innerHTML    = breakTimeOptionsHtml(b[2].start);
+    document.getElementById('breakPmEnd').innerHTML      = breakTimeOptionsHtml(b[2].end);
+    document.getElementById('breakSettingsModalOverlay').classList.add('open');
+  }
+
+  function closeBreakSettingsModal() {
+    document.getElementById('breakSettingsModalOverlay').classList.remove('open');
+  }
+
+  async function saveBreakSettings() {
+    const amStart    = document.getElementById('breakAmStart').value;
+    const amEnd      = document.getElementById('breakAmEnd').value;
+    const lunchStart = document.getElementById('breakLunchStart').value;
+    const lunchEnd   = document.getElementById('breakLunchEnd').value;
+    const pmStart    = document.getElementById('breakPmStart').value;
+    const pmEnd      = document.getElementById('breakPmEnd').value;
+
+    const msg = document.getElementById('breakSettingsMsg');
+    if (amStart >= amEnd || lunchStart >= lunchEnd || pmStart >= pmEnd) {
+      msg.textContent = '各休憩の終了時刻は開始時刻より後にしてください';
+      return;
+    }
+
+    const btn = document.getElementById('breakSettingsSaveBtn');
+    btn.disabled = true;
+    btn.textContent = '保存中...';
+
+    const { error } = await supabaseClient
+      .from('break_settings')
+      .update({
+        am_start: amStart, am_end: amEnd,
+        lunch_start: lunchStart, lunch_end: lunchEnd,
+        pm_start: pmStart, pm_end: pmEnd,
+        updated_by: currentProfile.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', 1);
+
+    btn.disabled = false;
+    btn.textContent = '保存する';
+
+    if (error) { msg.textContent = '保存に失敗しました'; console.error(error); return; }
+
+    applyBreakSettingsToProgressBreaks({
+      am_start: amStart, am_end: amEnd,
+      lunch_start: lunchStart, lunch_end: lunchEnd,
+      pm_start: pmStart, pm_end: pmEnd,
+    });
+    closeBreakSettingsModal();
+    if (currentTab === 'progress') loadProgress();
+  }
 
   async function loadProgress() {
     updateNowDisplay();
@@ -1528,6 +1750,7 @@
     document.getElementById('selectedDate').value = getToday();
     document.getElementById('reportsDate').value = getToday();
     populateTimeSelects();
+    await loadBreakSettings();
 
     // スタッフ一覧取得
     const { data } = await supabaseClient
