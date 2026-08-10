@@ -1023,12 +1023,26 @@
 <script src="js/supabase.js"></script>
 <script>
 
-  // ── 休憩時間定義 ──────────────────────────────────────
-  const BREAKS = [
+  // ── 休憩時間定義（管理者が「休憩時間変更」で変更可能。DBから取得できるまでの初期値） ──
+  let BREAKS = [
     { type: 'break', label: '☕ 休憩（きゅうけい）',   start: '10:00', end: '10:30' },
     { type: 'break', label: '🍱 昼休憩（ひるきゅうけい）', start: '12:00', end: '13:00' },
     { type: 'break', label: '☕ 休憩（きゅうけい）',   start: '15:00', end: '15:30' },
   ];
+
+  async function loadBreakSettings() {
+    const { data, error } = await supabaseClient
+      .from('break_settings')
+      .select('am_start, am_end, lunch_start, lunch_end, pm_start, pm_end')
+      .eq('id', 1)
+      .single();
+    if (error || !data) { console.error(error); return; }
+    BREAKS = [
+      { type: 'break', label: '☕ 休憩（きゅうけい）',   start: fmt(data.am_start),    end: fmt(data.am_end) },
+      { type: 'break', label: '🍱 昼休憩（ひるきゅうけい）', start: fmt(data.lunch_start), end: fmt(data.lunch_end) },
+      { type: 'break', label: '☕ 休憩（きゅうけい）',   start: fmt(data.pm_start),    end: fmt(data.pm_end) },
+    ];
+  }
 
   let currentProfile = null;
   // DBが追いつく前に再描画されても「開始済み」状態を保持するローカルキャッシュ
@@ -2230,6 +2244,7 @@
     setInterval(loadTasks, 60000);
 
     populateReportTimeSelects();
+    await loadBreakSettings();
     await loadFieldPlotsCache();
     await loadTasks();
 
