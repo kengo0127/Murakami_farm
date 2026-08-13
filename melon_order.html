@@ -99,9 +99,6 @@
 
     .section-title:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
 
-    .other-row { display: flex; gap: 10px; }
-    .other-row .form-group { flex: 1; margin-bottom: 0; }
-
     /* ハニーポット：botよけ。人には見えない */
     .hp-field { position: absolute; left: -9999px; top: -9999px; }
 
@@ -222,17 +219,6 @@
       <input type="number" id="fOnion" min="0" step="0.1" value="0">
     </div>
 
-    <div class="form-group other-row">
-      <div class="form-group">
-        <label>その他 数量</label>
-        <input type="number" id="fOtherQty" min="0" step="1" value="0">
-      </div>
-      <div class="form-group">
-        <label>その他 内容</label>
-        <input type="text" id="fOtherLabel" placeholder="例：パネ">
-      </div>
-    </div>
-
     <div class="form-group" style="margin-top:16px;">
       <label>備考 <span class="hint">任意</span></label>
       <textarea id="fNote" placeholder="ご要望などございましたらご記入ください"></textarea>
@@ -244,7 +230,7 @@
   <div class="success-state" id="successState">
     <div class="icon">✅</div>
     <h2>ご注文を受け付けました</h2>
-    <p>担当者が内容を確認のうえ、予約リストに登録いたします。<br>ご注文ありがとうございました。</p>
+    <p>担当者が内容を確認のうえ、ご連絡いたします。<br>ご注文ありがとうございました。</p>
     <button type="button" class="btn-again" onclick="resetForm()">続けてもう1件申し込む</button>
   </div>
 </div>
@@ -253,6 +239,13 @@
 <script src="js/supabase.js"></script>
 <script src="js/melon-common.js"></script>
 <script>
+
+  function todayStrJST() {
+    const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    return jst.toISOString().split('T')[0];
+  }
+
+  document.getElementById('fDate').min = todayStrJST();
 
   function updateWeekdayPreview() {
     const val = document.getElementById('fDate').value;
@@ -292,15 +285,14 @@
     const qty4l = Math.max(0, parseInt(document.getElementById('fQty4l').value || '0', 10));
     const qty5l = Math.max(0, parseInt(document.getElementById('fQty5l').value || '0', 10));
     const onionKg = Math.max(0, parseFloat(document.getElementById('fOnion').value || '0'));
-    const otherQty = Math.max(0, parseInt(document.getElementById('fOtherQty').value || '0', 10));
-    const otherLabel = document.getElementById('fOtherLabel').value.trim();
     const note = document.getElementById('fNote').value.trim();
 
     if (!name) { showError('お名前をご入力ください。'); return; }
     if (!contact) { showError('ご連絡先をご入力ください。'); return; }
     if (!date) { showError('ご来店希望日をご入力ください。'); return; }
-    if (qty3l + qty4l + qty5l + otherQty <= 0 && onionKg <= 0) {
-      showError('ご注文内容（3L/4L/5L・玉ねぎ・その他のいずれか）を1つ以上ご入力ください。');
+    if (date < todayStrJST()) { showError('ご来店希望日は本日以降の日付をお選びください。'); return; }
+    if (qty3l + qty4l + qty5l <= 0 && onionKg <= 0) {
+      showError('ご注文内容（3L/4L/5L・玉ねぎのいずれか）を1つ以上ご入力ください。');
       return;
     }
 
@@ -315,8 +307,6 @@
       qty_3l: qty3l,
       qty_4l: qty4l,
       qty_5l: qty5l,
-      qty_other: otherQty,
-      other_label: otherLabel || null,
       onion_kg: onionKg,
       note: note || null,
     });
