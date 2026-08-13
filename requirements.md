@@ -257,3 +257,15 @@ Edge Function（サービスロール）専用のテーブル。クライアン�
 - 簡易なbot対策としてハニーポット欄をフォームに設置（reCAPTCHA等の本格的な対策は未導入）
 - 関連ファイル：`migration_2026-08-13_melon_order_requests.sql` / `melon_order.html` / `melon_requests.html`
 - お客様向けフォームのURLは、村上農園のインスタのプロフィール欄・固定投稿等で案内する想定
+- 承認・却下の画面（melon_requests.html）には、連絡先をワンタップでコピーできるボタンを追加（承認・却下いずれの場合もお客様への連絡が必要なため）
+
+### 注文リクエストのLINE通知（2026-08-13追加）
+
+- タスクの押し忘れ通知（`check-delayed-tasks`）と同じ、管理者向けLINE公式アカウントの仕組みを流用
+- 実現方法：新規Edge Function `supabase/functions/notify-order-requests` を pg_cron で5分おきに自動実行
+- 以下2種類の通知を行う：
+  1. **新規受信通知**：新しい注文リクエストが届いたら、数分以内にLINEで通知
+  2. **未対応の催促通知**：`pending`状態のまま受付から60分経過しても未対応の場合に再通知
+- 二重送信防止のため、`melon_order_requests` テーブルに `notified_new_at` / `notified_overdue_at` を追加し、送信済みかどうかを記録
+- 通知先は `line_recipients` テーブル（`label = 'admin_alert'`）を `check-delayed-tasks` と共用。LINE公式アカウントの友だち追加が既に済んでいれば追加設定不要
+- 関連ファイル：`migration_2026-08-13b_order_request_notify.sql` / `supabase/functions/notify-order-requests/index.ts`
