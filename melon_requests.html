@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>村上農園 - メロン注文リクエスト</title>
+  <title>村上農園 - インスタ・EC注文リクエスト</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -259,7 +259,7 @@
           </div>
           <div class="req-submitted">${formatSubmittedAt(r.created_at)}</div>
         </div>
-        <div class="req-date">🍈 お届け希望日：${formatDateJa(r.entry_date)}</div>
+        <div class="req-date">📅 ご来店希望日：${formatDateJa(r.entry_date)}</div>
         <div class="req-items">
           ${itemChips(r).map(c => `<div class="req-item-chip">${escHtml(c)}</div>`).join('') || '<div class="req-item-chip">（数量未入力）</div>'}
         </div>
