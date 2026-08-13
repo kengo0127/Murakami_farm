@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 - メロンご予約フォーム</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f7f0;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    header {
+      background: #2e5c28;
+      color: #fff;
+      padding: 18px 16px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    }
+
+    .header-title { font-size: 18px; font-weight: 800; }
+    .header-sub { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+
+    .content {
+      padding: 18px 14px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .intro {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #444;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
+    }
+
+    form {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .form-group { margin-bottom: 18px; }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a3d17;
+      margin-bottom: 8px;
+    }
+
+    .form-group .hint { font-size: 11px; font-weight: 400; color: #999; margin-left: 4px; }
+
+    .form-group input[type="text"],
+    .form-group input[type="tel"],
+    .form-group input[type="date"],
+    .form-group input[type="number"],
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: inherit;
+    }
+
+    .form-group textarea { min-height: 70px; resize: vertical; }
+
+    .weekday-preview { font-size: 12px; color: #2e5c28; font-weight: 700; margin-top: 6px; }
+
+    .qty-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .qty-item label { text-align: center; }
+
+    .qty-item input { text-align: center; }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #1a3d17;
+      margin: 22px 0 14px;
+      padding-top: 18px;
+      border-top: 1px solid #eef3ee;
+    }
+
+    .section-title:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+
+    .other-row { display: flex; gap: 10px; }
+    .other-row .form-group { flex: 1; margin-bottom: 0; }
+
+    /* ハニーポット：botよけ。人には見えない */
+    .hp-field { position: absolute; left: -9999px; top: -9999px; }
+
+    .btn-submit {
+      width: 100%;
+      padding: 15px;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .btn-submit:active { background: #1a3d17; }
+    .btn-submit:disabled { background: #bbb; cursor: not-allowed; }
+
+    .error-box {
+      display: none;
+      background: #fdecea;
+      color: #c62828;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .error-box.show { display: block; }
+
+    .success-state {
+      display: none;
+      text-align: center;
+      background: #fff;
+      border-radius: 14px;
+      padding: 50px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .success-state.show { display: block; }
+
+    .success-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .success-state h2 { font-size: 17px; color: #1a3d17; margin-bottom: 10px; }
+    .success-state p { font-size: 13px; color: #666; line-height: 1.7; }
+
+    .btn-again {
+      margin-top: 20px;
+      background: none;
+      border: 1.5px solid #2e5c28;
+      color: #2e5c28;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">🍈 村上農園 メロンご予約フォーム</div>
+  <div class="header-sub">ご注文内容をご入力ください</div>
+</header>
+
+<div class="content">
+  <div class="intro">
+    ご注文いただいた内容は担当者が確認のうえ、予約リストに登録いたします。<br>
+    内容確認のため、少しお時間をいただく場合があります。あらかじめご了承ください。
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <form id="orderForm" onsubmit="handleSubmit(event)">
+    <input class="hp-field" type="text" id="hpField" name="website" tabindex="-1" autocomplete="off">
+
+    <div class="section-title">お客様情報</div>
+
+    <div class="form-group">
+      <label>お名前 <span class="hint">必須</span></label>
+      <input type="text" id="fName" placeholder="例：村上　太郎" required>
+    </div>
+
+    <div class="form-group">
+      <label>ご連絡先 <span class="hint">お電話番号・インスタのユーザー名など</span></label>
+      <input type="text" id="fContact" placeholder="例：090-1234-5678 / @murakami_taro">
+    </div>
+
+    <div class="section-title">お届け希望日</div>
+
+    <div class="form-group">
+      <label>お届け希望日 <span class="hint">必須</span></label>
+      <input type="date" id="fDate" required onchange="updateWeekdayPreview()">
+      <div class="weekday-preview" id="weekdayPreview"></div>
+    </div>
+
+    <div class="section-title">ご注文内容</div>
+
+    <div class="qty-grid">
+      <div class="qty-item form-group">
+        <label>3L</label>
+        <input type="number" id="fQty3l" min="0" step="1" value="0">
+      </div>
+      <div class="qty-item form-group">
+        <label>4L</label>
+        <input type="number" id="fQty4l" min="0" step="1" value="0">
+      </div>
+      <div class="qty-item form-group">
+        <label>5L</label>
+        <input type="number" id="fQty5l" min="0" step="1" value="0">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:16px;">
+      <label>玉ねぎ <span class="hint">kg</span></label>
+      <input type="number" id="fOnion" min="0" step="0.1" value="0">
+    </div>
+
+    <div class="form-group other-row">
+      <div class="form-group">
+        <label>その他 数量</label>
+        <input type="number" id="fOtherQty" min="0" step="1" value="0">
+      </div>
+      <div class="form-group">
+        <label>その他 内容</label>
+        <input type="text" id="fOtherLabel" placeholder="例：パネ">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:16px;">
+      <label>備考 <span class="hint">任意</span></label>
+      <textarea id="fNote" placeholder="ご要望などございましたらご記入ください"></textarea>
+    </div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">この内容で予約を申し込む</button>
+  </form>
+
+  <div class="success-state" id="successState">
+    <div class="icon">✅</div>
+    <h2>ご注文を受け付けました</h2>
+    <p>担当者が内容を確認のうえ、予約リストに登録いたします。<br>ご注文ありがとうございました。</p>
+    <button type="button" class="btn-again" onclick="resetForm()">続けてもう1件申し込む</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/melon-common.js"></script>
+<script>
+
+  function updateWeekdayPreview() {
+    const val = document.getElementById('fDate').value;
+    document.getElementById('weekdayPreview').textContent = val ? formatDateJa(val) : '';
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('errorBox');
+    box.textContent = msg;
+    box.classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function clearError() {
+    document.getElementById('errorBox').classList.remove('show');
+  }
+
+  function resetForm() {
+    document.getElementById('orderForm').reset();
+    document.getElementById('weekdayPreview').textContent = '';
+    document.getElementById('successState').classList.remove('show');
+    document.getElementById('orderForm').style.display = 'block';
+    clearError();
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    clearError();
+
+    // ハニーポット：人には見えない欄が埋まっていたらbotとみなして無視する
+    if (document.getElementById('hpField').value) return;
+
+    const name = document.getElementById('fName').value.trim();
+    const contact = document.getElementById('fContact').value.trim();
+    const date = document.getElementById('fDate').value;
+    const qty3l = Math.max(0, parseInt(document.getElementById('fQty3l').value || '0', 10));
+    const qty4l = Math.max(0, parseInt(document.getElementById('fQty4l').value || '0', 10));
+    const qty5l = Math.max(0, parseInt(document.getElementById('fQty5l').value || '0', 10));
+    const onionKg = Math.max(0, parseFloat(document.getElementById('fOnion').value || '0'));
+    const otherQty = Math.max(0, parseInt(document.getElementById('fOtherQty').value || '0', 10));
+    const otherLabel = document.getElementById('fOtherLabel').value.trim();
+    const note = document.getElementById('fNote').value.trim();
+
+    if (!name) { showError('お名前をご入力ください。'); return; }
+    if (!date) { showError('お届け希望日をご入力ください。'); return; }
+    if (qty3l + qty4l + qty5l + otherQty <= 0 && onionKg <= 0) {
+      showError('ご注文内容（3L/4L/5L・玉ねぎ・その他のいずれか）を1つ以上ご入力ください。');
+      return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '送信中...';
+
+    const { error } = await supabaseClient.from('melon_order_requests').insert({
+      customer_name: name,
+      contact: contact || null,
+      entry_date: date,
+      qty_3l: qty3l,
+      qty_4l: qty4l,
+      qty_5l: qty5l,
+      qty_other: otherQty,
+      other_label: otherLabel || null,
+      onion_kg: onionKg,
+      note: note || null,
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'この内容で予約を申し込む';
+
+    if (error) {
+      console.error(error);
+      showError('送信に失敗しました。お手数ですが、もう一度お試しください。');
+      return;
+    }
+
+    document.getElementById('orderForm').style.display = 'none';
+    document.getElementById('successState').classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+</script>
+</body>
+</html>

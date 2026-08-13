@@ -530,22 +530,11 @@
   // 指定日時点で有効な価格期間を返す（開始日が指定日以前で最も新しいもの。
   // 終了日が指定日より前の「期限切れ」期間より、終了日内/未設定の期間を優先する）
   function getActivePricePeriod(dateStr) {
-    const target = dateStr || shiftedDateStr(0);
-    const inRange = pricePeriods.filter(p => p.start_date <= target && (!p.end_date || p.end_date >= target));
-    const pool = inRange.length ? inRange : pricePeriods.filter(p => p.start_date <= target);
-    if (!pool.length) return null;
-    return pool.reduce((latest, p) => (p.start_date > latest.start_date ? p : latest));
+    return getActivePricePeriodFrom(pricePeriods, dateStr || shiftedDateStr(0));
   }
 
   function getPricesForDate(dateStr) {
-    const period = getActivePricePeriod(dateStr);
-    if (period) {
-      return {
-        qty3l: period.price_3l, qty4l: period.price_4l, qty5l: period.price_5l,
-        onion: period.price_onion, box2: period.price_box2, box35: period.price_box35,
-      };
-    }
-    return { qty3l: DEFAULT_PRICES.qty3l, qty4l: DEFAULT_PRICES.qty4l, qty5l: DEFAULT_PRICES.qty5l, onion: DEFAULT_PRICES.onion, box2: DEFAULT_PRICES.box2, box35: DEFAULT_PRICES.box35 };
+    return getPricesForDateFrom(pricePeriods, dateStr || shiftedDateStr(0));
   }
 
   function getDefaultPrice(colKey, entry) {

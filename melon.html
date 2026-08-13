@@ -98,6 +98,33 @@
 
     .fab-add:active { background: #1a3d17; }
 
+    .request-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      text-decoration: none;
+      border-left: 4px solid #ffa726;
+    }
+
+    .request-banner-text { font-size: 14px; font-weight: 800; color: #1a3d17; }
+    .request-banner-sub { font-size: 12px; color: #888; margin-top: 2px; }
+
+    .request-banner-badge {
+      background: #ffa726;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      border-radius: 20px;
+      padding: 5px 12px;
+      white-space: nowrap;
+    }
+
     .modal-overlay {
       display: none;
       position: fixed;
@@ -192,6 +219,14 @@
 </header>
 
 <div class="content">
+  <a class="request-banner" id="requestBanner" href="melon_requests.html" style="display:none">
+    <div>
+      <div class="request-banner-text">📋 お客様からの注文リクエスト</div>
+      <div class="request-banner-sub">未処理のリクエストがあります</div>
+    </div>
+    <div class="request-banner-badge" id="requestBannerBadge">0件</div>
+  </a>
+
   <div class="month-grid" id="monthGrid">
     <div class="loading-state">読み込み中...</div>
   </div>
@@ -309,12 +344,26 @@
     window.location.href = `melon_sheet.html?y=${year}&m=${month}`;
   }
 
+  async function loadPendingRequestCount() {
+    const { count, error } = await supabaseClient
+      .from('melon_order_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending');
+
+    if (error) { console.error(error); return; }
+    if (count > 0) {
+      document.getElementById('requestBannerBadge').textContent = `${count}件`;
+      document.getElementById('requestBanner').style.display = 'flex';
+    }
+  }
+
   (async () => {
     currentProfile = await requireAuth('admin');
     if (!currentProfile) return;
 
     document.getElementById('userName').textContent = currentProfile.name;
     await loadMonths();
+    await loadPendingRequestCount();
   })();
 
 </script>
