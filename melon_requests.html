@@ -175,6 +175,51 @@
     .btn-reject:active { background: #fdecea; }
     .btn-reject:disabled { cursor: not-allowed; opacity: 0.6; }
 
+    .req-contact-copy {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f0f7ee;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+    }
+
+    .req-contact-copy-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #666;
+      flex-shrink: 0;
+    }
+
+    .btn-copy-contact {
+      flex: 1;
+      background: #fff;
+      border: 1.5px solid #c8e0c4;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a3d17;
+      cursor: pointer;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+
+    .btn-copy-contact.copied { background: #e8f5e9; border-color: #43a047; color: #2e7d32; }
+
+    .req-contact-empty {
+      font-size: 12px;
+      color: #c68a00;
+      background: #fff8e6;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+    }
+
     .empty-state, .loading-state {
       text-align: center;
       padding: 60px 20px;
@@ -244,6 +289,15 @@
         ? '<div class="req-status-label rejected">✕ 却下</div>'
         : '';
 
+    const contactCopy = r.status === 'pending' ? (
+      r.contact
+        ? `<div class="req-contact-copy">
+            <span class="req-contact-copy-label">連絡先</span>
+            <button type="button" class="btn-copy-contact" data-contact="${escHtml(r.contact)}" onclick="copyContact(this)">${escHtml(r.contact)}</button>
+          </div>`
+        : `<div class="req-contact-empty">⚠ 連絡先の入力がありません（承認・却下の結果はお客様へご自身で伝えてください）</div>`
+    ) : '';
+
     const actions = r.status === 'pending' ? `
       <div class="req-actions">
         <button class="btn-approve" onclick="approveRequest('${r.id}', this)">✅ 承認して予約表に登録</button>
@@ -265,6 +319,7 @@
         </div>
         ${r.note ? `<div class="req-note">${escHtml(r.note)}</div>` : ''}
         ${statusLabel}
+        ${contactCopy}
         ${actions}
       </div>`;
   }
@@ -284,6 +339,29 @@
       return;
     }
     el.innerHTML = filtered.map(reqCardHTML).join('');
+  }
+
+  async function copyContact(btn) {
+    const text = btn.dataset.contact;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    const original = btn.textContent;
+    btn.textContent = '✅ コピーしました';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.classList.remove('copied');
+    }, 1500);
   }
 
   function switchTab(tab) {
