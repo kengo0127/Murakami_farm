@@ -29,3 +29,23 @@ function formatDateJa(dateStr) {
 function monthLabel(year, month) {
   return `${year}年${month}月`;
 }
+
+// 価格期間一覧から、指定日時点で有効な期間を返す（開始日が指定日以前で最も新しいもの。
+// 終了日が指定日より前の「期限切れ」期間より、終了日内/未設定の期間を優先する）
+function getActivePricePeriodFrom(pricePeriods, dateStr) {
+  const inRange = pricePeriods.filter(p => p.start_date <= dateStr && (!p.end_date || p.end_date >= dateStr));
+  const pool = inRange.length ? inRange : pricePeriods.filter(p => p.start_date <= dateStr);
+  if (!pool.length) return null;
+  return pool.reduce((latest, p) => (p.start_date > latest.start_date ? p : latest));
+}
+
+function getPricesForDateFrom(pricePeriods, dateStr) {
+  const period = getActivePricePeriodFrom(pricePeriods, dateStr);
+  if (period) {
+    return {
+      qty3l: period.price_3l, qty4l: period.price_4l, qty5l: period.price_5l,
+      onion: period.price_onion, box2: period.price_box2, box35: period.price_box35,
+    };
+  }
+  return { ...DEFAULT_PRICES };
+}

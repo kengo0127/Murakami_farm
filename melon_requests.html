@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 - メロン注文リクエスト</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f7f0;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    header {
+      background: #2e5c28;
+      color: #fff;
+      padding: 13px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 10px; }
+
+    .btn-back { color: #fff; text-decoration: none; font-size: 14px; opacity: 0.85; }
+
+    .header-title { font-size: 16px; font-weight: 800; }
+
+    .header-right { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+
+    .btn-logout {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .content {
+      padding: 18px 14px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      background: #fff;
+      color: #1a3d17;
+      border: 1.5px solid #c8e0c4;
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab-btn.active { background: #2e5c28; color: #fff; border-color: #2e5c28; }
+
+    .req-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border-left: 4px solid #ffa726;
+    }
+
+    .req-card.approved { border-left-color: #4caf50; }
+    .req-card.rejected { border-left-color: #c62828; opacity: 0.75; }
+
+    .req-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .req-name { font-size: 16px; font-weight: 800; color: #1a3d17; }
+    .req-contact { font-size: 12px; color: #888; margin-top: 2px; }
+    .req-submitted { font-size: 11px; color: #aaa; white-space: nowrap; }
+
+    .req-date {
+      display: inline-block;
+      background: #f0f7ee;
+      color: #1a3d17;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .req-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .req-item-chip {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .req-note {
+      font-size: 12px;
+      color: #666;
+      background: #fafafa;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    .req-status-label {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .req-status-label.approved { color: #2e7d32; }
+    .req-status-label.rejected { color: #c62828; }
+
+    .req-actions { display: flex; gap: 10px; }
+
+    .btn-approve {
+      flex: 1;
+      padding: 11px;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-approve:active { background: #1a3d17; }
+    .btn-approve:disabled { background: #bbb; cursor: not-allowed; }
+
+    .btn-reject {
+      flex: 1;
+      padding: 11px;
+      background: transparent;
+      color: #c62828;
+      border: 1.5px solid #f0c8c8;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-reject:active { background: #fdecea; }
+    .btn-reject:disabled { cursor: not-allowed; opacity: 0.6; }
+
+    .empty-state, .loading-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #bbb;
+    }
+
+    .empty-state .icon { font-size: 52px; margin-bottom: 14px; }
+    .empty-state p { font-size: 15px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a class="btn-back" href="melon.html">← 戻る</a>
+    <div class="header-title">📋 お客様からの注文リクエスト</div>
+  </div>
+  <div class="header-right">
+    <span id="userName"></span>
+    <button class="btn-logout" onclick="logout()">ログアウト</button>
+  </div>
+</header>
+
+<div class="content">
+  <div class="tabs">
+    <button class="tab-btn active" id="tabPending" onclick="switchTab('pending')">未処理</button>
+    <button class="tab-btn" id="tabDone" onclick="switchTab('done')">処理済み</button>
+  </div>
+
+  <div id="listArea">
+    <div class="loading-state">読み込み中...</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/melon-common.js"></script>
+<script>
+
+  let currentProfile = null;
+  let requests = [];
+  let currentTab = 'pending';
+
+  function itemChips(r) {
+    const chips = [];
+    if (r.qty_3l) chips.push(`3L ${r.qty_3l}玉`);
+    if (r.qty_4l) chips.push(`4L ${r.qty_4l}玉`);
+    if (r.qty_5l) chips.push(`5L ${r.qty_5l}玉`);
+    if (r.onion_kg) chips.push(`玉ねぎ ${r.onion_kg}kg`);
+    if (r.qty_other) chips.push(`その他 ${r.qty_other}${r.other_label ? '（' + r.other_label + '）' : ''}`);
+    return chips;
+  }
+
+  function formatSubmittedAt(ts) {
+    const d = new Date(ts);
+    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} 受付`;
+  }
+
+  function escHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function reqCardHTML(r) {
+    const statusLabel = r.status === 'approved'
+      ? '<div class="req-status-label approved">✅ 予約表に登録済み</div>'
+      : r.status === 'rejected'
+        ? '<div class="req-status-label rejected">✕ 却下</div>'
+        : '';
+
+    const actions = r.status === 'pending' ? `
+      <div class="req-actions">
+        <button class="btn-approve" onclick="approveRequest('${r.id}', this)">✅ 承認して予約表に登録</button>
+        <button class="btn-reject" onclick="rejectRequest('${r.id}')">却下</button>
+      </div>` : '';
+
+    return `
+      <div class="req-card ${r.status}">
+        <div class="req-top">
+          <div>
+            <div class="req-name">${escHtml(r.customer_name)}</div>
+            ${r.contact ? `<div class="req-contact">${escHtml(r.contact)}</div>` : ''}
+          </div>
+          <div class="req-submitted">${formatSubmittedAt(r.created_at)}</div>
+        </div>
+        <div class="req-date">🍈 お届け希望日：${formatDateJa(r.entry_date)}</div>
+        <div class="req-items">
+          ${itemChips(r).map(c => `<div class="req-item-chip">${escHtml(c)}</div>`).join('') || '<div class="req-item-chip">（数量未入力）</div>'}
+        </div>
+        ${r.note ? `<div class="req-note">${escHtml(r.note)}</div>` : ''}
+        ${statusLabel}
+        ${actions}
+      </div>`;
+  }
+
+  function renderList() {
+    const el = document.getElementById('listArea');
+    const filtered = currentTab === 'pending'
+      ? requests.filter(r => r.status === 'pending')
+      : requests.filter(r => r.status !== 'pending');
+
+    if (!filtered.length) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📋</div>
+          <p>${currentTab === 'pending' ? 'いま未処理の注文リクエストはありません' : '処理済みのリクエストはまだありません'}</p>
+        </div>`;
+      return;
+    }
+    el.innerHTML = filtered.map(reqCardHTML).join('');
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tabPending').classList.toggle('active', tab === 'pending');
+    document.getElementById('tabDone').classList.toggle('active', tab === 'done');
+    renderList();
+  }
+
+  async function loadRequests() {
+    const { data, error } = await supabaseClient
+      .from('melon_order_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error(error);
+      document.getElementById('listArea').innerHTML = '<div class="empty-state">読み込みに失敗しました</div>';
+      return;
+    }
+    requests = data || [];
+    renderList();
+  }
+
+  // ── 月次シートの取得（なければ作成） ──────────────────────
+  async function ensureSheetFor(year, month) {
+    const { data: existing } = await supabaseClient
+      .from('melon_sheets')
+      .select('id')
+      .eq('year', year)
+      .eq('month', month)
+      .single();
+
+    if (existing) return existing.id;
+
+    const { data: created, error } = await supabaseClient
+      .from('melon_sheets')
+      .insert({ year, month, created_by: currentProfile.id })
+      .select('id')
+      .single();
+
+    if (error) throw error;
+    return created.id;
+  }
+
+  async function loadOrCreatePricePeriods(sheetId, year, month) {
+    const { data, error } = await supabaseClient
+      .from('melon_price_periods')
+      .select('*')
+      .eq('sheet_id', sheetId)
+      .order('start_date', { ascending: true });
+
+    if (error) throw error;
+    if (data && data.length) return data;
+
+    const monthStart = `${year}-${String(month).padStart(2, '0')}-01`;
+    const { data: created, error: insErr } = await supabaseClient
+      .from('melon_price_periods')
+      .insert({
+        sheet_id: sheetId,
+        start_date: monthStart,
+        price_3l: DEFAULT_PRICES.qty3l, price_4l: DEFAULT_PRICES.qty4l, price_5l: DEFAULT_PRICES.qty5l,
+        price_onion: DEFAULT_PRICES.onion, price_box2: DEFAULT_PRICES.box2, price_box35: DEFAULT_PRICES.box35,
+      })
+      .select()
+      .single();
+    if (insErr) throw insErr;
+    return [created];
+  }
+
+  async function approveRequest(id, btn) {
+    const req = requests.find(r => r.id === id);
+    if (!req) return;
+    if (!confirm(`${req.customer_name} 様のご注文を予約表（${formatDateJa(req.entry_date)}）に登録します。よろしいですか？`)) return;
+
+    btn.disabled = true;
+    btn.textContent = '登録中...';
+
+    try {
+      const [year, month] = req.entry_date.split('-').map(Number);
+      const sheetId = await ensureSheetFor(year, month);
+      const pricePeriods = await loadOrCreatePricePeriods(sheetId, year, month);
+      const prices = getPricesForDateFrom(pricePeriods, req.entry_date);
+
+      const { data: existingEntries } = await supabaseClient
+        .from('melon_entries')
+        .select('sort_order')
+        .eq('sheet_id', sheetId)
+        .order('sort_order', { ascending: false })
+        .limit(1);
+      const maxOrder = existingEntries && existingEntries.length ? existingEntries[0].sort_order : 0;
+
+      const { data: entry, error: insErr } = await supabaseClient
+        .from('melon_entries')
+        .insert({
+          sheet_id: sheetId,
+          sort_order: maxOrder + 1,
+          entry_date: req.entry_date,
+          customer_name: req.customer_name,
+          qty_3l: req.qty_3l,
+          qty_4l: req.qty_4l,
+          qty_5l: req.qty_5l,
+          qty_other: req.qty_other,
+          other_label: req.other_label,
+          onion_kg: req.onion_kg,
+          note: req.contact ? `${req.note ? req.note + '\n' : ''}連絡先：${req.contact}` : req.note,
+          unit_price_3l: prices.qty3l,
+          unit_price_4l: prices.qty4l,
+          unit_price_5l: prices.qty5l,
+          onion_unit_price: prices.onion,
+          box_unit_price_2: prices.box2,
+          box_unit_price_35: prices.box35,
+          created_by: currentProfile.id,
+        })
+        .select('id')
+        .single();
+
+      if (insErr) throw insErr;
+
+      const { error: updErr } = await supabaseClient
+        .from('melon_order_requests')
+        .update({
+          status: 'approved',
+          reviewed_by: currentProfile.id,
+          reviewed_at: new Date().toISOString(),
+          melon_entry_id: entry.id,
+        })
+        .eq('id', id);
+
+      if (updErr) throw updErr;
+
+      await loadRequests();
+    } catch (err) {
+      console.error(err);
+      alert('登録に失敗しました。もう一度お試しください。');
+      btn.disabled = false;
+      btn.textContent = '✅ 承認して予約表に登録';
+    }
+  }
+
+  async function rejectRequest(id) {
+    if (!confirm('このリクエストを却下します。よろしいですか？')) return;
+
+    const { error } = await supabaseClient
+      .from('melon_order_requests')
+      .update({
+        status: 'rejected',
+        reviewed_by: currentProfile.id,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error(error);
+      alert('操作に失敗しました。');
+      return;
+    }
+    await loadRequests();
+  }
+
+  (async () => {
+    currentProfile = await requireAuth('admin');
+    if (!currentProfile) return;
+
+    document.getElementById('userName').textContent = currentProfile.name;
+    await loadRequests();
+  })();
+
+</script>
+</body>
+</html>
