@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>村上農園 - メロン予約管理</title>
+  <title>村上農園 - インスタ・EC注文管理</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -11,7 +11,7 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
       background: #f0f7f0;
       min-height: 100vh;
-      padding-bottom: 100px;
+      padding-bottom: 40px;
     }
 
     header {
@@ -57,47 +57,6 @@
       margin: 0 auto;
     }
 
-    .month-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 12px;
-    }
-
-    .month-card {
-      display: block;
-      background: #fff;
-      border-radius: 14px;
-      padding: 22px 12px;
-      text-align: center;
-      text-decoration: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      transition: transform 0.1s;
-    }
-
-    .month-card:active { transform: scale(0.97); }
-
-    .month-icon { font-size: 34px; margin-bottom: 8px; }
-
-    .month-label { font-size: 15px; font-weight: 800; color: #1a3d17; }
-
-    .fab-add {
-      position: fixed;
-      right: 18px;
-      bottom: 22px;
-      z-index: 200;
-      background: #2e5c28;
-      color: #fff;
-      border: none;
-      border-radius: 30px;
-      padding: 14px 22px;
-      font-size: 14px;
-      font-weight: 800;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.28);
-      cursor: pointer;
-    }
-
-    .fab-add:active { background: #1a3d17; }
-
     .request-banner {
       display: flex;
       align-items: center;
@@ -125,75 +84,78 @@
       white-space: nowrap;
     }
 
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 300;
-      align-items: flex-end;
-      justify-content: center;
+    .add-row-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
     }
 
-    .modal-overlay.open { display: flex; }
-
-    .modal-sheet {
-      background: #fff;
-      width: 100%;
-      max-width: 480px;
-      border-radius: 18px 18px 0 0;
-      padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
-      max-height: 85vh;
-      overflow-y: auto;
-    }
-
-    .modal-title { font-size: 17px; font-weight: 800; color: #1a3d17; margin-bottom: 16px; }
-
-    .modal-group { margin-bottom: 16px; }
-
-    .modal-group label {
-      display: block;
-      font-size: 12px;
-      font-weight: 700;
-      color: #555;
-      margin-bottom: 8px;
-    }
-
-    .modal-group input[type="month"] {
-      width: 100%;
-      padding: 12px;
+    .add-row-bar input[type="month"] {
+      flex: 1;
+      padding: 11px 12px;
       border: 1.5px solid #dde8dd;
       border-radius: 10px;
-      font-size: 16px;
+      font-size: 15px;
+      background: #fff;
     }
 
-    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
-
-    .btn-modal-cancel {
-      flex: 1;
-      padding: 13px;
-      background: transparent;
-      color: #888;
-      border: 1.5px solid #ddd;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .btn-modal-submit {
-      flex: 2;
-      padding: 13px;
+    .btn-add-row {
       background: #2e5c28;
       color: #fff;
       border: none;
       border-radius: 10px;
-      font-size: 15px;
+      padding: 11px 18px;
+      font-size: 14px;
       font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-add-row:active { background: #1a3d17; }
+    .btn-add-row:disabled { background: #bbb; cursor: not-allowed; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    thead th {
+      background: #1a3d17;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 12px 16px;
+      text-align: left;
+    }
+
+    tbody td {
+      padding: 0;
+      border-bottom: 1px solid #eef3ee;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    .month-row-btn {
+      display: block;
+      width: 100%;
+      padding: 15px 16px;
+      background: none;
+      border: none;
+      text-align: left;
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a3d17;
+      font-family: inherit;
       cursor: pointer;
     }
 
-    .btn-modal-submit:disabled { background: #bbb; cursor: not-allowed; }
+    .month-row-btn:active { background: #e8f5e9; }
+
+    .month-row-btn .arrow { float: right; color: #bbb; font-weight: 400; }
 
     .empty-state, .loading-state {
       text-align: center;
@@ -210,7 +172,7 @@
 <header>
   <div class="header-left">
     <a class="btn-back" href="admin.html">← 戻る</a>
-    <div class="header-title">🍈 メロン予約管理</div>
+    <div class="header-title">🍈 インスタ・EC注文管理</div>
   </div>
   <div class="header-right">
     <span id="userName"></span>
@@ -227,27 +189,19 @@
     <div class="request-banner-badge" id="requestBannerBadge">0件</div>
   </a>
 
-  <div class="month-grid" id="monthGrid">
-    <div class="loading-state">読み込み中...</div>
+  <div class="add-row-bar">
+    <input type="month" id="monthInput">
+    <button type="button" class="btn-add-row" id="addRowBtn" onclick="handleAddMonth()">＋ 行を追加</button>
   </div>
-</div>
 
-<button class="fab-add" onclick="openAddMonthModal()">＋ 新しい月を追加</button>
-
-<div class="modal-overlay" id="addMonthOverlay">
-  <div class="modal-sheet">
-    <div class="modal-title">新しい月次シートを追加</div>
-    <form id="addMonthForm" onsubmit="handleAddMonth(event)">
-      <div class="modal-group">
-        <label>対象月</label>
-        <input type="month" id="monthInput" required>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn-modal-cancel" onclick="closeAddMonthModal()">キャンセル</button>
-        <button type="submit" class="btn-modal-submit" id="addMonthSubmitBtn">追加する</button>
-      </div>
-    </form>
-  </div>
+  <table>
+    <thead>
+      <tr><th>対象月</th></tr>
+    </thead>
+    <tbody id="monthTbody">
+      <tr><td><div class="loading-state">読み込み中...</div></td></tr>
+    </tbody>
+  </table>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -257,25 +211,31 @@
 
   let currentProfile = null;
 
-  function monthCardHTML(sheet) {
+  function monthRowHTML(sheet) {
     return `
-      <a class="month-card" href="melon_sheet.html?y=${sheet.year}&m=${sheet.month}">
-        <div class="month-icon">🍈</div>
-        <div class="month-label">${monthLabel(sheet.year, sheet.month)}</div>
-      </a>`;
+      <tr>
+        <td>
+          <button type="button" class="month-row-btn" onclick="location.href='melon_sheet.html?y=${sheet.year}&m=${sheet.month}'">
+            ${monthLabel(sheet.year, sheet.month)}
+            <span class="arrow">›</span>
+          </button>
+        </td>
+      </tr>`;
   }
 
-  function renderMonthGrid(sheets) {
-    const el = document.getElementById('monthGrid');
+  function renderMonthTable(sheets) {
+    const el = document.getElementById('monthTbody');
     if (!sheets.length) {
       el.innerHTML = `
-        <div class="empty-state" style="grid-column:1/-1">
-          <div class="icon">🍈</div>
-          <p>まだ月次シートがありません<br>右下の「＋新しい月を追加」から始めましょう</p>
-        </div>`;
+        <tr><td>
+          <div class="empty-state">
+            <div class="icon">🍈</div>
+            <p>まだ月次シートがありません<br>上の欄から対象月を選んで追加しましょう</p>
+          </div>
+        </td></tr>`;
       return;
     }
-    el.innerHTML = sheets.map(monthCardHTML).join('');
+    el.innerHTML = sheets.map(monthRowHTML).join('');
   }
 
   async function loadMonths() {
@@ -287,29 +247,19 @@
 
     if (error) {
       console.error(error);
-      document.getElementById('monthGrid').innerHTML = '<div class="empty-state">読み込みに失敗しました</div>';
+      document.getElementById('monthTbody').innerHTML = '<tr><td><div class="empty-state">読み込みに失敗しました</div></td></tr>';
       return;
     }
 
-    renderMonthGrid(data || []);
+    renderMonthTable(data || []);
   }
 
-  function openAddMonthModal() {
-    document.getElementById('addMonthForm').reset();
-    document.getElementById('addMonthOverlay').classList.add('open');
-  }
-
-  function closeAddMonthModal() {
-    document.getElementById('addMonthOverlay').classList.remove('open');
-  }
-
-  async function handleAddMonth(e) {
-    e.preventDefault();
+  async function handleAddMonth() {
     const val = document.getElementById('monthInput').value; // "2026-08"
-    if (!val) return;
+    if (!val) { alert('対象月を選択してください。'); return; }
     const [year, month] = val.split('-').map(Number);
 
-    const btn = document.getElementById('addMonthSubmitBtn');
+    const btn = document.getElementById('addRowBtn');
     btn.disabled = true;
     btn.textContent = '追加中...';
 
@@ -334,7 +284,7 @@
         alert('追加に失敗しました。もう一度お試しください。');
         console.error(error);
         btn.disabled = false;
-        btn.textContent = '追加する';
+        btn.textContent = '＋ 行を追加';
         return;
       }
     } else {

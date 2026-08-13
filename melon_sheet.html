@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>村上農園 - メロン予約管理表</title>
+  <title>村上農園 - インスタ・EC注文管理表</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -75,10 +75,19 @@
 
     .table-wrap {
       flex: 1;
+      min-height: 120px;
       overflow: auto;
       padding: 0 12px 24px;
       -webkit-overflow-scrolling: touch;
+      scrollbar-width: auto;
+      scrollbar-color: #8fb88a #e4ece2;
     }
+
+    /* Chrome/Edge/Safari：スクロールバーを常に太く目立つ表示にする（オーバーレイ非表示を防ぐ） */
+    .table-wrap::-webkit-scrollbar { width: 12px; height: 12px; }
+    .table-wrap::-webkit-scrollbar-track { background: #e4ece2; }
+    .table-wrap::-webkit-scrollbar-thumb { background: #8fb88a; border-radius: 6px; border: 2px solid #e4ece2; }
+    .table-wrap::-webkit-scrollbar-thumb:hover { background: #6a9a65; }
 
     table {
       border-collapse: collapse;
@@ -167,19 +176,39 @@
     .summary-panel {
       flex-shrink: 0;
       margin: 10px 12px 0;
-      padding: 10px 14px 12px;
+      padding: 10px 14px;
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      overflow-x: auto;
     }
 
     .summary-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
       font-size: 12px;
       font-weight: 800;
       color: #1a3d17;
-      margin-bottom: 6px;
+      cursor: pointer;
+      user-select: none;
     }
+
+    .toggle-arrow {
+      font-size: 10px;
+      color: #999;
+      transition: transform 0.15s;
+      flex-shrink: 0;
+    }
+
+    .summary-panel:not(.collapsed) .toggle-arrow { transform: rotate(90deg); }
+
+    .summary-body {
+      margin-top: 8px;
+      overflow-x: auto;
+    }
+
+    .summary-panel.collapsed .summary-body { display: none; }
 
     .mini-table {
       border-collapse: collapse;
@@ -433,7 +462,7 @@
 <header>
   <div class="header-left">
     <a class="btn-back" href="melon.html">← 戻る</a>
-    <div class="header-title" id="sheetTitle">🍈 メロン予約管理表</div>
+    <div class="header-title" id="sheetTitle">🍈 インスタ・EC注文管理表</div>
   </div>
   <div class="header-right">
     <span id="userName"></span>
@@ -441,26 +470,36 @@
   </div>
 </header>
 
-<div class="summary-panel">
-  <div class="summary-title">💴 単価一覧（このシート専用・適用期間ごと）</div>
-  <table class="mini-table">
-    <thead>
-      <tr><th>開始日</th><th>終了日</th><th>3L</th><th>4L</th><th>5L</th><th>玉ねぎ(kg)</th><th>2玉入箱</th><th>3〜5玉入箱</th><th></th></tr>
-    </thead>
-    <tbody id="priceTableBody"></tbody>
-  </table>
-  <button type="button" class="btn-tool" style="margin-top:8px;" onclick="addPricePeriod()">＋ 価格期間を追加</button>
-  <p class="summary-note">※ 価格をタップすると変更できます。開始日以降（終了日を設定していれば終了日まで）に登録した行に、その価格が使われます。過去に登録済みの行の単価は、期間の価格を変更しても遡って変わりません。緑色の行が本日時点で適用中の期間です。</p>
+<div class="summary-panel collapsed" id="pricePanel">
+  <div class="summary-title" onclick="toggleSummaryPanel('pricePanel')">
+    <span>💴 単価一覧（このシート専用・適用期間ごと）</span>
+    <span class="toggle-arrow">▶</span>
+  </div>
+  <div class="summary-body">
+    <table class="mini-table">
+      <thead>
+        <tr><th>開始日</th><th>終了日</th><th>3L</th><th>4L</th><th>5L</th><th>玉ねぎ(kg)</th><th>2玉入箱</th><th>3〜5玉入箱</th><th></th></tr>
+      </thead>
+      <tbody id="priceTableBody"></tbody>
+    </table>
+    <button type="button" class="btn-tool" style="margin-top:8px;" onclick="addPricePeriod()">＋ 価格期間を追加</button>
+    <p class="summary-note">※ 価格をタップすると変更できます。開始日以降（終了日を設定していれば終了日まで）に登録した行に、その価格が使われます。過去に登録済みの行の単価は、期間の価格を変更しても遡って変わりません。緑色の行が本日時点で適用中の期間です。</p>
+  </div>
 </div>
 
-<div class="summary-panel">
-  <div class="summary-title">📊 当日・前日の出荷状況</div>
-  <table class="mini-table">
-    <thead>
-      <tr><th></th><th>3L</th><th>4L</th><th>5L</th><th>その他</th><th>売上合計</th></tr>
-    </thead>
-    <tbody id="dailySummaryBody"></tbody>
-  </table>
+<div class="summary-panel collapsed" id="dailyPanel">
+  <div class="summary-title" onclick="toggleSummaryPanel('dailyPanel')">
+    <span>📊 当日・前日の出荷状況</span>
+    <span class="toggle-arrow">▶</span>
+  </div>
+  <div class="summary-body">
+    <table class="mini-table">
+      <thead>
+        <tr><th></th><th>3L</th><th>4L</th><th>5L</th><th>その他</th><th>売上合計</th></tr>
+      </thead>
+      <tbody id="dailySummaryBody"></tbody>
+    </table>
+  </div>
 </div>
 
 <div class="toolbar">
@@ -692,6 +731,11 @@
     }
     renderPriceTable();
     renderDailySummary();
+  }
+
+  // ── サマリーパネルの開閉 ────────────────────────────────
+  function toggleSummaryPanel(id) {
+    document.getElementById(id).classList.toggle('collapsed');
   }
 
   // ── 単価一覧（このシート専用・期間ごとに編集可） ────────
@@ -1216,7 +1260,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `村上農園_メロン予約_${YEAR}_${MONTH}.csv`;
+    a.download = `村上農園_インスタEC注文_${YEAR}_${MONTH}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1235,7 +1279,7 @@
     }
 
     document.getElementById('userName').textContent = currentProfile.name;
-    document.getElementById('sheetTitle').textContent = `🍈 ${monthLabel(YEAR, MONTH)} メロン予約管理表`;
+    document.getElementById('sheetTitle').textContent = `🍈 ${monthLabel(YEAR, MONTH)} インスタ・EC注文管理表`;
 
     await loadCustomers();
 
