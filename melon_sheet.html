@@ -91,7 +91,7 @@
 
     table {
       border-collapse: collapse;
-      min-width: 1260px;
+      min-width: 1300px;
       background: #fff;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
@@ -111,6 +111,9 @@
 
     thead th:first-child { border-top-left-radius: 10px; }
     thead th:last-child { border-top-right-radius: 10px; }
+
+    .melon-size-line { line-height: 1.5; }
+    .melon-size-line .cell-sub-inline { font-size: 10px; color: #999; }
 
     tbody td {
       border-bottom: 1px solid #eef3ee;
@@ -514,9 +517,7 @@
       <tr>
         <th>日付</th>
         <th>お名前</th>
-        <th>3L</th>
-        <th>4L</th>
-        <th>5L</th>
+        <th>🍈 メロン</th>
         <th>その他</th>
         <th>玉ねぎ(kg)</th>
         <th>発送</th>
@@ -525,6 +526,8 @@
         <th>商品小計</th>
         <th>総計</th>
         <th>入金</th>
+        <th>現金支払い</th>
+        <th>PayPay支払い</th>
         <th>領収書</th>
         <th>備考</th>
         <th></th>
@@ -564,8 +567,6 @@
   let pricePeriods = []; // このシート(月)専用の価格期間一覧（melon_price_periods）
   const NAME_CHIP_GROUP_COLORS = 6; // .name-chip.group-0 〜 group-5 のCSSクラス数
 
-  const PRICE_KEY_MAP = { qty_3l: 'qty3l', qty_4l: 'qty4l', qty_5l: 'qty5l' };
-
   // 指定日時点で有効な価格期間を返す（開始日が指定日以前で最も新しいもの。
   // 終了日が指定日より前の「期限切れ」期間より、終了日内/未設定の期間を優先する）
   function getActivePricePeriod(dateStr) {
@@ -576,17 +577,18 @@
     return getPricesForDateFrom(pricePeriods, dateStr || shiftedDateStr(0));
   }
 
-  function getDefaultPrice(colKey, entry) {
-    return getPricesForDate(entry?.entry_date)[PRICE_KEY_MAP[colKey]];
-  }
+  // メロンのサイズ（3L/4L/5L）1列に統合された「メロン」セルを、モーダルで編集する際の内訳定義
+  const MELON_SIZE_DEFS = [
+    { qtyKey: 'qty_3l', priceKey: 'unit_price_3l', priceDefaultKey: 'qty3l', label: '3L' },
+    { qtyKey: 'qty_4l', priceKey: 'unit_price_4l', priceDefaultKey: 'qty4l', label: '4L' },
+    { qtyKey: 'qty_5l', priceKey: 'unit_price_5l', priceDefaultKey: 'qty5l', label: '5L' },
+  ];
 
   // ── 列定義 ──────────────────────────────────────────────
   const COLUMN_DEFS = {
     entry_date:     { label: '日付',     type: 'date' },
     customer_name:  { label: 'お名前',   type: 'customer' },
-    qty_3l:         { label: '3L',       type: 'qty', priceKey: 'unit_price_3l' },
-    qty_4l:         { label: '4L',       type: 'qty', priceKey: 'unit_price_4l' },
-    qty_5l:         { label: '5L',       type: 'qty', priceKey: 'unit_price_5l' },
+    melon:          { label: 'メロン',   type: 'melon' },
     qty_other:      { label: 'その他',   type: 'qty_other' },
     onion_kg:       { label: '玉ねぎ(kg)', type: 'onion' },
     box:            { label: '箱代',     type: 'box' },
@@ -679,6 +681,19 @@
     return `<div class="check-cell ${checked ? 'checked' : 'unchecked'}" onclick="toggleCheckCell(findEntry('${entry.id}'), '${colKey}')">${checked ? '✅' : '—'}</div>`;
   }
 
+  // メロン列（3L/4L/5Lをまとめた1列）：注文があるサイズだけを、クリック不要で常に縦に並べて表示する
+  function melonCellContent(entry, rowPrices) {
+    const ordered = MELON_SIZE_DEFS.filter(s => entry[s.qtyKey]);
+    if (!ordered.length) {
+      return cellBtn('-', 'melon', entry.id, { empty: true });
+    }
+    const label = ordered.map(s => {
+      const priceNote = entry[s.priceKey] !== rowPrices[s.priceDefaultKey] ? ` <span class="cell-sub-inline">@${entry[s.priceKey]}円</span>` : '';
+      return `<div class="melon-size-line">${s.label} ${entry[s.qtyKey]}玉${priceNote}</div>`;
+    }).join('');
+    return cellBtn(label, 'melon', entry.id, {});
+  }
+
   function rowHTML(entry) {
     const dateLabel = entry.entry_date ? formatDateJa(entry.entry_date) : '未設定';
     const nameLabel = entry.customer_name || '(未入力)';
@@ -688,9 +703,7 @@
       <tr class="${entry.paid ? 'row-paid' : ''}">
         <td>${cellBtn(dateLabel, 'entry_date', entry.id, { empty: !entry.entry_date })}</td>
         <td>${cellBtn(escHtml(nameLabel), 'customer_name', entry.id, { empty: !entry.customer_name })}</td>
-        <td>${cellBtn(entry.qty_3l ? `${entry.qty_3l}玉` : '-', 'qty_3l', entry.id, { empty: !entry.qty_3l, sub: entry.qty_3l && entry.unit_price_3l !== rowPrices.qty3l ? `@${entry.unit_price_3l}円` : '' })}</td>
-        <td>${cellBtn(entry.qty_4l ? `${entry.qty_4l}玉` : '-', 'qty_4l', entry.id, { empty: !entry.qty_4l, sub: entry.qty_4l && entry.unit_price_4l !== rowPrices.qty4l ? `@${entry.unit_price_4l}円` : '' })}</td>
-        <td>${cellBtn(entry.qty_5l ? `${entry.qty_5l}玉` : '-', 'qty_5l', entry.id, { empty: !entry.qty_5l, sub: entry.qty_5l && entry.unit_price_5l !== rowPrices.qty5l ? `@${entry.unit_price_5l}円` : '' })}</td>
+        <td>${melonCellContent(entry, rowPrices)}</td>
         <td>${cellBtn(entry.qty_other ? `${entry.qty_other}` : '-', 'qty_other', entry.id, { empty: !entry.qty_other, sub: entry.other_label ? escHtml(entry.other_label) : '' })}</td>
         <td>${cellBtn(entry.onion_kg ? `${entry.onion_kg}kg` : '-', 'onion_kg', entry.id, { empty: !entry.onion_kg })}</td>
         <td>${checkCell(entry, 'shipped')}</td>
@@ -699,6 +712,8 @@
         <td class="total-cell">${cellBtn(formatYen(entry.subtotal_amount), 'subtotal_amount', entry.id, { readonly: true })}</td>
         <td class="total-cell">${cellBtn(formatYen(entry.total_amount), 'total_amount', entry.id, { readonly: true })}</td>
         <td>${checkCell(entry, 'paid')}</td>
+        <td>${checkCell(entry, 'paid_cash')}</td>
+        <td>${checkCell(entry, 'paid_paypay')}</td>
         <td>${checkCell(entry, 'receipt_issued')}</td>
         <td>${cellBtn(entry.note ? escHtml(entry.note) : '-', 'note', entry.id, { empty: !entry.note })}</td>
         <td><button class="btn-del-row" onclick="deleteRow('${entry.id}')">🗑</button></td>
@@ -980,7 +995,7 @@
     const renderers = {
       date: renderDateModal,
       customer: renderCustomerModal,
-      qty: renderQtyModal,
+      melon: renderMelonModal,
       qty_other: renderQtyOtherModal,
       onion: renderOnionModal,
       box: renderBoxModal,
@@ -1116,43 +1131,43 @@
     }
   }
 
-  // ── 数量+単価モーダル(3L/4L/5L) ─────────────────────────
-  function renderQtyModal(body, entry, def) {
+  // ── メロンモーダル（3L/4L/5Lをまとめて編集・サイズごとに単価変更も可） ──
+  function renderMelonModal(body, entry) {
     body.dataset.entryId = entry.id;
-    const colKey = Object.keys(COLUMN_DEFS).find(k => COLUMN_DEFS[k] === def);
-    const defaultPrice = getDefaultPrice(colKey, entry);
-    const currentPrice = entry[def.priceKey] ?? defaultPrice;
-    const priceChanged = currentPrice !== defaultPrice;
+    const prices = getPricesForDate(entry.entry_date);
 
-    body.innerHTML = `
-      <div class="modal-group">
-        <label>${def.label} 個数</label>
-        <input type="number" id="mQty" min="0" step="1" value="${entry[colKey] || 0}">
-      </div>
-      <div class="modal-group">
-        <label>単価（基本 ${formatYen(defaultPrice)}）</label>
-        <button type="button" class="price-toggle" id="priceToggleBtn" onclick="togglePriceInput()">${priceChanged ? '単価を変更中 ▲' : '単価を変更する ▼'}</button>
-        <div class="price-input-row ${priceChanged ? 'open' : ''}" id="priceInputRow">
-          <input type="number" id="mPrice" min="0" step="1" value="${currentPrice}">
+    body.innerHTML = MELON_SIZE_DEFS.map((s, i) => {
+      const defaultPrice = prices[s.priceDefaultKey];
+      const currentPrice = entry[s.priceKey] ?? defaultPrice;
+      const priceChanged = currentPrice !== defaultPrice;
+      return `
+      <div class="modal-group" style="${i > 0 ? 'border-top:1px dashed #eee;padding-top:16px;' : ''}">
+        <label>${s.label} 個数（基本 ${formatYen(defaultPrice)}）</label>
+        <input type="number" id="mQty_${s.qtyKey}" min="0" step="1" value="${entry[s.qtyKey] || 0}">
+        <button type="button" class="price-toggle" id="priceToggleBtn_${s.qtyKey}" onclick="toggleMelonPriceInput('${s.qtyKey}')">${priceChanged ? '単価を変更中 ▲' : '単価を変更する ▼'}</button>
+        <div class="price-input-row ${priceChanged ? 'open' : ''}" id="priceInputRow_${s.qtyKey}">
+          <input type="number" id="mPrice_${s.qtyKey}" min="0" step="1" value="${currentPrice}">
           <span>円</span>
         </div>
       </div>`;
+    }).join('');
 
     return async () => {
-      const qtyVal = Math.max(0, parseInt(document.getElementById('mQty').value || '0', 10));
-      const priceRow = document.getElementById('priceInputRow');
-      const patch = { [colKey]: qtyVal };
-      if (priceRow.classList.contains('open')) {
-        const priceVal = Math.max(0, parseInt(document.getElementById('mPrice').value || '0', 10));
-        patch[def.priceKey] = priceVal;
-      }
+      const patch = {};
+      MELON_SIZE_DEFS.forEach(s => {
+        patch[s.qtyKey] = Math.max(0, parseInt(document.getElementById(`mQty_${s.qtyKey}`).value || '0', 10));
+        const priceRow = document.getElementById(`priceInputRow_${s.qtyKey}`);
+        if (priceRow.classList.contains('open')) {
+          patch[s.priceKey] = Math.max(0, parseInt(document.getElementById(`mPrice_${s.qtyKey}`).value || '0', 10));
+        }
+      });
       return patch;
     };
   }
 
-  function togglePriceInput() {
-    const row = document.getElementById('priceInputRow');
-    const btn = document.getElementById('priceToggleBtn');
+  function toggleMelonPriceInput(qtyKey) {
+    const row = document.getElementById(`priceInputRow_${qtyKey}`);
+    const btn = document.getElementById(`priceToggleBtn_${qtyKey}`);
     const open = row.classList.toggle('open');
     btn.textContent = open ? '単価を変更中 ▲' : '単価を変更する ▼';
   }
@@ -1240,7 +1255,8 @@
   function exportEntriesCSV() {
     const headers = [
       '日付', 'お名前', '3L', '4L', '5L', 'その他数量', 'その他単価', 'その他内容',
-      '玉ねぎ(kg)', '発送', '2玉入箱', '3〜5玉入箱', '送料', '商品小計(円)', '総計(円)', '入金', '領収書', '備考',
+      '玉ねぎ(kg)', '発送', '2玉入箱', '3〜5玉入箱', '送料', '商品小計(円)', '総計(円)',
+      '入金', '現金支払い', 'PayPay支払い', '領収書', '備考',
     ];
     const rows = getDisplayEntries().map(e => [
       e.entry_date || '', e.customer_name || '',
@@ -1249,7 +1265,8 @@
       e.onion_kg || 0, e.shipped ? '○' : '',
       e.box_2 || 0, e.box_35 || 0, e.shipping_fee || 0,
       e.subtotal_amount || 0, e.total_amount || 0,
-      e.paid ? '○' : '', e.receipt_issued ? '○' : '', e.note || '',
+      e.paid ? '○' : '', e.paid_cash ? '○' : '', e.paid_paypay ? '○' : '',
+      e.receipt_issued ? '○' : '', e.note || '',
     ]);
 
     const csvText = '﻿' + [headers, ...rows]
