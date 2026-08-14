@@ -517,7 +517,7 @@
       <tr>
         <th>日付</th>
         <th>お名前</th>
-        <th>🍈 メロン</th>
+        <th>メロン</th>
         <th>その他</th>
         <th>玉ねぎ(kg)</th>
         <th>発送</th>
@@ -526,8 +526,8 @@
         <th>商品小計</th>
         <th>総計</th>
         <th>入金</th>
-        <th>現金支払い</th>
-        <th>PayPay支払い</th>
+        <th>現金</th>
+        <th>PayPay</th>
         <th>領収書</th>
         <th>備考</th>
         <th></th>
@@ -681,6 +681,12 @@
     return `<div class="check-cell ${checked ? 'checked' : 'unchecked'}" onclick="toggleCheckCell(findEntry('${entry.id}'), '${colKey}')">${checked ? '✅' : '—'}</div>`;
   }
 
+  // 支払い方法（現金／PayPay）用のチェックセル：2つは排他的（一方をONにすると他方は自動でOFF）
+  function paymentMethodCell(entry, colKey) {
+    const checked = !!entry[colKey];
+    return `<div class="check-cell ${checked ? 'checked' : 'unchecked'}" onclick="togglePaymentMethodCell(findEntry('${entry.id}'), '${colKey}')">${checked ? '✅' : '—'}</div>`;
+  }
+
   // メロン列（3L/4L/5Lをまとめた1列）：注文があるサイズだけを、クリック不要で常に縦に並べて表示する
   function melonCellContent(entry, rowPrices) {
     const ordered = MELON_SIZE_DEFS.filter(s => entry[s.qtyKey]);
@@ -712,8 +718,8 @@
         <td class="total-cell">${cellBtn(formatYen(entry.subtotal_amount), 'subtotal_amount', entry.id, { readonly: true })}</td>
         <td class="total-cell">${cellBtn(formatYen(entry.total_amount), 'total_amount', entry.id, { readonly: true })}</td>
         <td>${checkCell(entry, 'paid')}</td>
-        <td>${checkCell(entry, 'paid_cash')}</td>
-        <td>${checkCell(entry, 'paid_paypay')}</td>
+        <td>${paymentMethodCell(entry, 'paid_cash')}</td>
+        <td>${paymentMethodCell(entry, 'paid_paypay')}</td>
         <td>${checkCell(entry, 'receipt_issued')}</td>
         <td>${cellBtn(entry.note ? escHtml(entry.note) : '-', 'note', entry.id, { empty: !entry.note })}</td>
         <td><button class="btn-del-row" onclick="deleteRow('${entry.id}')">🗑</button></td>
@@ -929,6 +935,15 @@
 
   async function toggleCheckCell(entry, colKey) {
     await saveCell(entry.id, { [colKey]: !entry[colKey] });
+  }
+
+  // 現金／PayPayは排他：ONにする方を立てると、もう一方は自動でOFFにする
+  async function togglePaymentMethodCell(entry, colKey) {
+    const otherKey = colKey === 'paid_cash' ? 'paid_paypay' : 'paid_cash';
+    const newVal = !entry[colKey];
+    const patch = { [colKey]: newVal };
+    if (newVal) patch[otherKey] = false;
+    await saveCell(entry.id, patch);
   }
 
   // ── 行追加・削除 ────────────────────────────────────────
@@ -1256,7 +1271,7 @@
     const headers = [
       '日付', 'お名前', '3L', '4L', '5L', 'その他数量', 'その他単価', 'その他内容',
       '玉ねぎ(kg)', '発送', '2玉入箱', '3〜5玉入箱', '送料', '商品小計(円)', '総計(円)',
-      '入金', '現金支払い', 'PayPay支払い', '領収書', '備考',
+      '入金', '現金', 'PayPay', '領収書', '備考',
     ];
     const rows = getDisplayEntries().map(e => [
       e.entry_date || '', e.customer_name || '',
