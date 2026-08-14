@@ -60,6 +60,7 @@
     }
 
     .form-group .hint { font-size: 11px; font-weight: 400; color: #999; margin-left: 4px; }
+    .form-group .unit-price { font-size: 11px; font-weight: 400; color: #2e5c28; margin-left: 4px; }
 
     .form-group input[type="text"],
     .form-group input[type="tel"],
@@ -98,6 +99,19 @@
     }
 
     .section-title:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+
+    .total-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #eef6ec;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-top: 18px;
+    }
+
+    .total-label { font-size: 13px; font-weight: 700; color: #1a3d17; }
+    .total-amount { font-size: 20px; font-weight: 800; color: #2e5c28; }
 
     /* ハニーポット：botよけ。人には見えない */
     .hp-field { position: absolute; left: -9999px; top: -9999px; }
@@ -145,6 +159,43 @@
     .success-state .icon { font-size: 48px; margin-bottom: 16px; }
     .success-state h2 { font-size: 17px; color: #1a3d17; margin-bottom: 10px; }
     .success-state p { font-size: 13px; color: #666; line-height: 1.7; }
+
+    .order-summary {
+      text-align: left;
+      background: #f6faf5;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #333;
+    }
+
+    .summary-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 0;
+    }
+
+    .summary-row.summary-no { font-weight: 800; color: #1a3d17; }
+    .summary-row.summary-no span:last-child { font-size: 15px; letter-spacing: 0.5px; }
+
+    .summary-items {
+      border-top: 1px dashed #d6e3d5;
+      border-bottom: 1px dashed #d6e3d5;
+      margin: 6px 0;
+      padding: 4px 0;
+    }
+
+    .summary-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+      color: #444;
+    }
+
+    .summary-row.summary-total { font-weight: 800; color: #2e5c28; font-size: 15px; padding-top: 8px; }
 
     .btn-again {
       margin-top: 20px;
@@ -197,26 +248,31 @@
       <div class="weekday-preview" id="weekdayPreview"></div>
     </div>
 
-    <div class="section-title">メロン ご注文内容</div>
+    <div class="section-title">メロン</div>
 
     <div class="qty-grid">
       <div class="qty-item form-group">
-        <label>3L</label>
-        <input type="number" id="fQty3l" min="0" step="1" value="0">
+        <label>3L <span class="unit-price" id="priceQty3l"></span></label>
+        <input type="number" id="fQty3l" min="0" step="1" value="0" oninput="updateTotal()">
       </div>
       <div class="qty-item form-group">
-        <label>4L</label>
-        <input type="number" id="fQty4l" min="0" step="1" value="0">
+        <label>4L <span class="unit-price" id="priceQty4l"></span></label>
+        <input type="number" id="fQty4l" min="0" step="1" value="0" oninput="updateTotal()">
       </div>
       <div class="qty-item form-group">
-        <label>5L</label>
-        <input type="number" id="fQty5l" min="0" step="1" value="0">
+        <label>5L <span class="unit-price" id="priceQty5l"></span></label>
+        <input type="number" id="fQty5l" min="0" step="1" value="0" oninput="updateTotal()">
       </div>
     </div>
 
     <div class="form-group" style="margin-top:16px;">
-      <label>玉ねぎ <span class="hint">kg</span></label>
-      <input type="number" id="fOnion" min="0" step="0.1" value="0">
+      <label>玉ねぎ <span class="hint">kg</span> <span class="unit-price" id="priceOnion"></span></label>
+      <input type="number" id="fOnion" min="0" step="0.1" value="0" oninput="updateTotal()">
+    </div>
+
+    <div class="total-box" id="totalBox">
+      <span class="total-label">合計金額（目安）</span>
+      <span class="total-amount" id="totalAmount">0円</span>
     </div>
 
     <div class="form-group" style="margin-top:16px;">
@@ -231,6 +287,23 @@
     <div class="icon">✅</div>
     <h2>ご注文を受け付けました</h2>
     <p>担当者が内容を確認のうえ、ご連絡いたします。<br>ご注文ありがとうございました。</p>
+
+    <div class="order-summary">
+      <div class="summary-row summary-no">
+        <span>注文仮受付No</span>
+        <span id="summaryReqNo"></span>
+      </div>
+      <div class="summary-row">
+        <span>ご来店希望日</span>
+        <span id="summaryDate"></span>
+      </div>
+      <div class="summary-items" id="summaryItems"></div>
+      <div class="summary-row summary-total">
+        <span>合計金額（目安）</span>
+        <span id="summaryTotal"></span>
+      </div>
+    </div>
+
     <button type="button" class="btn-again" onclick="resetForm()">続けてもう1件申し込む</button>
   </div>
 </div>
@@ -245,11 +318,95 @@
     return jst.toISOString().split('T')[0];
   }
 
+  // 送信を確定した時刻（JST）から「YYMMDDHHMM」形式の注文仮受付Noを発行する
+  function generateRequestNo() {
+    const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    const yy = String(jst.getUTCFullYear()).slice(-2);
+    const mm = String(jst.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(jst.getUTCDate()).padStart(2, '0');
+    const hh = String(jst.getUTCHours()).padStart(2, '0');
+    const mi = String(jst.getUTCMinutes()).padStart(2, '0');
+    return `${yy}${mm}${dd}${hh}${mi}`;
+  }
+
   document.getElementById('fDate').min = todayStrJST();
+
+  let currentPrices = { ...DEFAULT_PRICES };
 
   function updateWeekdayPreview() {
     const val = document.getElementById('fDate').value;
     document.getElementById('weekdayPreview').textContent = val ? formatDateJa(val) : '';
+    loadPricesForDate(val);
+  }
+
+  function updatePriceLabels() {
+    document.getElementById('priceQty3l').textContent = `@${formatYen(currentPrices.qty3l)}`;
+    document.getElementById('priceQty4l').textContent = `@${formatYen(currentPrices.qty4l)}`;
+    document.getElementById('priceQty5l').textContent = `@${formatYen(currentPrices.qty5l)}`;
+    document.getElementById('priceOnion').textContent = `@${formatYen(currentPrices.onion)}/kg`;
+  }
+
+  function updateTotal() {
+    const qty3l = Math.max(0, parseInt(document.getElementById('fQty3l').value || '0', 10));
+    const qty4l = Math.max(0, parseInt(document.getElementById('fQty4l').value || '0', 10));
+    const qty5l = Math.max(0, parseInt(document.getElementById('fQty5l').value || '0', 10));
+    const onionKg = Math.max(0, parseFloat(document.getElementById('fOnion').value || '0'));
+
+    const total = qty3l * currentPrices.qty3l + qty4l * currentPrices.qty4l + qty5l * currentPrices.qty5l
+      + onionKg * currentPrices.onion;
+
+    document.getElementById('totalAmount').textContent = formatYen(Math.round(total));
+  }
+
+  // ご来店希望日が属する月の予約表に設定されている単価（一時的な割引期間を含む）を取得する。
+  // まだその月の予約表が存在しない場合は、規定単価を表示する。
+  async function loadPricesForDate(dateStr) {
+    currentPrices = { ...DEFAULT_PRICES };
+
+    if (dateStr) {
+      const [year, month] = dateStr.split('-').map(Number);
+      const { data: sheet } = await supabaseClient
+        .from('melon_sheets')
+        .select('id')
+        .eq('year', year)
+        .eq('month', month)
+        .maybeSingle();
+
+      if (sheet) {
+        const { data: periods } = await supabaseClient
+          .from('melon_price_periods')
+          .select('*')
+          .eq('sheet_id', sheet.id);
+
+        if (periods && periods.length) {
+          currentPrices = getPricesForDateFrom(periods, dateStr);
+        }
+      }
+    }
+
+    updatePriceLabels();
+    updateTotal();
+  }
+
+  updatePriceLabels();
+  updateTotal();
+
+  function renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, onionKg, prices }) {
+    document.getElementById('summaryReqNo').textContent = requestNo;
+    document.getElementById('summaryDate').textContent = formatDateJa(date);
+
+    const items = [];
+    if (qty3l > 0) items.push({ label: `メロン 3L × ${qty3l}`, amount: qty3l * prices.qty3l });
+    if (qty4l > 0) items.push({ label: `メロン 4L × ${qty4l}`, amount: qty4l * prices.qty4l });
+    if (qty5l > 0) items.push({ label: `メロン 5L × ${qty5l}`, amount: qty5l * prices.qty5l });
+    if (onionKg > 0) items.push({ label: `玉ねぎ × ${onionKg}kg`, amount: onionKg * prices.onion });
+
+    document.getElementById('summaryItems').innerHTML = items
+      .map(i => `<div class="summary-item-row"><span>${i.label}</span><span>${formatYen(Math.round(i.amount))}</span></div>`)
+      .join('');
+
+    const total = items.reduce((sum, i) => sum + i.amount, 0);
+    document.getElementById('summaryTotal').textContent = formatYen(Math.round(total));
   }
 
   function showError(msg) {
@@ -269,6 +426,9 @@
     document.getElementById('successState').classList.remove('show');
     document.getElementById('orderForm').style.display = 'block';
     clearError();
+    currentPrices = { ...DEFAULT_PRICES };
+    updatePriceLabels();
+    updateTotal();
   }
 
   async function handleSubmit(e) {
@@ -300,6 +460,8 @@
     btn.disabled = true;
     btn.textContent = '送信中...';
 
+    const requestNo = generateRequestNo();
+
     const { error } = await supabaseClient.from('melon_order_requests').insert({
       customer_name: name,
       contact: contact || null,
@@ -309,6 +471,7 @@
       qty_5l: qty5l,
       onion_kg: onionKg,
       note: note || null,
+      request_no: requestNo,
     });
 
     btn.disabled = false;
@@ -319,6 +482,8 @@
       showError('送信に失敗しました。お手数ですが、もう一度お試しください。');
       return;
     }
+
+    renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, onionKg, prices: currentPrices });
 
     document.getElementById('orderForm').style.display = 'none';
     document.getElementById('successState').classList.add('show');

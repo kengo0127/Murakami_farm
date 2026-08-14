@@ -95,7 +95,8 @@
 
     .req-name { font-size: 16px; font-weight: 800; color: #1a3d17; }
     .req-contact { font-size: 12px; color: #888; margin-top: 2px; }
-    .req-submitted { font-size: 11px; color: #aaa; white-space: nowrap; }
+    .req-submitted { font-size: 11px; color: #aaa; white-space: nowrap; text-align: right; }
+    .req-no { font-size: 11px; color: #999; white-space: nowrap; text-align: right; margin-top: 3px; }
 
     .req-date {
       display: inline-block;
@@ -311,7 +312,10 @@
             <div class="req-name">${escHtml(r.customer_name)}</div>
             ${r.contact ? `<div class="req-contact">${escHtml(r.contact)}</div>` : ''}
           </div>
-          <div class="req-submitted">${formatSubmittedAt(r.created_at)}</div>
+          <div>
+            <div class="req-submitted">${formatSubmittedAt(r.created_at)}</div>
+            ${r.request_no ? `<div class="req-no">受付No：${escHtml(r.request_no)}</div>` : ''}
+          </div>
         </div>
         <div class="req-date">📅 ご来店希望日：${formatDateJa(r.entry_date)}</div>
         <div class="req-items">
@@ -454,6 +458,11 @@
         .limit(1);
       const maxOrder = existingEntries && existingEntries.length ? existingEntries[0].sort_order : 0;
 
+      const noteLines = [];
+      if (req.note) noteLines.push(req.note);
+      if (req.contact) noteLines.push(`連絡先：${req.contact}`);
+      if (req.request_no) noteLines.push(`受付No：${req.request_no}`);
+
       const { data: entry, error: insErr } = await supabaseClient
         .from('melon_entries')
         .insert({
@@ -467,7 +476,7 @@
           qty_other: req.qty_other,
           other_label: req.other_label,
           onion_kg: req.onion_kg,
-          note: req.contact ? `${req.note ? req.note + '\n' : ''}連絡先：${req.contact}` : req.note,
+          note: noteLines.length ? noteLines.join('\n') : null,
           unit_price_3l: prices.qty3l,
           unit_price_4l: prices.qty4l,
           unit_price_5l: prices.qty5l,
