@@ -1038,7 +1038,7 @@
     <form id="editStartForm" onsubmit="handleEditStartSubmit(event)">
       <div class="modal-group">
         <label>実際に作業を始めた時刻（じっさいにさぎょうをはじめたじこく）</label>
-        <input type="time" id="editStartTime" class="modal-input" required>
+        <select id="editStartTime" class="modal-input" required></select>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn-modal-cancel" onclick="closeEditStartModal()">キャンセル</button>
@@ -1140,7 +1140,7 @@
       status === 'next'    ? `<div class="status-badge next">⏭ 次の作業（つぎのさぎょう）</div>` : '';
 
     const editStartLink = (started && started.started_by === currentProfile?.id)
-      ? `<button type="button" class="btn-edit-link" onclick="openEditStartModal('${task.id}','${started.started_at}')">✏️ 修正</button>` : '';
+      ? `<button type="button" class="btn-edit-link" onclick="openEditStartModal('${task.id}','${started.started_at}')">✏️ 修正（しゅうせい）</button>` : '';
     const startedInfo = started
       ? `<div class="started-info"><span>⏱ ${fmtHM(new Date(started.started_at))} 開始（かいし）</span>${editStartLink}</div>` : '';
 
@@ -1950,9 +1950,30 @@
   // ── 開始時刻修正処理（押し忘れ対応） ─────────────────────
   let editStartTaskId = null;
 
+  // 4:00〜20:00 を15分刻みでselectに設定
+  function populateEditStartTimeSelect() {
+    const options = ['<option value="">-- 選択（せんたく） --</option>'];
+    for (let h = 4; h <= 20; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        options.push(`<option value="${hh}:${mm}">${hh}:${mm}</option>`);
+      }
+    }
+    document.getElementById('editStartTime').innerHTML = options.join('');
+  }
+
+  // 実際の開始時刻を15分刻みに丸めて選択肢に合わせる
+  function roundTo15(date) {
+    const totalMin = Math.round((date.getHours() * 60 + date.getMinutes()) / 15) * 15;
+    const hh = String(Math.floor(totalMin / 60) % 24).padStart(2, '0');
+    const mm = String(totalMin % 60).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+
   function openEditStartModal(taskId, startedAtIso) {
     editStartTaskId = taskId;
-    document.getElementById('editStartTime').value = fmtHM(new Date(startedAtIso));
+    document.getElementById('editStartTime').value = roundTo15(new Date(startedAtIso));
     document.getElementById('editStartModalOverlay').classList.add('open');
   }
 
@@ -2033,7 +2054,7 @@
       const div = document.createElement('div');
       div.className = 'started-info';
       div.innerHTML = `<span>⏱ ${fmtHM(startedAt)} 開始（かいし）</span>` +
-        `<button type="button" class="btn-edit-link" onclick="openEditStartModal('${taskId}','${startedAt.toISOString()}')">✏️ 修正</button>`;
+        `<button type="button" class="btn-edit-link" onclick="openEditStartModal('${taskId}','${startedAt.toISOString()}')">✏️ 修正（しゅうせい）</button>`;
       badge.insertAdjacentElement('afterend', div);
     }
 
@@ -2324,6 +2345,7 @@
     setInterval(loadTasks, 60000);
 
     populateReportTimeSelects();
+    populateEditStartTimeSelect();
     await loadBreakSettings();
     await loadFieldPlotsCache();
     await loadTasks();
