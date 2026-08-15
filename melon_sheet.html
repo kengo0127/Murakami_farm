@@ -878,8 +878,8 @@
 
   // ── 当日・前日の出荷状況 ────────────────────────────────
   function shiftedDateStr(offsetDays) {
-    const d = new Date();
-    d.setDate(d.getDate() + offsetDays);
+    const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    d.setUTCDate(d.getUTCDate() + offsetDays);
     return d.toISOString().split('T')[0];
   }
 
