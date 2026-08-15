@@ -360,10 +360,24 @@
     }
 
     .started-info {
+      display: flex;
+      align-items: center;
       font-size: 12px;
       color: #2e7d32;
       font-weight: 600;
       margin-bottom: 4px;
+    }
+
+    .btn-edit-link {
+      background: none;
+      border: none;
+      color: #1565c0;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-left: auto;
+      padding: 4px;
     }
 
     /* Completed info */
@@ -1018,6 +1032,22 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="editStartModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title">開始時刻を修正（かいしじこくをしゅうせい）</div>
+    <form id="editStartForm" onsubmit="handleEditStartSubmit(event)">
+      <div class="modal-group">
+        <label>実際に作業を始めた時刻（じっさいにさぎょうをはじめたじこく）</label>
+        <input type="time" id="editStartTime" class="modal-input" required>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-modal-cancel" onclick="closeEditStartModal()">キャンセル</button>
+        <button type="submit" class="btn-modal-submit" id="editStartSubmitBtn">保存する（ほぞんする）</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="js/supabase.js"></script>
@@ -1052,7 +1082,8 @@
 
   // ── 時刻ユーティリティ ──────────────────────────────────
   function getToday() {
-    return new Date().toISOString().split('T')[0];
+    const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    return jst.toISOString().split('T')[0];
   }
 
   function toMin(t) {
@@ -1108,8 +1139,10 @@
       status === 'active'  ? `<div class="status-badge active">▶ 作業中（さぎょうちゅう）</div>` :
       status === 'next'    ? `<div class="status-badge next">⏭ 次の作業（つぎのさぎょう）</div>` : '';
 
+    const editStartLink = (started && started.started_by === currentProfile?.id)
+      ? `<button type="button" class="btn-edit-link" onclick="openEditStartModal('${task.id}','${started.started_at}')">✏️ 修正</button>` : '';
     const startedInfo = started
-      ? `<div class="started-info">⏱ ${fmtHM(new Date(started.started_at))} 開始（かいし）</div>` : '';
+      ? `<div class="started-info"><span>⏱ ${fmtHM(new Date(started.started_at))} 開始（かいし）</span>${editStartLink}</div>` : '';
 
     const note = task.note
       ? `<div class="task-note">${task.note}</div>` : '';
@@ -1914,6 +1947,51 @@
     await loadTasks();
   }
 
+  // ── 開始時刻修正処理（押し忘れ対応） ─────────────────────
+  let editStartTaskId = null;
+
+  function openEditStartModal(taskId, startedAtIso) {
+    editStartTaskId = taskId;
+    document.getElementById('editStartTime').value = fmtHM(new Date(startedAtIso));
+    document.getElementById('editStartModalOverlay').classList.add('open');
+  }
+
+  function closeEditStartModal() {
+    document.getElementById('editStartModalOverlay').classList.remove('open');
+    editStartTaskId = null;
+  }
+
+  async function handleEditStartSubmit(e) {
+    e.preventDefault();
+    const taskId = editStartTaskId;
+    const timeVal = document.getElementById('editStartTime').value;
+    if (!taskId || !timeVal) return;
+
+    const btn = document.getElementById('editStartSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = '保存中（ほぞんちゅう）...';
+
+    const newStartedAt = new Date(`${getToday()}T${timeVal}:00`);
+
+    const { error } = await supabaseClient
+      .from('task_starts')
+      .update({ started_at: newStartedAt.toISOString() })
+      .eq('task_id', taskId);
+
+    btn.disabled = false;
+    btn.textContent = '保存する（ほぞんする）';
+
+    if (error) {
+      alert('修正（しゅうせい）に失敗（しっぱい）しました。もう一度（いちど）お試（ため）しください。');
+      console.error(error);
+      return;
+    }
+
+    localStartedTasks.delete(taskId);
+    closeEditStartModal();
+    await loadTasks();
+  }
+
   // ── 完了キャンセル処理 ─────────────────────────────────
   async function handleCancelComplete(taskId) {
     if (!confirm('完了報告（かんりょうほうこく）を取り消しますか？')) return;
@@ -1954,7 +2032,8 @@
     if (!card.querySelector('.started-info')) {
       const div = document.createElement('div');
       div.className = 'started-info';
-      div.textContent = `⏱ ${fmtHM(startedAt)} 開始（かいし）`;
+      div.innerHTML = `<span>⏱ ${fmtHM(startedAt)} 開始（かいし）</span>` +
+        `<button type="button" class="btn-edit-link" onclick="openEditStartModal('${taskId}','${startedAt.toISOString()}')">✏️ 修正</button>`;
       badge.insertAdjacentElement('afterend', div);
     }
 

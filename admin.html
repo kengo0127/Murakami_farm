@@ -921,7 +921,8 @@
 
   // ── ユーティリティ ───────────────────────────────────────
   function getToday() {
-    return new Date().toISOString().split('T')[0];
+    const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    return jst.toISOString().split('T')[0];
   }
 
   function toMin(t) {
