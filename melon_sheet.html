@@ -73,6 +73,42 @@
     .btn-tool.primary { background: #2e5c28; color: #fff; border-color: #2e5c28; }
     .btn-tool.primary:active { background: #1a3d17; }
 
+    /* 季節外の作物の列を非表示にするトグル */
+    .column-toggle-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 12px 10px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .column-toggle-label { font-size: 12px; color: #666; margin-right: 2px; }
+
+    .col-toggle-btn {
+      background: #fff;
+      color: #999;
+      border: 1.5px solid #ddd;
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .col-toggle-btn.active {
+      background: #e8f5e9;
+      color: #1a3d17;
+      border-color: #43a047;
+    }
+
+    #entryTable.hide-melon  .col-melon,
+    #entryTable.hide-suika  .col-suika,
+    #entryTable.hide-onion  .col-onion,
+    #entryTable.hide-veggie .col-veggie {
+      display: none;
+    }
+
     .table-wrap {
       flex: 1;
       min-height: 120px;
@@ -111,6 +147,22 @@
 
     thead th:first-child { border-top-left-radius: 10px; }
     thead th:last-child { border-top-right-radius: 10px; }
+
+    /* 日付・お名前列は横スクロール時も固定表示にする */
+    thead th:nth-child(1) { left: 0; width: 100px; min-width: 100px; z-index: 12; }
+    thead th:nth-child(2) { left: 100px; z-index: 12; }
+
+    tbody td:nth-child(1),
+    tbody td:nth-child(2) {
+      position: sticky;
+      z-index: 5;
+      background: #fff;
+    }
+    tbody td:nth-child(1) { left: 0; width: 100px; min-width: 100px; }
+    tbody td:nth-child(2) { left: 100px; }
+
+    tr.row-paid td:nth-child(1),
+    tr.row-paid td:nth-child(2) { background: #e6e6e6; }
 
     .melon-size-line { line-height: 1.5; }
     .melon-size-line .cell-sub-inline { font-size: 10px; color: #999; }
@@ -266,6 +318,21 @@
       font-size: 10px;
       color: #999;
       margin-top: 6px;
+    }
+
+    .price-group-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #1a3d17;
+      margin: 14px 0 6px;
+    }
+    .price-group-title:first-child { margin-top: 0; }
+
+    .modal-group-heading {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1a3d17;
+      margin-bottom: 10px;
     }
 
     .total-cell { font-weight: 800; color: #1a3d17; }
@@ -479,14 +546,65 @@
     <span class="toggle-arrow">▶</span>
   </div>
   <div class="summary-body">
+    <div class="price-group-title">🍈 メロン単価</div>
     <table class="mini-table">
       <thead>
-        <tr><th>開始日</th><th>終了日</th><th>3L</th><th>4L</th><th>5L</th><th>玉ねぎ(kg)</th><th>2玉入箱</th><th>3〜5玉入箱</th><th></th></tr>
+        <tr>
+          <th>開始日</th><th>終了日</th>
+          <th>マルセイユ3L</th><th>マルセイユ4L</th><th>マルセイユ5L</th>
+          <th>アンデス3L</th><th>アンデス4L</th><th>アンデス5L</th>
+          <th>ヨーグル中</th><th>ヨーグル大</th>
+          <th>ピュア並</th><th>ピュア大</th><th>ピュア特大</th>
+          <th>日焼け</th><th>ハミー中</th><th>ハミー大</th>
+          <th></th>
+        </tr>
       </thead>
-      <tbody id="priceTableBody"></tbody>
+      <tbody id="priceTableBody_melon"></tbody>
     </table>
+
+    <div class="price-group-title">🍉 スイカ単価</div>
+    <table class="mini-table">
+      <thead>
+        <tr>
+          <th>開始日</th><th>終了日</th>
+          <th>訳あり S</th><th>訳あり M</th><th>訳あり L</th><th>訳あり 2L</th><th>訳あり 3L</th><th>訳あり 4L</th><th>訳あり 5L</th>
+          <th>正規 2L</th><th>正規 3L</th><th>正規 4L</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="priceTableBody_suika"></tbody>
+    </table>
+
+    <div class="price-group-title">🥬 野菜単価</div>
+    <table class="mini-table">
+      <thead>
+        <tr>
+          <th>開始日</th><th>終了日</th>
+          <th>こかぶ規格外</th><th>中かぶ</th>
+          <th>大根S</th><th>大根M</th><th>大根L</th><th>大根2L</th><th>切り大根</th>
+          <th>かぼちゃ規格外</th><th>にんじん規格外</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="priceTableBody_veggie"></tbody>
+    </table>
+
+    <div class="price-group-title">📦 玉ねぎ・箱代単価</div>
+    <table class="mini-table">
+      <thead>
+        <tr>
+          <th>開始日</th><th>終了日</th>
+          <th>玉ねぎ(kg)</th>
+          <th>メロン2入</th><th>メロン3-5入</th>
+          <th>スイカ1入</th><th>スイカ2入</th><th>スイカ無地</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="priceTableBody_box"></tbody>
+    </table>
+
     <button type="button" class="btn-tool" style="margin-top:8px;" onclick="addPricePeriod()">＋ 価格期間を追加</button>
-    <p class="summary-note">※ 価格をタップすると変更できます。開始日以降（終了日を設定していれば終了日まで）に登録した行に、その価格が使われます。過去に登録済みの行の単価は、期間の価格を変更しても遡って変わりません。緑色の行が本日時点で適用中の期間です。</p>
+    <p class="summary-note">※ 価格をタップすると変更できます。開始日以降（終了日を設定していれば終了日まで）に登録した行に、その価格が使われます。過去に登録済みの行の単価は、期間の価格を変更しても遡って変わりません。緑色の行が本日時点で適用中の期間です。4つの表は同じ価格期間を分野別に分けて表示しています（どこで開始日・終了日を変更しても全表に反映されます）。</p>
   </div>
 </div>
 
@@ -511,15 +629,25 @@
   <button class="btn-tool" onclick="exportEntriesCSV()">⬇ CSVダウンロード</button>
 </div>
 
+<div class="column-toggle-bar">
+  <span class="column-toggle-label">表示する商品：</span>
+  <button type="button" class="col-toggle-btn" data-col="melon"  onclick="toggleColumnVisibility('melon')">🍈 メロン</button>
+  <button type="button" class="col-toggle-btn" data-col="suika"  onclick="toggleColumnVisibility('suika')">🍉 スイカ</button>
+  <button type="button" class="col-toggle-btn" data-col="onion"  onclick="toggleColumnVisibility('onion')">🧅 玉ねぎ</button>
+  <button type="button" class="col-toggle-btn" data-col="veggie" onclick="toggleColumnVisibility('veggie')">🥬 野菜</button>
+</div>
+
 <div class="table-wrap">
   <table id="entryTable" style="display:none">
     <thead>
       <tr>
         <th>日付</th>
         <th>お名前</th>
-        <th>メロン</th>
+        <th class="col-melon">メロン</th>
+        <th class="col-suika">スイカ</th>
+        <th class="col-onion">玉ねぎ(kg)</th>
+        <th class="col-veggie">野菜</th>
         <th>その他</th>
-        <th>玉ねぎ(kg)</th>
         <th>発送</th>
         <th>箱代</th>
         <th>送料</th>
@@ -577,18 +705,84 @@
     return getPricesForDateFrom(pricePeriods, dateStr || shiftedDateStr(0));
   }
 
-  // メロンのサイズ（3L/4L/5L）1列に統合された「メロン」セルを、モーダルで編集する際の内訳定義
-  const MELON_SIZE_DEFS = [
-    { qtyKey: 'qty_3l', priceKey: 'unit_price_3l', priceDefaultKey: 'qty3l', label: '3L' },
-    { qtyKey: 'qty_4l', priceKey: 'unit_price_4l', priceDefaultKey: 'qty4l', label: '4L' },
-    { qtyKey: 'qty_5l', priceKey: 'unit_price_5l', priceDefaultKey: 'qty5l', label: '5L' },
+  // メロン・スイカ・野菜列は、複数SKUを1つのセルにまとめ、タップで内訳編集モーダルを開く
+  // （商品ごとに qtyKey/priceKey/priceDefaultKey/label のグループを定義する）
+  const MELON_GROUPS = [
+    { label: 'マルセイユメロン', items: [
+        { qtyKey: 'qty_3l', priceKey: 'unit_price_3l', priceDefaultKey: 'qty3l', label: '3L' },
+        { qtyKey: 'qty_4l', priceKey: 'unit_price_4l', priceDefaultKey: 'qty4l', label: '4L' },
+        { qtyKey: 'qty_5l', priceKey: 'unit_price_5l', priceDefaultKey: 'qty5l', label: '5L' },
+    ]},
+    { label: 'アンデスメロン', items: [
+        { qtyKey: 'qty_andes_3l', priceKey: 'unit_price_andes_3l', priceDefaultKey: 'andes3l', label: '3L' },
+        { qtyKey: 'qty_andes_4l', priceKey: 'unit_price_andes_4l', priceDefaultKey: 'andes4l', label: '4L' },
+        { qtyKey: 'qty_andes_5l', priceKey: 'unit_price_andes_5l', priceDefaultKey: 'andes5l', label: '5L' },
+    ]},
+    { label: 'ヨーグルキッス', items: [
+        { qtyKey: 'qty_yogurkiss_m', priceKey: 'unit_price_yogurkiss_m', priceDefaultKey: 'yogurkissM', label: '中' },
+        { qtyKey: 'qty_yogurkiss_l', priceKey: 'unit_price_yogurkiss_l', priceDefaultKey: 'yogurkissL', label: '大' },
+    ]},
+    { label: 'ピュアリモーネ', items: [
+        { qtyKey: 'qty_pure_normal', priceKey: 'unit_price_pure_normal', priceDefaultKey: 'pureNormal', label: '並' },
+        { qtyKey: 'qty_pure_large',  priceKey: 'unit_price_pure_large',  priceDefaultKey: 'pureLarge',  label: '大' },
+        { qtyKey: 'qty_pure_xlarge', priceKey: 'unit_price_pure_xlarge', priceDefaultKey: 'pureXlarge', label: '特大' },
+    ]},
+    { label: '日焼け（ハネ）', items: [
+        { qtyKey: 'qty_hiyake', priceKey: 'unit_price_hiyake', priceDefaultKey: 'hiyake', label: '' },
+    ]},
+    { label: 'サクサクハミー', items: [
+        { qtyKey: 'qty_sakusaku_m', priceKey: 'unit_price_sakusaku_m', priceDefaultKey: 'sakusakuM', label: '中' },
+        { qtyKey: 'qty_sakusaku_l', priceKey: 'unit_price_sakusaku_l', priceDefaultKey: 'sakusakuL', label: '大' },
+    ]},
   ];
+
+  const SUIKA_GROUPS = [
+    { label: '訳あり', items: [
+        { qtyKey: 'qty_suika_wake_s',  priceKey: 'unit_price_suika_wake_s',  priceDefaultKey: 'suikaWakeS',  label: 'S' },
+        { qtyKey: 'qty_suika_wake_m',  priceKey: 'unit_price_suika_wake_m',  priceDefaultKey: 'suikaWakeM',  label: 'M' },
+        { qtyKey: 'qty_suika_wake_l',  priceKey: 'unit_price_suika_wake_l',  priceDefaultKey: 'suikaWakeL',  label: 'L' },
+        { qtyKey: 'qty_suika_wake_2l', priceKey: 'unit_price_suika_wake_2l', priceDefaultKey: 'suikaWake2l', label: '2L' },
+        { qtyKey: 'qty_suika_wake_3l', priceKey: 'unit_price_suika_wake_3l', priceDefaultKey: 'suikaWake3l', label: '3L' },
+        { qtyKey: 'qty_suika_wake_4l', priceKey: 'unit_price_suika_wake_4l', priceDefaultKey: 'suikaWake4l', label: '4L' },
+        { qtyKey: 'qty_suika_wake_5l', priceKey: 'unit_price_suika_wake_5l', priceDefaultKey: 'suikaWake5l', label: '5L' },
+    ]},
+    { label: '正規品', items: [
+        { qtyKey: 'qty_suika_regular_2l', priceKey: 'unit_price_suika_regular_2l', priceDefaultKey: 'suikaRegular2l', label: '2L' },
+        { qtyKey: 'qty_suika_regular_3l', priceKey: 'unit_price_suika_regular_3l', priceDefaultKey: 'suikaRegular3l', label: '3L' },
+        { qtyKey: 'qty_suika_regular_4l', priceKey: 'unit_price_suika_regular_4l', priceDefaultKey: 'suikaRegular4l', label: '4L' },
+    ]},
+  ];
+
+  const VEGGIE_GROUPS = [
+    { label: 'こかぶ', items: [
+        { qtyKey: 'qty_kokabu_kikaku', priceKey: 'unit_price_kokabu_kikaku', priceDefaultKey: 'kokabuKikaku', label: '規格外（10玉1セット）', unit: 'セット' },
+        { qtyKey: 'qty_kokabu_naka',   priceKey: 'unit_price_kokabu_naka',   priceDefaultKey: 'kokabuNaka',   label: '中かぶ', unit: '玉' },
+    ]},
+    { label: '大根', items: [
+        { qtyKey: 'qty_daikon_s',  priceKey: 'unit_price_daikon_s',  priceDefaultKey: 'daikonS',  label: 'S', unit: '本' },
+        { qtyKey: 'qty_daikon_m',  priceKey: 'unit_price_daikon_m',  priceDefaultKey: 'daikonM',  label: 'M', unit: '本' },
+        { qtyKey: 'qty_daikon_l',  priceKey: 'unit_price_daikon_l',  priceDefaultKey: 'daikonL',  label: 'L', unit: '本' },
+        { qtyKey: 'qty_daikon_2l', priceKey: 'unit_price_daikon_2l', priceDefaultKey: 'daikon2l', label: '2L', unit: '本' },
+        { qtyKey: 'qty_daikon_kiri', priceKey: 'unit_price_daikon_kiri', priceDefaultKey: 'daikonKiri', label: '切り大根(1kg)', unit: 'kg' },
+    ]},
+    { label: 'かぼちゃ', items: [
+        { qtyKey: 'qty_kabocha_kikaku', priceKey: 'unit_price_kabocha_kikaku', priceDefaultKey: 'kabochaKikaku', label: '規格外(100g)', unit: '×100g' },
+    ]},
+    { label: 'にんじん', items: [
+        { qtyKey: 'qty_ninjin_kikaku', priceKey: 'unit_price_ninjin_kikaku', priceDefaultKey: 'ninjinKikaku', label: '規格外(10kg)', unit: '×10kg' },
+    ]},
+  ];
+
+  // 単価の初期セット（addRow）・CSV出力で使う、全SKUのフラットな一覧
+  const ALL_ITEM_GROUPS = [...MELON_GROUPS, ...SUIKA_GROUPS, ...VEGGIE_GROUPS];
 
   // ── 列定義 ──────────────────────────────────────────────
   const COLUMN_DEFS = {
     entry_date:     { label: '日付',     type: 'date' },
     customer_name:  { label: 'お名前',   type: 'customer' },
     melon:          { label: 'メロン',   type: 'melon' },
+    suika:          { label: 'スイカ',   type: 'suika' },
+    veggie:         { label: '野菜',     type: 'veggie' },
     qty_other:      { label: 'その他',   type: 'qty_other' },
     onion_kg:       { label: '玉ねぎ(kg)', type: 'onion' },
     box:            { label: '箱代',     type: 'box' },
@@ -687,17 +881,41 @@
     return `<div class="check-cell ${checked ? 'checked' : 'unchecked'}" onclick="togglePaymentMethodCell(findEntry('${entry.id}'), '${colKey}')">${checked ? '✅' : '—'}</div>`;
   }
 
-  // メロン列（3L/4L/5Lをまとめた1列）：注文があるサイズだけを、クリック不要で常に縦に並べて表示する
-  function melonCellContent(entry, rowPrices) {
-    const ordered = MELON_SIZE_DEFS.filter(s => entry[s.qtyKey]);
-    if (!ordered.length) {
-      return cellBtn('-', 'melon', entry.id, { empty: true });
-    }
-    const label = ordered.map(s => {
-      const priceNote = entry[s.priceKey] !== rowPrices[s.priceDefaultKey] ? ` <span class="cell-sub-inline">@${entry[s.priceKey]}円</span>` : '';
-      return `<div class="melon-size-line">${s.label} ${entry[s.qtyKey]}玉${priceNote}</div>`;
-    }).join('');
-    return cellBtn(label, 'melon', entry.id, {});
+  // メロン／スイカ／野菜列（複数SKUをまとめた1列）：注文があるSKUだけを、クリック不要で常に縦に並べて表示する
+  function groupedCellContent(entry, rowPrices, groups, colKey) {
+    const lines = [];
+    groups.forEach(g => {
+      g.items.forEach(it => {
+        const qty = entry[it.qtyKey];
+        if (!qty) return;
+        const defaultPrice = rowPrices[it.priceDefaultKey];
+        const price = entry[it.priceKey] ?? defaultPrice;
+        const priceNote = price !== defaultPrice ? ` <span class="cell-sub-inline">@${price}円</span>` : '';
+        const itemLabel = it.label ? ` ${it.label}` : '';
+        lines.push(`<div class="melon-size-line">${g.label}${itemLabel} ${qty}${it.unit || '玉'}${priceNote}</div>`);
+      });
+    });
+    if (!lines.length) return cellBtn('-', colKey, entry.id, { empty: true });
+    return cellBtn(lines.join(''), colKey, entry.id, {});
+  }
+
+  function melonCellContent(entry, rowPrices)  { return groupedCellContent(entry, rowPrices, MELON_GROUPS,  'melon'); }
+  function suikaCellContent(entry, rowPrices)  { return groupedCellContent(entry, rowPrices, SUIKA_GROUPS,  'suika'); }
+  function veggieCellContent(entry, rowPrices) { return groupedCellContent(entry, rowPrices, VEGGIE_GROUPS, 'veggie'); }
+
+  // 箱代セル：メロン箱・スイカ箱のうち登録がある内訳だけを短縮表示する
+  function boxCellLabel(entry) {
+    const parts = [];
+    if (entry.box_2) parts.push(`メロン2入:${entry.box_2}`);
+    if (entry.box_35) parts.push(`メロン3-5入:${entry.box_35}`);
+    if (entry.box_suika_1) parts.push(`スイカ1入:${entry.box_suika_1}`);
+    if (entry.box_suika_2) parts.push(`スイカ2入:${entry.box_suika_2}`);
+    if (entry.box_suika_plain) parts.push(`スイカ無地:${entry.box_suika_plain}`);
+    return parts.length ? parts.join(' / ') : '-';
+  }
+
+  function hasAnyBox(entry) {
+    return !!(entry.box_2 || entry.box_35 || entry.box_suika_1 || entry.box_suika_2 || entry.box_suika_plain);
   }
 
   function rowHTML(entry) {
@@ -709,11 +927,13 @@
       <tr class="${entry.paid ? 'row-paid' : ''}">
         <td>${cellBtn(dateLabel, 'entry_date', entry.id, { empty: !entry.entry_date })}</td>
         <td>${cellBtn(escHtml(nameLabel), 'customer_name', entry.id, { empty: !entry.customer_name })}</td>
-        <td>${melonCellContent(entry, rowPrices)}</td>
+        <td class="col-melon">${melonCellContent(entry, rowPrices)}</td>
+        <td class="col-suika">${suikaCellContent(entry, rowPrices)}</td>
+        <td class="col-onion">${cellBtn(entry.onion_kg ? `${entry.onion_kg}kg` : '-', 'onion_kg', entry.id, { empty: !entry.onion_kg })}</td>
+        <td class="col-veggie">${veggieCellContent(entry, rowPrices)}</td>
         <td>${cellBtn(entry.qty_other ? `${entry.qty_other}` : '-', 'qty_other', entry.id, { empty: !entry.qty_other, sub: entry.other_label ? escHtml(entry.other_label) : '' })}</td>
-        <td>${cellBtn(entry.onion_kg ? `${entry.onion_kg}kg` : '-', 'onion_kg', entry.id, { empty: !entry.onion_kg })}</td>
         <td>${checkCell(entry, 'shipped')}</td>
-        <td>${cellBtn((entry.box_2 || entry.box_35) ? `2入:${entry.box_2||0} / 3-5入:${entry.box_35||0}` : '-', 'box', entry.id, { empty: !entry.box_2 && !entry.box_35 })}</td>
+        <td>${cellBtn(boxCellLabel(entry), 'box', entry.id, { empty: !hasAnyBox(entry) })}</td>
         <td>${cellBtn(entry.shipping_fee ? formatYen(entry.shipping_fee) : '-', 'shipping_fee', entry.id, { empty: !entry.shipping_fee })}</td>
         <td class="total-cell">${cellBtn(formatYen(entry.subtotal_amount), 'subtotal_amount', entry.id, { readonly: true })}</td>
         <td class="total-cell">${cellBtn(formatYen(entry.total_amount), 'total_amount', entry.id, { readonly: true })}</td>
@@ -759,15 +979,84 @@
     document.getElementById(id).classList.toggle('collapsed');
   }
 
+  // ── 季節外の作物列を非表示にするトグル（ブラウザに記憶） ──
+  const COLUMN_VISIBILITY_STORAGE_KEY = 'murakami_ec_sheet_hidden_columns';
+
+  function loadHiddenColumns() {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(COLUMN_VISIBILITY_STORAGE_KEY) || '[]'));
+    } catch {
+      return new Set();
+    }
+  }
+
+  let hiddenColumns = loadHiddenColumns();
+
+  function applyColumnVisibility() {
+    const table = document.getElementById('entryTable');
+    ['melon', 'suika', 'onion', 'veggie'].forEach(key => {
+      table.classList.toggle(`hide-${key}`, hiddenColumns.has(key));
+    });
+    document.querySelectorAll('.col-toggle-btn').forEach(btn => {
+      btn.classList.toggle('active', !hiddenColumns.has(btn.dataset.col));
+    });
+  }
+
+  function toggleColumnVisibility(key) {
+    if (hiddenColumns.has(key)) hiddenColumns.delete(key);
+    else hiddenColumns.add(key);
+    localStorage.setItem(COLUMN_VISIBILITY_STORAGE_KEY, JSON.stringify([...hiddenColumns]));
+    applyColumnVisibility();
+  }
+
   // ── 単価一覧（このシート専用・期間ごとに編集可） ────────
+  // group: 単価一覧パネルでどのミニテーブルに表示するか（melon/suika/veggie/box）
   const PRICE_TABLE_COLS = [
-    { key: 'qty3l',  dbCol: 'price_3l',    label: '3L' },
-    { key: 'qty4l',  dbCol: 'price_4l',    label: '4L' },
-    { key: 'qty5l',  dbCol: 'price_5l',    label: '5L' },
-    { key: 'onion',  dbCol: 'price_onion', label: '玉ねぎ(kg)' },
-    { key: 'box2',   dbCol: 'price_box2',  label: '2玉入箱' },
-    { key: 'box35',  dbCol: 'price_box35', label: '3〜5玉入箱' },
+    { key: 'qty3l',  dbCol: 'price_3l',    label: 'マルセイユ3L', group: 'melon' },
+    { key: 'qty4l',  dbCol: 'price_4l',    label: 'マルセイユ4L', group: 'melon' },
+    { key: 'qty5l',  dbCol: 'price_5l',    label: 'マルセイユ5L', group: 'melon' },
+    { key: 'andes3l', dbCol: 'price_andes_3l', label: 'アンデス3L', group: 'melon' },
+    { key: 'andes4l', dbCol: 'price_andes_4l', label: 'アンデス4L', group: 'melon' },
+    { key: 'andes5l', dbCol: 'price_andes_5l', label: 'アンデス5L', group: 'melon' },
+    { key: 'yogurkissM', dbCol: 'price_yogurkiss_m', label: 'ヨーグルキッス中', group: 'melon' },
+    { key: 'yogurkissL', dbCol: 'price_yogurkiss_l', label: 'ヨーグルキッス大', group: 'melon' },
+    { key: 'pureNormal', dbCol: 'price_pure_normal', label: 'ピュアリモーネ並', group: 'melon' },
+    { key: 'pureLarge',  dbCol: 'price_pure_large',  label: 'ピュアリモーネ大', group: 'melon' },
+    { key: 'pureXlarge', dbCol: 'price_pure_xlarge', label: 'ピュアリモーネ特大', group: 'melon' },
+    { key: 'hiyake', dbCol: 'price_hiyake', label: '日焼け（ハネ）', group: 'melon' },
+    { key: 'sakusakuM', dbCol: 'price_sakusaku_m', label: 'サクサクハミー中', group: 'melon' },
+    { key: 'sakusakuL', dbCol: 'price_sakusaku_l', label: 'サクサクハミー大', group: 'melon' },
+
+    { key: 'suikaWakeS',  dbCol: 'price_suika_wake_s',  label: '訳あり S',  group: 'suika' },
+    { key: 'suikaWakeM',  dbCol: 'price_suika_wake_m',  label: '訳あり M',  group: 'suika' },
+    { key: 'suikaWakeL',  dbCol: 'price_suika_wake_l',  label: '訳あり L',  group: 'suika' },
+    { key: 'suikaWake2l', dbCol: 'price_suika_wake_2l', label: '訳あり 2L', group: 'suika' },
+    { key: 'suikaWake3l', dbCol: 'price_suika_wake_3l', label: '訳あり 3L', group: 'suika' },
+    { key: 'suikaWake4l', dbCol: 'price_suika_wake_4l', label: '訳あり 4L', group: 'suika' },
+    { key: 'suikaWake5l', dbCol: 'price_suika_wake_5l', label: '訳あり 5L', group: 'suika' },
+    { key: 'suikaRegular2l', dbCol: 'price_suika_regular_2l', label: '正規 2L', group: 'suika' },
+    { key: 'suikaRegular3l', dbCol: 'price_suika_regular_3l', label: '正規 3L', group: 'suika' },
+    { key: 'suikaRegular4l', dbCol: 'price_suika_regular_4l', label: '正規 4L', group: 'suika' },
+
+    { key: 'kokabuKikaku', dbCol: 'price_kokabu_kikaku', label: 'こかぶ規格外', group: 'veggie' },
+    { key: 'kokabuNaka',   dbCol: 'price_kokabu_naka',   label: '中かぶ',     group: 'veggie' },
+    { key: 'daikonS',  dbCol: 'price_daikon_s',  label: '大根S',  group: 'veggie' },
+    { key: 'daikonM',  dbCol: 'price_daikon_m',  label: '大根M',  group: 'veggie' },
+    { key: 'daikonL',  dbCol: 'price_daikon_l',  label: '大根L',  group: 'veggie' },
+    { key: 'daikon2l', dbCol: 'price_daikon_2l', label: '大根2L', group: 'veggie' },
+    { key: 'daikonKiri', dbCol: 'price_daikon_kiri', label: '切り大根', group: 'veggie' },
+    { key: 'kabochaKikaku', dbCol: 'price_kabocha_kikaku', label: 'かぼちゃ規格外', group: 'veggie' },
+    { key: 'ninjinKikaku',  dbCol: 'price_ninjin_kikaku',  label: 'にんじん規格外', group: 'veggie' },
+
+    { key: 'onion',  dbCol: 'price_onion', label: '玉ねぎ(kg)', group: 'box' },
+    { key: 'box2',   dbCol: 'price_box2',  label: 'メロン2玉入箱', group: 'box' },
+    { key: 'box35',  dbCol: 'price_box35', label: 'メロン3〜5玉入箱', group: 'box' },
+    { key: 'boxSuika1',     dbCol: 'price_box_suika_1',     label: 'スイカ1玉入箱', group: 'box' },
+    { key: 'boxSuika2',     dbCol: 'price_box_suika_2',     label: 'スイカ2玉入箱', group: 'box' },
+    { key: 'boxSuikaPlain', dbCol: 'price_box_suika_plain', label: 'スイカ無地箱', group: 'box' },
   ];
+
+  const PRICE_TABLE_GROUPS = ['melon', 'suika', 'veggie', 'box'];
 
   async function loadPricePeriods() {
     const { data, error } = await supabaseClient
@@ -782,14 +1071,11 @@
     // このシートにまだ価格期間がなければ、月初日付・基本価格で1件だけ作成しておく
     if (!pricePeriods.length) {
       const monthStart = `${YEAR}-${String(MONTH).padStart(2, '0')}-01`;
+      const payload = { sheet_id: sheetId, start_date: monthStart };
+      PRICE_TABLE_COLS.forEach(c => { payload[c.dbCol] = DEFAULT_PRICES[c.key]; });
       const { data: created, error: insErr } = await supabaseClient
         .from('melon_price_periods')
-        .insert({
-          sheet_id: sheetId,
-          start_date: monthStart,
-          price_3l: DEFAULT_PRICES.qty3l, price_4l: DEFAULT_PRICES.qty4l, price_5l: DEFAULT_PRICES.qty5l,
-          price_onion: DEFAULT_PRICES.onion, price_box2: DEFAULT_PRICES.box2, price_box35: DEFAULT_PRICES.box35,
-        })
+        .insert(payload)
         .select()
         .single();
       if (!insErr && created) pricePeriods = [created];
@@ -798,31 +1084,30 @@
 
   function renderPriceTable() {
     const activeId = getActivePricePeriod(shiftedDateStr(0))?.id;
-    document.getElementById('priceTableBody').innerHTML = pricePeriods.map(p => `
-      <tr class="${p.id === activeId ? 'price-row-active' : ''}">
-        <td><input type="date" value="${p.start_date || ''}" onchange="updatePricePeriodDate('${p.id}','start_date',this.value)"></td>
-        <td><input type="date" value="${p.end_date || ''}" onchange="updatePricePeriodDate('${p.id}','end_date',this.value)"></td>
-        ${PRICE_TABLE_COLS.map(c => `
-          <td><button type="button" class="price-cell-btn" onclick="editPricePeriodAmount('${p.id}','${c.key}')">${formatYen(p[c.dbCol])}</button></td>
-        `).join('')}
-        <td><button type="button" class="btn-del-row" onclick="deletePricePeriod('${p.id}')">🗑</button></td>
-      </tr>`).join('');
+    PRICE_TABLE_GROUPS.forEach(group => {
+      const cols = PRICE_TABLE_COLS.filter(c => c.group === group);
+      const tbody = document.getElementById(`priceTableBody_${group}`);
+      if (!tbody) return;
+      tbody.innerHTML = pricePeriods.map(p => `
+        <tr class="${p.id === activeId ? 'price-row-active' : ''}">
+          <td><input type="date" value="${p.start_date || ''}" onchange="updatePricePeriodDate('${p.id}','start_date',this.value)"></td>
+          <td><input type="date" value="${p.end_date || ''}" onchange="updatePricePeriodDate('${p.id}','end_date',this.value)"></td>
+          ${cols.map(c => `
+            <td><button type="button" class="price-cell-btn" onclick="editPricePeriodAmount('${p.id}','${c.key}')">${formatYen(p[c.dbCol])}</button></td>
+          `).join('')}
+          <td><button type="button" class="btn-del-row" onclick="deletePricePeriod('${p.id}')">🗑</button></td>
+        </tr>`).join('');
+    });
   }
 
   async function addPricePeriod() {
     const base = getActivePricePeriod(shiftedDateStr(0)) || pricePeriods[pricePeriods.length - 1];
+    const payload = { sheet_id: sheetId, start_date: shiftedDateStr(0) };
+    PRICE_TABLE_COLS.forEach(c => { payload[c.dbCol] = base ? base[c.dbCol] : DEFAULT_PRICES[c.key]; });
+
     const { data, error } = await supabaseClient
       .from('melon_price_periods')
-      .insert({
-        sheet_id: sheetId,
-        start_date: shiftedDateStr(0),
-        price_3l: base ? base.price_3l : DEFAULT_PRICES.qty3l,
-        price_4l: base ? base.price_4l : DEFAULT_PRICES.qty4l,
-        price_5l: base ? base.price_5l : DEFAULT_PRICES.qty5l,
-        price_onion: base ? base.price_onion : DEFAULT_PRICES.onion,
-        price_box2: base ? base.price_box2 : DEFAULT_PRICES.box2,
-        price_box35: base ? base.price_box35 : DEFAULT_PRICES.box35,
-      })
+      .insert(payload)
       .select()
       .single();
 
@@ -946,6 +1231,21 @@
     await saveCell(entry.id, patch);
   }
 
+  // 新規行に設定する単価一式（メロン／スイカ／野菜の全SKU＋玉ねぎ・箱代）を、
+  // その時点の価格期間から組み立てる
+  function buildUnitPricePayload(prices) {
+    const payload = {
+      onion_unit_price: prices.onion,
+      box_unit_price_2: prices.box2,
+      box_unit_price_35: prices.box35,
+      box_unit_price_suika_1: prices.boxSuika1,
+      box_unit_price_suika_2: prices.boxSuika2,
+      box_unit_price_suika_plain: prices.boxSuikaPlain,
+    };
+    ALL_ITEM_GROUPS.forEach(g => g.items.forEach(it => { payload[it.priceKey] = prices[it.priceDefaultKey]; }));
+    return payload;
+  }
+
   // ── 行追加・削除 ────────────────────────────────────────
   async function addRow() {
     const maxOrder = entries.reduce((m, e) => Math.max(m, e.sort_order), 0);
@@ -956,12 +1256,7 @@
         sheet_id: sheetId,
         sort_order: maxOrder + 1,
         created_by: currentProfile.id,
-        unit_price_3l: prices.qty3l,
-        unit_price_4l: prices.qty4l,
-        unit_price_5l: prices.qty5l,
-        onion_unit_price: prices.onion,
-        box_unit_price_2: prices.box2,
-        box_unit_price_35: prices.box35,
+        ...buildUnitPricePayload(prices),
       })
       .select()
       .single();
@@ -1011,6 +1306,8 @@
       date: renderDateModal,
       customer: renderCustomerModal,
       melon: renderMelonModal,
+      suika: renderSuikaModal,
+      veggie: renderVeggieModal,
       qty_other: renderQtyOtherModal,
       onion: renderOnionModal,
       box: renderBoxModal,
@@ -1146,46 +1443,57 @@
     }
   }
 
-  // ── メロンモーダル（3L/4L/5Lをまとめて編集・サイズごとに単価変更も可） ──
-  function renderMelonModal(body, entry) {
+  // ── メロン／スイカ／野菜共通モーダル（商品グループごとに個数・単価を編集） ──
+  function groupedModal(body, entry, groups) {
     body.dataset.entryId = entry.id;
     const prices = getPricesForDate(entry.entry_date);
 
-    body.innerHTML = MELON_SIZE_DEFS.map((s, i) => {
-      const defaultPrice = prices[s.priceDefaultKey];
-      const currentPrice = entry[s.priceKey] ?? defaultPrice;
-      const priceChanged = currentPrice !== defaultPrice;
-      return `
-      <div class="modal-group" style="${i > 0 ? 'border-top:1px dashed #eee;padding-top:16px;' : ''}">
-        <label>${s.label} 個数（基本 ${formatYen(defaultPrice)}）</label>
-        <input type="number" id="mQty_${s.qtyKey}" min="0" step="1" value="${entry[s.qtyKey] || 0}">
-        <button type="button" class="price-toggle" id="priceToggleBtn_${s.qtyKey}" onclick="toggleMelonPriceInput('${s.qtyKey}')">${priceChanged ? '単価を変更中 ▲' : '単価を変更する ▼'}</button>
-        <div class="price-input-row ${priceChanged ? 'open' : ''}" id="priceInputRow_${s.qtyKey}">
-          <input type="number" id="mPrice_${s.qtyKey}" min="0" step="1" value="${currentPrice}">
-          <span>円</span>
-        </div>
-      </div>`;
+    let first = true;
+    body.innerHTML = groups.map(g => {
+      const heading = `<div class="modal-group-heading" style="${first ? '' : 'border-top:1px dashed #eee;padding-top:16px;'}">${g.label}</div>`;
+      first = false;
+      const rows = g.items.map(it => {
+        const defaultPrice = prices[it.priceDefaultKey];
+        const currentPrice = entry[it.priceKey] ?? defaultPrice;
+        const priceChanged = currentPrice !== defaultPrice;
+        const itemLabel = it.label ? `${it.label} ` : '';
+        return `
+        <div class="modal-group">
+          <label>${itemLabel}個数（基本 ${formatYen(defaultPrice)}）</label>
+          <input type="number" id="mQty_${it.qtyKey}" min="0" step="1" value="${entry[it.qtyKey] || 0}">
+          <button type="button" class="price-toggle" id="priceToggleBtn_${it.qtyKey}" onclick="toggleGroupedPriceInput('${it.qtyKey}')">${priceChanged ? '単価を変更中 ▲' : '単価を変更する ▼'}</button>
+          <div class="price-input-row ${priceChanged ? 'open' : ''}" id="priceInputRow_${it.qtyKey}">
+            <input type="number" id="mPrice_${it.qtyKey}" min="0" step="1" value="${currentPrice}">
+            <span>円</span>
+          </div>
+        </div>`;
+      }).join('');
+      return heading + rows;
     }).join('');
 
     return async () => {
       const patch = {};
-      MELON_SIZE_DEFS.forEach(s => {
-        patch[s.qtyKey] = Math.max(0, parseInt(document.getElementById(`mQty_${s.qtyKey}`).value || '0', 10));
-        const priceRow = document.getElementById(`priceInputRow_${s.qtyKey}`);
+      groups.forEach(g => g.items.forEach(it => {
+        patch[it.qtyKey] = Math.max(0, parseInt(document.getElementById(`mQty_${it.qtyKey}`).value || '0', 10));
+        const priceRow = document.getElementById(`priceInputRow_${it.qtyKey}`);
         if (priceRow.classList.contains('open')) {
-          patch[s.priceKey] = Math.max(0, parseInt(document.getElementById(`mPrice_${s.qtyKey}`).value || '0', 10));
+          patch[it.priceKey] = Math.max(0, parseInt(document.getElementById(`mPrice_${it.qtyKey}`).value || '0', 10));
         }
-      });
+      }));
       return patch;
     };
   }
 
-  function toggleMelonPriceInput(qtyKey) {
+  function toggleGroupedPriceInput(qtyKey) {
     const row = document.getElementById(`priceInputRow_${qtyKey}`);
     const btn = document.getElementById(`priceToggleBtn_${qtyKey}`);
     const open = row.classList.toggle('open');
     btn.textContent = open ? '単価を変更中 ▲' : '単価を変更する ▼';
   }
+
+  function renderMelonModal(body, entry)  { return groupedModal(body, entry, MELON_GROUPS); }
+  function renderSuikaModal(body, entry)  { return groupedModal(body, entry, SUIKA_GROUPS); }
+  function renderVeggieModal(body, entry) { return groupedModal(body, entry, VEGGIE_GROUPS); }
 
   // ── その他モーダル ──────────────────────────────────────
   function renderQtyOtherModal(body, entry) {
@@ -1228,6 +1536,7 @@
     body.dataset.entryId = entry.id;
     const prices = getPricesForDate(entry.entry_date);
     body.innerHTML = `
+      <div class="modal-group-heading">メロン箱</div>
       <div class="modal-group">
         <div class="box-row">
           <span>2玉入（${formatYen(prices.box2)}）</span>
@@ -1237,10 +1546,28 @@
           <span>3〜5玉入（${formatYen(prices.box35)}）</span>
           <input type="number" id="mBox35" min="0" step="1" value="${entry.box_35 || 0}">
         </div>
+      </div>
+      <div class="modal-group-heading" style="border-top:1px dashed #eee;padding-top:16px;">スイカ箱</div>
+      <div class="modal-group">
+        <div class="box-row">
+          <span>1玉入（${formatYen(prices.boxSuika1)}）</span>
+          <input type="number" id="mBoxSuika1" min="0" step="1" value="${entry.box_suika_1 || 0}">
+        </div>
+        <div class="box-row">
+          <span>2玉入（${formatYen(prices.boxSuika2)}）</span>
+          <input type="number" id="mBoxSuika2" min="0" step="1" value="${entry.box_suika_2 || 0}">
+        </div>
+        <div class="box-row">
+          <span>無地箱（${formatYen(prices.boxSuikaPlain)}）</span>
+          <input type="number" id="mBoxSuikaPlain" min="0" step="1" value="${entry.box_suika_plain || 0}">
+        </div>
       </div>`;
     return async () => ({
       box_2: Math.max(0, parseInt(document.getElementById('mBox2').value || '0', 10)),
       box_35: Math.max(0, parseInt(document.getElementById('mBox35').value || '0', 10)),
+      box_suika_1: Math.max(0, parseInt(document.getElementById('mBoxSuika1').value || '0', 10)),
+      box_suika_2: Math.max(0, parseInt(document.getElementById('mBoxSuika2').value || '0', 10)),
+      box_suika_plain: Math.max(0, parseInt(document.getElementById('mBoxSuikaPlain').value || '0', 10)),
     });
   }
 
@@ -1269,16 +1596,21 @@
   // ── CSVエクスポート ─────────────────────────────────────
   function exportEntriesCSV() {
     const headers = [
-      '日付', 'お名前', '3L', '4L', '5L', 'その他数量', 'その他単価', 'その他内容',
-      '玉ねぎ(kg)', '発送', '2玉入箱', '3〜5玉入箱', '送料', '商品小計(円)', '総計(円)',
+      '日付', 'お名前',
+      ...ALL_ITEM_GROUPS.flatMap(g => g.items.map(it => `${g.label}${it.label ? ' ' + it.label : ''}`)),
+      'その他数量', 'その他単価', 'その他内容',
+      '玉ねぎ(kg)', '発送',
+      'メロン2玉入箱', 'メロン3〜5玉入箱', 'スイカ1玉入箱', 'スイカ2玉入箱', 'スイカ無地箱',
+      '送料', '商品小計(円)', '総計(円)',
       '入金', '現金', 'PayPay', '領収書', '備考',
     ];
     const rows = getDisplayEntries().map(e => [
       e.entry_date || '', e.customer_name || '',
-      e.qty_3l || 0, e.qty_4l || 0, e.qty_5l || 0,
+      ...ALL_ITEM_GROUPS.flatMap(g => g.items.map(it => e[it.qtyKey] || 0)),
       e.qty_other || 0, e.unit_price_other || 0, e.other_label || '',
       e.onion_kg || 0, e.shipped ? '○' : '',
-      e.box_2 || 0, e.box_35 || 0, e.shipping_fee || 0,
+      e.box_2 || 0, e.box_35 || 0, e.box_suika_1 || 0, e.box_suika_2 || 0, e.box_suika_plain || 0,
+      e.shipping_fee || 0,
       e.subtotal_amount || 0, e.total_amount || 0,
       e.paid ? '○' : '', e.paid_cash ? '○' : '', e.paid_paypay ? '○' : '',
       e.receipt_issued ? '○' : '', e.note || '',
@@ -1312,6 +1644,7 @@
 
     document.getElementById('userName').textContent = currentProfile.name;
     document.getElementById('sheetTitle').textContent = `🍈 ${monthLabel(YEAR, MONTH)} インスタ・EC注文管理表`;
+    applyColumnVisibility();
 
     await loadCustomers();
 

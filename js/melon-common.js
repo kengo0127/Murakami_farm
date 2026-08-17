@@ -9,6 +9,23 @@ const DEFAULT_PRICES = {
   onion: 280,
   box2: 250,
   box35: 350,
+
+  andes3l: 1000, andes4l: 1100, andes5l: 1200,
+  yogurkissM: 300, yogurkissL: 500,
+  pureNormal: 1000, pureLarge: 1100, pureXlarge: 1100,
+  hiyake: 800,
+  sakusakuM: 600, sakusakuL: 800,
+
+  suikaWakeS: 1000, suikaWakeM: 1200, suikaWakeL: 1400,
+  suikaWake2l: 1600, suikaWake3l: 2000, suikaWake4l: 2200, suikaWake5l: 2500,
+  suikaRegular2l: 2300, suikaRegular3l: 2500, suikaRegular4l: 2800,
+  boxSuika1: 200, boxSuika2: 300, boxSuikaPlain: 250,
+
+  kokabuKikaku: 400, kokabuNaka: 55,
+  daikonS: 120, daikonM: 130, daikonL: 170, daikon2l: 190,
+  daikonKiri: 100,
+  kabochaKikaku: 35,
+  ninjinKikaku: 1080,
 };
 
 const WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
@@ -45,6 +62,24 @@ function getPricesForDateFrom(pricePeriods, dateStr) {
     return {
       qty3l: period.price_3l, qty4l: period.price_4l, qty5l: period.price_5l,
       onion: period.price_onion, box2: period.price_box2, box35: period.price_box35,
+
+      andes3l: period.price_andes_3l, andes4l: period.price_andes_4l, andes5l: period.price_andes_5l,
+      yogurkissM: period.price_yogurkiss_m, yogurkissL: period.price_yogurkiss_l,
+      pureNormal: period.price_pure_normal, pureLarge: period.price_pure_large, pureXlarge: period.price_pure_xlarge,
+      hiyake: period.price_hiyake,
+      sakusakuM: period.price_sakusaku_m, sakusakuL: period.price_sakusaku_l,
+
+      suikaWakeS: period.price_suika_wake_s, suikaWakeM: period.price_suika_wake_m, suikaWakeL: period.price_suika_wake_l,
+      suikaWake2l: period.price_suika_wake_2l, suikaWake3l: period.price_suika_wake_3l,
+      suikaWake4l: period.price_suika_wake_4l, suikaWake5l: period.price_suika_wake_5l,
+      suikaRegular2l: period.price_suika_regular_2l, suikaRegular3l: period.price_suika_regular_3l, suikaRegular4l: period.price_suika_regular_4l,
+      boxSuika1: period.price_box_suika_1, boxSuika2: period.price_box_suika_2, boxSuikaPlain: period.price_box_suika_plain,
+
+      kokabuKikaku: period.price_kokabu_kikaku, kokabuNaka: period.price_kokabu_naka,
+      daikonS: period.price_daikon_s, daikonM: period.price_daikon_m, daikonL: period.price_daikon_l, daikon2l: period.price_daikon_2l,
+      daikonKiri: period.price_daikon_kiri,
+      kabochaKikaku: period.price_kabocha_kikaku,
+      ninjinKikaku: period.price_ninjin_kikaku,
     };
   }
   return { ...DEFAULT_PRICES };
