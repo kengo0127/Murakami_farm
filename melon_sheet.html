@@ -578,8 +578,8 @@
       <thead>
         <tr>
           <th>開始日</th><th>終了日</th>
-          <th>訳あり S</th><th>訳あり M</th><th>訳あり L</th><th>訳あり 2L</th><th>訳あり 3L</th><th>訳あり 4L</th><th>訳あり 5L</th>
           <th>正規 2L</th><th>正規 3L</th><th>正規 4L</th>
+          <th>訳あり S</th><th>訳あり M</th><th>訳あり L</th><th>訳あり 2L</th><th>訳あり 3L</th><th>訳あり 4L</th><th>訳あり 5L</th>
           <th></th>
         </tr>
       </thead>
@@ -719,12 +719,12 @@
   // メロン・スイカ・野菜列は、複数SKUを1つのセルにまとめ、タップで内訳編集モーダルを開く
   // （商品ごとに qtyKey/priceKey/priceDefaultKey/label のグループを定義する）
   const MELON_GROUPS = [
-    { label: 'マルセイユメロン', items: [
+    { label: 'マルセイユ', items: [
         { qtyKey: 'qty_3l', priceKey: 'unit_price_3l', priceDefaultKey: 'qty3l', label: '3L' },
         { qtyKey: 'qty_4l', priceKey: 'unit_price_4l', priceDefaultKey: 'qty4l', label: '4L' },
         { qtyKey: 'qty_5l', priceKey: 'unit_price_5l', priceDefaultKey: 'qty5l', label: '5L' },
     ]},
-    { label: 'アンデスメロン', items: [
+    { label: 'アンデス', items: [
         { qtyKey: 'qty_andes_3l', priceKey: 'unit_price_andes_3l', priceDefaultKey: 'andes3l', label: '3L' },
         { qtyKey: 'qty_andes_4l', priceKey: 'unit_price_andes_4l', priceDefaultKey: 'andes4l', label: '4L' },
         { qtyKey: 'qty_andes_5l', priceKey: 'unit_price_andes_5l', priceDefaultKey: 'andes5l', label: '5L' },
@@ -748,6 +748,11 @@
   ];
 
   const SUIKA_GROUPS = [
+    { label: '正規品', items: [
+        { qtyKey: 'qty_suika_regular_2l', priceKey: 'unit_price_suika_regular_2l', priceDefaultKey: 'suikaRegular2l', label: '2L' },
+        { qtyKey: 'qty_suika_regular_3l', priceKey: 'unit_price_suika_regular_3l', priceDefaultKey: 'suikaRegular3l', label: '3L' },
+        { qtyKey: 'qty_suika_regular_4l', priceKey: 'unit_price_suika_regular_4l', priceDefaultKey: 'suikaRegular4l', label: '4L' },
+    ]},
     { label: '訳あり', items: [
         { qtyKey: 'qty_suika_wake_s',  priceKey: 'unit_price_suika_wake_s',  priceDefaultKey: 'suikaWakeS',  label: 'S' },
         { qtyKey: 'qty_suika_wake_m',  priceKey: 'unit_price_suika_wake_m',  priceDefaultKey: 'suikaWakeM',  label: 'M' },
@@ -756,11 +761,6 @@
         { qtyKey: 'qty_suika_wake_3l', priceKey: 'unit_price_suika_wake_3l', priceDefaultKey: 'suikaWake3l', label: '3L' },
         { qtyKey: 'qty_suika_wake_4l', priceKey: 'unit_price_suika_wake_4l', priceDefaultKey: 'suikaWake4l', label: '4L' },
         { qtyKey: 'qty_suika_wake_5l', priceKey: 'unit_price_suika_wake_5l', priceDefaultKey: 'suikaWake5l', label: '5L' },
-    ]},
-    { label: '正規品', items: [
-        { qtyKey: 'qty_suika_regular_2l', priceKey: 'unit_price_suika_regular_2l', priceDefaultKey: 'suikaRegular2l', label: '2L' },
-        { qtyKey: 'qty_suika_regular_3l', priceKey: 'unit_price_suika_regular_3l', priceDefaultKey: 'suikaRegular3l', label: '3L' },
-        { qtyKey: 'qty_suika_regular_4l', priceKey: 'unit_price_suika_regular_4l', priceDefaultKey: 'suikaRegular4l', label: '4L' },
     ]},
   ];
 
@@ -1038,6 +1038,9 @@
     { key: 'sakusakuM', dbCol: 'price_sakusaku_m', label: 'サクサクハミー中', group: 'melon' },
     { key: 'sakusakuL', dbCol: 'price_sakusaku_l', label: 'サクサクハミー大', group: 'melon' },
 
+    { key: 'suikaRegular2l', dbCol: 'price_suika_regular_2l', label: '正規 2L', group: 'suika' },
+    { key: 'suikaRegular3l', dbCol: 'price_suika_regular_3l', label: '正規 3L', group: 'suika' },
+    { key: 'suikaRegular4l', dbCol: 'price_suika_regular_4l', label: '正規 4L', group: 'suika' },
     { key: 'suikaWakeS',  dbCol: 'price_suika_wake_s',  label: '訳あり S',  group: 'suika' },
     { key: 'suikaWakeM',  dbCol: 'price_suika_wake_m',  label: '訳あり M',  group: 'suika' },
     { key: 'suikaWakeL',  dbCol: 'price_suika_wake_l',  label: '訳あり L',  group: 'suika' },
@@ -1045,9 +1048,6 @@
     { key: 'suikaWake3l', dbCol: 'price_suika_wake_3l', label: '訳あり 3L', group: 'suika' },
     { key: 'suikaWake4l', dbCol: 'price_suika_wake_4l', label: '訳あり 4L', group: 'suika' },
     { key: 'suikaWake5l', dbCol: 'price_suika_wake_5l', label: '訳あり 5L', group: 'suika' },
-    { key: 'suikaRegular2l', dbCol: 'price_suika_regular_2l', label: '正規 2L', group: 'suika' },
-    { key: 'suikaRegular3l', dbCol: 'price_suika_regular_3l', label: '正規 3L', group: 'suika' },
-    { key: 'suikaRegular4l', dbCol: 'price_suika_regular_4l', label: '正規 4L', group: 'suika' },
 
     { key: 'kokabuKikaku', dbCol: 'price_kokabu_kikaku', label: 'こかぶ規格外', group: 'veggie' },
     { key: 'kokabuNaka',   dbCol: 'price_kokabu_naka',   label: '中かぶ',     group: 'veggie' },
