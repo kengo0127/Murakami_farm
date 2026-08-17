@@ -335,6 +335,17 @@
       margin-bottom: 10px;
     }
 
+    /* メロン／スイカ／野菜モーダル：品種・区分ごとに背景を交互に変えて見分けやすくする */
+    .modal-group-band {
+      padding: 14px 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .modal-group-band:last-child { margin-bottom: 0; }
+    .modal-group-band .modal-group:last-child { margin-bottom: 0; }
+    .modal-group-band.band-a { background: #f3f9f1; }
+    .modal-group-band.band-b { background: #eef5fb; }
+
     .total-cell { font-weight: 800; color: #1a3d17; }
 
     .empty-state, .loading-state {
@@ -1448,10 +1459,8 @@
     body.dataset.entryId = entry.id;
     const prices = getPricesForDate(entry.entry_date);
 
-    let first = true;
-    body.innerHTML = groups.map(g => {
-      const heading = `<div class="modal-group-heading" style="${first ? '' : 'border-top:1px dashed #eee;padding-top:16px;'}">${g.label}</div>`;
-      first = false;
+    body.innerHTML = groups.map((g, gi) => {
+      const heading = `<div class="modal-group-heading">${g.label}</div>`;
       const rows = g.items.map(it => {
         const defaultPrice = prices[it.priceDefaultKey];
         const currentPrice = entry[it.priceKey] ?? defaultPrice;
@@ -1468,7 +1477,7 @@
           </div>
         </div>`;
       }).join('');
-      return heading + rows;
+      return `<div class="modal-group-band ${gi % 2 === 0 ? 'band-a' : 'band-b'}">${heading}${rows}</div>`;
     }).join('');
 
     return async () => {
@@ -1536,30 +1545,34 @@
     body.dataset.entryId = entry.id;
     const prices = getPricesForDate(entry.entry_date);
     body.innerHTML = `
-      <div class="modal-group-heading">メロン箱</div>
-      <div class="modal-group">
-        <div class="box-row">
-          <span>2玉入（${formatYen(prices.box2)}）</span>
-          <input type="number" id="mBox2" min="0" step="1" value="${entry.box_2 || 0}">
-        </div>
-        <div class="box-row">
-          <span>3〜5玉入（${formatYen(prices.box35)}）</span>
-          <input type="number" id="mBox35" min="0" step="1" value="${entry.box_35 || 0}">
+      <div class="modal-group-band band-a">
+        <div class="modal-group-heading">メロン箱</div>
+        <div class="modal-group">
+          <div class="box-row">
+            <span>2玉入（${formatYen(prices.box2)}）</span>
+            <input type="number" id="mBox2" min="0" step="1" value="${entry.box_2 || 0}">
+          </div>
+          <div class="box-row">
+            <span>3〜5玉入（${formatYen(prices.box35)}）</span>
+            <input type="number" id="mBox35" min="0" step="1" value="${entry.box_35 || 0}">
+          </div>
         </div>
       </div>
-      <div class="modal-group-heading" style="border-top:1px dashed #eee;padding-top:16px;">スイカ箱</div>
-      <div class="modal-group">
-        <div class="box-row">
-          <span>1玉入（${formatYen(prices.boxSuika1)}）</span>
-          <input type="number" id="mBoxSuika1" min="0" step="1" value="${entry.box_suika_1 || 0}">
-        </div>
-        <div class="box-row">
-          <span>2玉入（${formatYen(prices.boxSuika2)}）</span>
-          <input type="number" id="mBoxSuika2" min="0" step="1" value="${entry.box_suika_2 || 0}">
-        </div>
-        <div class="box-row">
-          <span>無地箱（${formatYen(prices.boxSuikaPlain)}）</span>
-          <input type="number" id="mBoxSuikaPlain" min="0" step="1" value="${entry.box_suika_plain || 0}">
+      <div class="modal-group-band band-b">
+        <div class="modal-group-heading">スイカ箱</div>
+        <div class="modal-group">
+          <div class="box-row">
+            <span>1玉入（${formatYen(prices.boxSuika1)}）</span>
+            <input type="number" id="mBoxSuika1" min="0" step="1" value="${entry.box_suika_1 || 0}">
+          </div>
+          <div class="box-row">
+            <span>2玉入（${formatYen(prices.boxSuika2)}）</span>
+            <input type="number" id="mBoxSuika2" min="0" step="1" value="${entry.box_suika_2 || 0}">
+          </div>
+          <div class="box-row">
+            <span>無地箱（${formatYen(prices.boxSuikaPlain)}）</span>
+            <input type="number" id="mBoxSuikaPlain" min="0" step="1" value="${entry.box_suika_plain || 0}">
+          </div>
         </div>
       </div>`;
     return async () => ({
