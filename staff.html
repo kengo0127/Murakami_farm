@@ -1242,7 +1242,9 @@
   function applyStaffI18n() {
     document.querySelectorAll('.ui-lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === uiLang));
     document.getElementById('logoutBtnLabel').textContent   = st('logout');
-    document.getElementById('loadingLabel').textContent     = st('loading');
+    // loadingLabelはタスク読み込み後にrenderTimeline()でDOMごと置き換わるため、存在する場合のみ更新
+    const loadingEl = document.getElementById('loadingLabel');
+    if (loadingEl) loadingEl.textContent = st('loading');
     document.getElementById('fabOnionLabel').textContent    = st('fabOnion');
     document.getElementById('fabReportLabel').textContent   = st('fabReport');
     document.getElementById('fieldMapTitle').textContent    = st('fieldMapTitle');
