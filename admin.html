@@ -831,7 +831,7 @@
         </div>
       </div>
       <p style="font-size:13px;color:#888;margin-bottom:16px;">
-        出力項目：日付 / スタッフ数 / タスク名 / 作物 / 予定開始 / 予定終了 / 予定所要時間(分) / 実開始時刻 / 完了時刻 / 所要時間(分) / 予実の差分(分) / 開始時間記録漏れ / スタッフ名
+        出力項目：日付 / スタッフ数 / タスク名 / 作物 / 予定開始 / 予定終了 / 予定所要時間(分) / 実開始時刻 / 完了時刻 / 所要時間(分) / 予実の差分(分) / 開始時間記録漏れ / 時間帯別人数 / スタッフ名
       </p>
       <button class="btn-submit" id="exportBtn" onclick="exportCSV()">CSVダウンロード（Excel対応）</button>
       <div id="exportMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
@@ -1007,7 +1007,7 @@
     // ③ 完了記録取得
     const { data: completions } = await supabaseClient
       .from('task_completions')
-      .select('task_id, completed_at, duration_minutes')
+      .select('task_id, completed_at, duration_minutes, worker_time_slots')
       .in('task_id', taskIds);
 
     // ④ 開始記録取得
@@ -1030,8 +1030,14 @@
     starts?.forEach(s => { startsMap[s.task_id] = s; });
 
     // CSV行を生成（タスクごとに1行）
-    const header = ['日付', 'スタッフ数', 'タスク名', '作物', '予定開始', '予定終了', '予定所要時間(分)', '実開始時刻', '完了時刻', '所要時間(分)', '予実の差分(分)', '開始時間記録漏れ', 'スタッフ名'];
+    const header = ['日付', 'スタッフ数', 'タスク名', '作物', '予定開始', '予定終了', '予定所要時間(分)', '実開始時刻', '完了時刻', '所要時間(分)', '予実の差分(分)', '開始時間記録漏れ', '時間帯別人数', 'スタッフ名'];
     const rows = [header];
+
+    // 完了時に入力された時間帯ごとの人数を「開始〜終了:人数」の形式でまとめてテキスト化
+    function formatWorkerTimeSlots(slots) {
+      if (!Array.isArray(slots) || !slots.length) return '';
+      return slots.map(s => `${s.start}〜${s.end}:${s.count}人`).join('／');
+    }
 
     tasks.forEach(task => {
       const staffNames     = assignMap[task.id] ?? [];
@@ -1070,6 +1076,7 @@
         durationMins,
         diff,
         missingStartFlag,
+        formatWorkerTimeSlots(comp?.worker_time_slots),
         staffNames.join('、'),
       ]);
     });
