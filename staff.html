@@ -1235,7 +1235,8 @@
     renderReportFieldGrid('north');
     renderReportFieldGrid('south');
     document.getElementById('todayLabel').textContent = formatDateJa(getToday());
-    loadTasks();
+    // DB再取得を待たず、直前に読み込んだデータをそのまま新しい言語で即時再描画
+    renderTimeline(lastRenderedTasks);
   }
 
   function applyStaffI18n() {
@@ -1299,6 +1300,7 @@
   // DBが追いつく前に再描画されても「開始済み」状態を保持するローカルキャッシュ
   const localStartedTasks = new Map(); // taskId -> Date
   let fieldPlotsCache = []; // 露地マップ表示用（field_plots全件）
+  let lastRenderedTasks = []; // 言語切り替え時、DB再取得なしで即時再描画するためのキャッシュ
 
   // ── 時刻ユーティリティ ──────────────────────────────────
   function getToday() {
@@ -2047,6 +2049,7 @@
 
   // ── タイムライン描画 ───────────────────────────────────
   function renderTimeline(tasks) {
+    lastRenderedTasks = tasks;
     const el = document.getElementById('timeline');
 
     if (!tasks.length) {
