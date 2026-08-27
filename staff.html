@@ -1078,6 +1078,27 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="completeModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title" id="completeModalTitle">完了報告（かんりょうほうこく）</div>
+    <div class="modal-group">
+      <label id="completeTimeSlotsLabel">時間帯ごとの人数（じかんたいごとのにんずう）</label>
+      <div class="onion-time-header">
+        <span id="completeStartHeader">開始（かいし）</span>
+        <span id="completeEndHeader">終了（しゅうりょう）</span>
+        <span id="completePeopleHeader">人数（にんずう）</span>
+        <span></span>
+      </div>
+      <div id="completeTimeRowsList"></div>
+      <button type="button" class="btn-onion-add-row" id="completeAddRowBtn" onclick="addCompleteTimeRow()">＋ 行を追加（ぎょうをついか）</button>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" id="completeCancelBtn" onclick="closeCompleteModal()">キャンセル</button>
+      <button type="button" class="btn-modal-submit" id="completeSubmitBtn" onclick="submitComplete()">✓ 完了（かんりょう）</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="js/supabase.js"></script>
@@ -1102,6 +1123,10 @@
       editStartTitle: '開始時刻を修正（かいしじこくをしゅうせい）',
       editStartFieldLabel: '実際に作業を始めた時刻（じっさいにさぎょうをはじめたじこく）',
       save: '保存する（ほぞんする）',
+      completeModalTitle: '完了報告（かんりょうほうこく）',
+      completeTimeSlotsLabel: '時間帯ごとの人数（じかんたいごとのにんずう）',
+      addRow: '＋ 行を追加（ぎょうをついか）',
+      completeValidationError: '時間帯（開始・終了）と人数をすべて入力してください。終了は開始より後の時刻にしてください。',
       breakMorning: '☕ 休憩（きゅうけい）', breakLunch: '🍱 昼休憩（ひるきゅうけい）', breakAfternoon: '☕ 休憩（きゅうけい）',
       weekdays: ['日', '月', '火', '水', '木', '金', '土'],
       badgeActive: '▶ 作業中（さぎょうちゅう）', badgeNext: '⏭ 次の作業（つぎのさぎょう）',
@@ -1146,6 +1171,10 @@
       editStartTitle: 'Ubah Waktu Mulai',
       editStartFieldLabel: 'Waktu sebenarnya pekerjaan dimulai',
       save: 'Simpan',
+      completeModalTitle: 'Laporan Selesai',
+      completeTimeSlotsLabel: 'Jumlah Pekerja per Rentang Waktu',
+      addRow: '＋ Tambah baris',
+      completeValidationError: 'Silakan isi rentang waktu (mulai/selesai) dan jumlah pekerja untuk semua baris. Waktu selesai harus lebih akhir dari waktu mulai.',
       breakMorning: '☕ Istirahat', breakLunch: '🍱 Istirahat Siang', breakAfternoon: '☕ Istirahat',
       weekdays: ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'],
       badgeActive: '▶ Sedang Bekerja', badgeNext: '⏭ Pekerjaan Berikutnya',
@@ -1190,6 +1219,10 @@
       editStartTitle: 'កែម៉ោងចាប់ផ្តើម',
       editStartFieldLabel: 'ម៉ោងពិតដែលបានចាប់ផ្តើមការងារ',
       save: 'រក្សាទុក',
+      completeModalTitle: 'រាយការណ៍ថារួចរាល់',
+      completeTimeSlotsLabel: 'ចំនួនកម្មករតាមចន្លោះពេលវេលា',
+      addRow: '＋ បន្ថែមជួរ',
+      completeValidationError: 'សូមបំពេញចន្លោះពេលវេលា (ចាប់ផ្តើម/បញ្ចប់) និងចំនួនកម្មករគ្រប់ជួរ។ ម៉ោងបញ្ចប់ត្រូវក្រោយម៉ោងចាប់ផ្តើម។',
       breakMorning: '☕ សម្រាក', breakLunch: '🍱 សម្រាកថ្ងៃត្រង់', breakAfternoon: '☕ សម្រាក',
       weekdays: ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍'],
       badgeActive: '▶ កំពុងធ្វើការ', badgeNext: '⏭ ការងារបន្ទាប់',
@@ -1272,6 +1305,14 @@
     document.getElementById('editStartFieldLabel').textContent = st('editStartFieldLabel');
     document.getElementById('editStartCancelBtn').textContent = st('cancel');
     document.getElementById('editStartSubmitBtn').textContent = st('save');
+    document.getElementById('completeModalTitle').textContent = st('completeModalTitle');
+    document.getElementById('completeTimeSlotsLabel').textContent = st('completeTimeSlotsLabel');
+    document.getElementById('completeStartHeader').textContent = st('startLabel');
+    document.getElementById('completeEndHeader').textContent = st('endLabel');
+    document.getElementById('completePeopleHeader').textContent = st('workerCountLabel');
+    document.getElementById('completeAddRowBtn').textContent = st('addRow');
+    document.getElementById('completeCancelBtn').textContent = st('cancel');
+    document.getElementById('completeSubmitBtn').textContent = st('completeBtn');
     populateReportTimeSelects();
     populateEditStartTimeSelect();
   }
@@ -1393,7 +1434,7 @@
     } else if (status === 'started') {
       const cancelBtn = (started && started.started_by === currentProfile?.id)
         ? `<button class="btn-cancel" onclick="handleCancelStart('${task.id}')">${st('cancelStartBtn')}</button>` : '';
-      action = `<button class="btn-complete" onclick="handleComplete('${task.id}','${task.scheduled_start}')">${st('completeBtn')}</button>${cancelBtn}`;
+      action = `<button class="btn-complete" onclick="openCompleteModal('${task.id}','${task.scheduled_start}','${task.scheduled_end}')">${st('completeBtn')}</button>${cancelBtn}`;
     } else if (status === 'active' || status === 'next') {
       action = `<button class="btn-start" onclick="handleStart('${task.id}')">${st('startBtn')}</button>`;
     } else {
@@ -1401,7 +1442,7 @@
     }
 
     return `
-      <div class="task-card status-${status}" id="task-${task.id}" data-scheduled-start="${task.scheduled_start}">
+      <div class="task-card status-${status}" id="task-${task.id}" data-scheduled-start="${task.scheduled_start}" data-scheduled-end="${task.scheduled_end}">
         <div class="task-header">
           <span class="crop-badge">${task.crop}</span>
           <span class="task-name">${task.task_name}</span>
@@ -2092,10 +2133,79 @@
     }).join('');
   }
 
-  // ── 完了ボタン処理 ─────────────────────────────────────
-  async function handleComplete(taskId, scheduledStart) {
-    const btn = document.querySelector(`#task-${taskId} .btn-complete`);
-    if (btn) { btn.disabled = true; btn.textContent = st('recording'); }
+  // ── 完了報告モーダル（時間帯ごとの作業人数） ────────────
+  let completeTaskId = null;
+  let completeScheduledStart = null;
+
+  // 4:00〜20:00 を15分刻みでselectに設定
+  function completeTimeOptionsHtml(selected) {
+    let html = `<option value="">${st('selectPlaceholder')}</option>`;
+    for (let h = 4; h <= 20; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        const v = `${hh}:${mm}`;
+        html += `<option value="${v}" ${v === selected ? 'selected' : ''}>${v}</option>`;
+      }
+    }
+    return html;
+  }
+
+  function completeTimeRowHtml(startVal, endVal, countVal) {
+    return `
+      <div class="onion-time-row complete-time-row">
+        <select class="ct-start">${completeTimeOptionsHtml(startVal ?? '')}</select>
+        <select class="ct-end">${completeTimeOptionsHtml(endVal ?? '')}</select>
+        <input type="number" class="ct-count" min="0" max="99" value="${countVal ?? ''}">
+        <button type="button" class="btn-onion-remove-row" onclick="this.closest('.complete-time-row').remove()">×</button>
+      </div>`;
+  }
+
+  function addCompleteTimeRow(startVal, endVal, countVal) {
+    document.getElementById('completeTimeRowsList').insertAdjacentHTML('beforeend', completeTimeRowHtml(startVal, endVal, countVal));
+  }
+
+  function openCompleteModal(taskId, scheduledStart, scheduledEnd) {
+    completeTaskId = taskId;
+    completeScheduledStart = scheduledStart;
+    document.getElementById('completeTimeRowsList').innerHTML = '';
+    // 予定時刻を初期値として1行分プリセットしておく（人数だけ入力すればよい状態）
+    addCompleteTimeRow(fmt(scheduledStart), fmt(scheduledEnd), '');
+    document.getElementById('completeModalOverlay').classList.add('open');
+  }
+
+  function closeCompleteModal() {
+    document.getElementById('completeModalOverlay').classList.remove('open');
+    completeTaskId = null;
+  }
+
+  // 入力行から {start, end, count} の配列を取得。不正な入力があれば null を返す
+  function collectCompleteTimeSlots() {
+    const rows = [...document.querySelectorAll('#completeTimeRowsList .complete-time-row')];
+    const slots = [];
+    for (const row of rows) {
+      const start = row.querySelector('.ct-start').value;
+      const end   = row.querySelector('.ct-end').value;
+      const count = row.querySelector('.ct-count').value;
+      if (!start && !end && !count) continue; // 完全な空行はスキップ
+      if (!start || !end || count === '') return null;
+      if (toMin(end) <= toMin(start)) return null;
+      const n = parseInt(count, 10);
+      if (!Number.isInteger(n) || n < 0 || n > 99) return null;
+      slots.push({ start, end, count: n });
+    }
+    return slots;
+  }
+
+  async function submitComplete() {
+    const slots = collectCompleteTimeSlots();
+    if (!slots || !slots.length) { alert(st('completeValidationError')); return; }
+
+    const taskId = completeTaskId;
+    const scheduledStart = completeScheduledStart;
+    const btn = document.getElementById('completeSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = st('recording');
 
     const now = new Date();
     const startDate = new Date(`${getToday()}T${scheduledStart.substring(0,8)}`);
@@ -2108,17 +2218,21 @@
         completed_by: currentProfile.id,
         completed_at: now.toISOString(),
         duration_minutes: durationMinutes,
+        worker_time_slots: slots,
       });
+
+    btn.disabled = false;
+    btn.textContent = st('completeBtn');
 
     if (error && error.code !== '23505') {
       // 重複以外の本当のエラーだけアラート
       alert(st('errorGeneral'));
       console.error(error);
-      if (btn) { btn.disabled = false; btn.textContent = st('completeBtn'); }
       return;
     }
 
     // 成功 or すでに完了済み → その場でカードを完了表示に切り替え
+    closeCompleteModal();
     markTaskCompleted(taskId, now);
     // DB反映を待ってから全体を再描画
     setTimeout(() => loadTasks(), 800);
@@ -2287,9 +2401,10 @@
     const startBtn = card.querySelector('.btn-start');
     if (startBtn) {
       const scheduledStart = card.dataset.scheduledStart;
+      const scheduledEnd = card.dataset.scheduledEnd;
       const completeBtn = document.createElement('button');
       completeBtn.className = 'btn-complete';
-      completeBtn.onclick = () => handleComplete(taskId, scheduledStart);
+      completeBtn.onclick = () => openCompleteModal(taskId, scheduledStart, scheduledEnd);
       completeBtn.textContent = st('completeBtn');
       startBtn.replaceWith(completeBtn);
 
