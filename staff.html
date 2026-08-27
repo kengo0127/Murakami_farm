@@ -52,6 +52,31 @@
       cursor: pointer;
     }
 
+    .ui-lang-switch {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .ui-lang-btn {
+      flex: 1;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.32);
+      border-radius: 8px;
+      padding: 5px 4px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: rgba(255,255,255,0.85);
+      cursor: pointer;
+    }
+
+    .ui-lang-btn.active {
+      background: #fff;
+      color: #2e5c28;
+      border-color: #fff;
+    }
+
     .header-row2 {
       display: flex;
       align-items: baseline;
@@ -869,11 +894,16 @@
 <body>
 
 <header>
+  <div class="ui-lang-switch">
+    <button type="button" class="ui-lang-btn" data-lang="ja" onclick="setUiLang('ja')">日本語</button>
+    <button type="button" class="ui-lang-btn" data-lang="id" onclick="setUiLang('id')">Indonesia（インドネシア語）</button>
+    <button type="button" class="ui-lang-btn" data-lang="km" onclick="setUiLang('km')">ខ្មែរ（カンボジア語）</button>
+  </div>
   <div class="header-row1">
     <div class="header-title">🌿 村上農園</div>
     <div class="header-right">
       <span id="userName"></span>
-      <button class="btn-logout" onclick="logout()">ログアウト</button>
+      <button class="btn-logout" id="logoutBtnLabel" onclick="logout()">ログアウト</button>
     </div>
   </div>
   <div class="header-row2">
@@ -883,11 +913,11 @@
 </header>
 
 <div class="timeline" id="timeline">
-  <div class="loading-state">読み込み中（よみこみちゅう）...</div>
+  <div class="loading-state" id="loadingLabel">読み込み中（よみこみちゅう）...</div>
 </div>
 
-<button class="fab-onion" onclick="openOnionMenuModal()">🧅 玉ねぎ日報（たまねぎにっぽう）</button>
-<button class="fab-report" onclick="openReportModal()">📋 作業を報告（さぎょうをほうこく）</button>
+<button class="fab-onion" onclick="openOnionMenuModal()" id="fabOnionLabel">🧅 玉ねぎ日報（たまねぎにっぽう）</button>
+<button class="fab-report" onclick="openReportModal()" id="fabReportLabel">📋 作業を報告（さぎょうをほうこく）</button>
 
 <div class="modal-overlay" id="onionMenuModalOverlay">
   <div class="modal-sheet">
@@ -949,27 +979,27 @@
 
 <div class="modal-overlay" id="fieldMapModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title">作業場所（さぎょうばしょ）（露地／ろじ）</div>
+    <div class="modal-title" id="fieldMapTitle">作業場所（さぎょうばしょ）（露地／ろじ）</div>
     <div class="field-grid-section">
-      <div class="field-grid-title">村上農園（むらかみのうえん）の北側（きたがわ）</div>
+      <div class="field-grid-title" id="fieldMapNorthLabel">村上農園（むらかみのうえん）の北側（きたがわ）</div>
       <div id="fieldMapModalNorth" class="field-grid"></div>
     </div>
     <div class="field-grid-section">
-      <div class="field-grid-title">村上農園（むらかみのうえん）の南側（みなみがわ）</div>
+      <div class="field-grid-title" id="fieldMapSouthLabel">村上農園（むらかみのうえん）の南側（みなみがわ）</div>
       <div id="fieldMapModalSouth" class="field-grid"></div>
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn-modal-cancel" onclick="closeFieldMapModal()">閉じる（とじる）</button>
+      <button type="button" class="btn-modal-cancel" id="fieldMapCloseBtn" onclick="closeFieldMapModal()">閉じる（とじる）</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="reportModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title">自発的な作業を報告（じはつてきなさぎょうをほうこく）</div>
+    <div class="modal-title" id="reportModalTitle">自発的な作業を報告（じはつてきなさぎょうをほうこく）</div>
     <form id="reportForm" onsubmit="handleReportSubmit(event)">
       <div class="modal-group">
-        <label>作物（さくもつ）</label>
+        <label id="reportCropLabel">作物（さくもつ）</label>
         <input list="reportCropList" id="reportCrop" class="modal-input" placeholder="例（れい）：スイカ" required>
         <datalist id="reportCropList">
           <option value="スイカ">
@@ -978,24 +1008,24 @@
       </div>
 
       <div class="modal-group">
-        <label>作業内容（さぎょうないよう）</label>
+        <label id="reportTaskNameLabel">作業内容（さぎょうないよう）</label>
         <input type="text" id="reportTaskName" class="modal-input" placeholder="例（れい）：除草（じょそう）" required>
       </div>
 
       <div class="modal-group">
-        <label>作業場所（さぎょうばしょ）</label>
+        <label id="reportLocationLabel">作業場所（さぎょうばしょ）</label>
         <div class="location-type-toggle">
-          <button type="button" class="loc-type-btn" data-type="house" onclick="setReportLocationType('house')">🏠 ハウス</button>
-          <button type="button" class="loc-type-btn" data-type="field" onclick="setReportLocationType('field')">🌾 露地（ろじ）</button>
+          <button type="button" class="loc-type-btn" data-type="house" id="reportLocHouseBtn" onclick="setReportLocationType('house')">🏠 ハウス</button>
+          <button type="button" class="loc-type-btn" data-type="field" id="reportLocFieldBtn" onclick="setReportLocationType('field')">🌾 露地（ろじ）</button>
         </div>
         <div id="reportHouseGrid" class="house-grid" style="display:none"></div>
         <div id="reportFieldMapWrap" style="display:none">
           <div class="field-grid-section">
-            <div class="field-grid-title">村上農園（むらかみのうえん）の北側（きたがわ）</div>
+            <div class="field-grid-title" id="reportFieldNorthLabel">村上農園（むらかみのうえん）の北側（きたがわ）</div>
             <div id="reportFieldGridNorth" class="field-grid"></div>
           </div>
           <div class="field-grid-section">
-            <div class="field-grid-title">村上農園（むらかみのうえん）の南側（みなみがわ）</div>
+            <div class="field-grid-title" id="reportFieldSouthLabel">村上農園（むらかみのうえん）の南側（みなみがわ）</div>
             <div id="reportFieldGridSouth" class="field-grid"></div>
           </div>
         </div>
@@ -1004,28 +1034,28 @@
       <div class="modal-group">
         <div class="report-row">
           <div>
-            <label>開始時刻（かいしじこく）</label>
+            <label id="reportStartLabel">開始時刻（かいしじこく）</label>
             <select id="reportStartTime" class="modal-input" required></select>
           </div>
           <div>
-            <label>終了時刻（しゅうりょうじこく）</label>
+            <label id="reportEndLabel">終了時刻（しゅうりょうじこく）</label>
             <select id="reportEndTime" class="modal-input" required></select>
           </div>
         </div>
       </div>
 
       <div class="modal-group">
-        <label>作業人数（さぎょうにんずう）</label>
+        <label id="reportWorkerCountLabel">作業人数（さぎょうにんずう）</label>
         <input type="number" id="reportWorkerCount" class="modal-input" min="1" max="99" step="1" value="1" required>
       </div>
 
       <div class="modal-group">
-        <label>メモ（任意／にんい）</label>
+        <label id="reportNoteLabel">メモ（任意／にんい）</label>
         <textarea id="reportNote" class="modal-input" rows="2" placeholder="補足事項（ほそくじこう）があれば"></textarea>
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="btn-modal-cancel" onclick="closeReportModal()">キャンセル</button>
+        <button type="button" class="btn-modal-cancel" id="reportCancelBtn" onclick="closeReportModal()">キャンセル</button>
         <button type="submit" class="btn-modal-submit" id="reportSubmitBtn">報告する（ほうこくする）</button>
       </div>
     </form>
@@ -1034,14 +1064,14 @@
 
 <div class="modal-overlay" id="editStartModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title">開始時刻を修正（かいしじこくをしゅうせい）</div>
+    <div class="modal-title" id="editStartTitle">開始時刻を修正（かいしじこくをしゅうせい）</div>
     <form id="editStartForm" onsubmit="handleEditStartSubmit(event)">
       <div class="modal-group">
-        <label>実際に作業を始めた時刻（じっさいにさぎょうをはじめたじこく）</label>
+        <label id="editStartFieldLabel">実際に作業を始めた時刻（じっさいにさぎょうをはじめたじこく）</label>
         <select id="editStartTime" class="modal-input" required></select>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn-modal-cancel" onclick="closeEditStartModal()">キャンセル</button>
+        <button type="button" class="btn-modal-cancel" id="editStartCancelBtn" onclick="closeEditStartModal()">キャンセル</button>
         <button type="submit" class="btn-modal-submit" id="editStartSubmitBtn">保存する（ほぞんする）</button>
       </div>
     </form>
@@ -1053,11 +1083,201 @@
 <script src="js/supabase.js"></script>
 <script>
 
+  // ── 多言語対応（日本語 / インドネシア語 / クメール語） ──
+  const STAFF_I18N = {
+    ja: {
+      logout: 'ログアウト', loading: '読み込み中（よみこみちゅう）...',
+      fabOnion: '🧅 玉ねぎ日報（たまねぎにっぽう）', fabReport: '📋 作業を報告（さぎょうをほうこく）',
+      fieldMapTitle: '作業場所（さぎょうばしょ）（露地／ろじ）',
+      fieldNorth: '村上農園（むらかみのうえん）の北側（きたがわ）', fieldSouth: '村上農園（むらかみのうえん）の南側（みなみがわ）',
+      close: '閉じる（とじる）', cancel: 'キャンセル',
+      reportModalTitle: '自発的な作業を報告（じはつてきなさぎょうをほうこく）',
+      cropLabel: '作物（さくもつ）', cropPlaceholder: '例（れい）：スイカ',
+      taskNameLabel: '作業内容（さぎょうないよう）', taskNamePlaceholder: '例（れい）：除草（じょそう）',
+      locationLabel: '作業場所（さぎょうばしょ）', locHouse: '🏠 ハウス', locField: '🌾 露地（ろじ）',
+      startLabel: '開始時刻（かいしじこく）', endLabel: '終了時刻（しゅうりょうじこく）',
+      workerCountLabel: '作業人数（さぎょうにんずう）',
+      noteLabel: 'メモ（任意／にんい）', notePlaceholder: '補足事項（ほそくじこう）があれば',
+      reportSubmit: '報告する（ほうこくする）',
+      editStartTitle: '開始時刻を修正（かいしじこくをしゅうせい）',
+      editStartFieldLabel: '実際に作業を始めた時刻（じっさいにさぎょうをはじめたじこく）',
+      save: '保存する（ほぞんする）',
+      breakMorning: '☕ 休憩（きゅうけい）', breakLunch: '🍱 昼休憩（ひるきゅうけい）', breakAfternoon: '☕ 休憩（きゅうけい）',
+      weekdays: ['日', '月', '火', '水', '木', '金', '土'],
+      badgeActive: '▶ 作業中（さぎょうちゅう）', badgeNext: '⏭ 次の作業（つぎのさぎょう）',
+      editLink: '✏️ 修正（しゅうせい）',
+      startedAt: time => `⏱ ${time} 開始（かいし）`,
+      houseBadge: nums => `🏠 ハウス ${nums}`, fieldBadge: '🌾 露地（ろじ）',
+      mapCheckBtn: '🗺 mapを確認（かくにん）',
+      completedInfo: time => `完了済み（かんりょうずみ）${time}`,
+      completedAt: time => `（${time}完了）`,
+      cancelLink: '取消（とりけし）',
+      completeBtn: '✓ 完了（かんりょう）', cancelStartBtn: '開始（かいし）を取消（とりけし）',
+      startBtn: '▶ 開始（かいし）', startBtnSubtle: '開始する（かいしする）',
+      emptyState: '本日（ほんじつ）の作業（さぎょう）タスクは<br>まだ登録（とうろく）されていません',
+      recording: '記録中（きろくちゅう）...',
+      errorGeneral: 'エラーが発生（はっせい）しました。もう一度（いちど）お試（ため）しください。',
+      confirmCancelStart: '開始（かいし）を取り消しますか？',
+      cancelStartFailed: '取消（とりけし）に失敗（しっぱい）しました。すでに完了報告（かんりょうほうこく）されている場合（ばあい）は取り消せません。',
+      selectPlaceholder: '-- 選択（せんたく） --',
+      saving: '保存中（ほぞんちゅう）...',
+      editStartFailed: '修正（しゅうせい）に失敗（しっぱい）しました。もう一度（いちど）お試（ため）しください。',
+      confirmCancelComplete: '完了報告（かんりょうほうこく）を取り消しますか？',
+      cancelCompleteFailed: '取消（とりけし）に失敗（しっぱい）しました。',
+      selectTimeAlert: '時刻（じこく）を選択（せんたく）してください',
+      sending: '送信中（そうしんちゅう）...',
+      reportSendFailed: '報告（ほうこく）の送信（そうしん）に失敗（しっぱい）しました。もう一度（いちど）お試（ため）しください。',
+      reportSent: '作業報告（さぎょうほうこく）を送信（そうしん）しました',
+    },
+    id: {
+      logout: 'Keluar', loading: 'Memuat...',
+      fabOnion: '🧅 Laporan Bawang', fabReport: '📋 Laporkan Pekerjaan',
+      fieldMapTitle: 'Lokasi Kerja (Lahan Terbuka)',
+      fieldNorth: 'Murakami Farm - Sisi Utara', fieldSouth: 'Murakami Farm - Sisi Selatan',
+      close: 'Tutup', cancel: 'Batal',
+      reportModalTitle: 'Laporkan Pekerjaan Sukarela',
+      cropLabel: 'Tanaman', cropPlaceholder: 'Contoh: Semangka',
+      taskNameLabel: 'Isi Pekerjaan', taskNamePlaceholder: 'Contoh: Penyiangan',
+      locationLabel: 'Lokasi Kerja', locHouse: '🏠 Rumah Kaca', locField: '🌾 Lahan Terbuka',
+      startLabel: 'Waktu Mulai', endLabel: 'Waktu Selesai',
+      workerCountLabel: 'Jumlah Pekerja',
+      noteLabel: 'Catatan (opsional)', notePlaceholder: 'Jika ada keterangan tambahan',
+      reportSubmit: 'Kirim Laporan',
+      editStartTitle: 'Ubah Waktu Mulai',
+      editStartFieldLabel: 'Waktu sebenarnya pekerjaan dimulai',
+      save: 'Simpan',
+      breakMorning: '☕ Istirahat', breakLunch: '🍱 Istirahat Siang', breakAfternoon: '☕ Istirahat',
+      weekdays: ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'],
+      badgeActive: '▶ Sedang Bekerja', badgeNext: '⏭ Pekerjaan Berikutnya',
+      editLink: '✏️ Ubah',
+      startedAt: time => `⏱ Mulai ${time}`,
+      houseBadge: nums => `🏠 Rumah Kaca ${nums}`, fieldBadge: '🌾 Lahan Terbuka',
+      mapCheckBtn: '🗺 Lihat Peta',
+      completedInfo: time => `Selesai${time}`,
+      completedAt: time => ` (selesai ${time})`,
+      cancelLink: 'Batalkan',
+      completeBtn: '✓ Selesai', cancelStartBtn: 'Batalkan Mulai',
+      startBtn: '▶ Mulai', startBtnSubtle: 'Mulai',
+      emptyState: 'Belum ada tugas kerja<br>untuk hari ini',
+      recording: 'Menyimpan...',
+      errorGeneral: 'Terjadi kesalahan. Silakan coba lagi.',
+      confirmCancelStart: 'Batalkan mulai kerja?',
+      cancelStartFailed: 'Gagal membatalkan. Tidak bisa dibatalkan jika sudah dilaporkan selesai.',
+      selectPlaceholder: '-- Pilih --',
+      saving: 'Menyimpan...',
+      editStartFailed: 'Gagal mengubah. Silakan coba lagi.',
+      confirmCancelComplete: 'Batalkan laporan selesai?',
+      cancelCompleteFailed: 'Gagal membatalkan.',
+      selectTimeAlert: 'Silakan pilih waktu',
+      sending: 'Mengirim...',
+      reportSendFailed: 'Gagal mengirim laporan. Silakan coba lagi.',
+      reportSent: 'Laporan pekerjaan telah terkirim',
+    },
+    km: {
+      logout: 'ចេញ', loading: 'កំពុងផ្ទុក...',
+      fabOnion: '🧅 របាយការណ៍ខ្ទឹម', fabReport: '📋 រាយការណ៍ការងារ',
+      fieldMapTitle: 'ទីតាំងការងារ (ដីវាល)',
+      fieldNorth: 'កសិដ្ឋានមូរាកាមី - ភាគខាងជើង', fieldSouth: 'កសិដ្ឋានមូរាកាមី - ភាគខាងត្បូង',
+      close: 'បិទ', cancel: 'បោះបង់',
+      reportModalTitle: 'រាយការណ៍ការងារស្ម័គ្រចិត្ត',
+      cropLabel: 'ដំណាំ', cropPlaceholder: 'ឧទាហរណ៍៖ ឪឡឹក',
+      taskNameLabel: 'មាតិកាការងារ', taskNamePlaceholder: 'ឧទាហរណ៍៖ ដកស្មៅ',
+      locationLabel: 'ទីតាំងការងារ', locHouse: '🏠 ផ្ទះកញ្ចក់', locField: '🌾 ដីវាល',
+      startLabel: 'ម៉ោងចាប់ផ្តើម', endLabel: 'ម៉ោងបញ្ចប់',
+      workerCountLabel: 'ចំនួនកម្មករ',
+      noteLabel: 'កំណត់ចំណាំ (មិនចាំបាច់)', notePlaceholder: 'ប្រសិនបើមានព័ត៌មានបន្ថែម',
+      reportSubmit: 'បញ្ជូនរបាយការណ៍',
+      editStartTitle: 'កែម៉ោងចាប់ផ្តើម',
+      editStartFieldLabel: 'ម៉ោងពិតដែលបានចាប់ផ្តើមការងារ',
+      save: 'រក្សាទុក',
+      breakMorning: '☕ សម្រាក', breakLunch: '🍱 សម្រាកថ្ងៃត្រង់', breakAfternoon: '☕ សម្រាក',
+      weekdays: ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍'],
+      badgeActive: '▶ កំពុងធ្វើការ', badgeNext: '⏭ ការងារបន្ទាប់',
+      editLink: '✏️ កែប្រែ',
+      startedAt: time => `⏱ ចាប់ផ្តើម ${time}`,
+      houseBadge: nums => `🏠 ផ្ទះកញ្ចក់ ${nums}`, fieldBadge: '🌾 ដីវាល',
+      mapCheckBtn: '🗺 មើលផែនទី',
+      completedInfo: time => `រួចរាល់${time}`,
+      completedAt: time => `（បញ្ចប់ ${time}）`,
+      cancelLink: 'បោះបង់',
+      completeBtn: '✓ រួចរាល់', cancelStartBtn: 'បោះបង់ការចាប់ផ្តើម',
+      startBtn: '▶ ចាប់ផ្តើម', startBtnSubtle: 'ចាប់ផ្តើម',
+      emptyState: 'មិនទាន់មានការងារ<br>សម្រាប់ថ្ងៃនេះទេ',
+      recording: 'កំពុងកត់ត្រា...',
+      errorGeneral: 'មានបញ្ហាកើតឡើង។ សូមព្យាយាមម្ដងទៀត។',
+      confirmCancelStart: 'បោះបង់ការចាប់ផ្តើមការងារឬ？',
+      cancelStartFailed: 'បោះបង់មិនជោគជ័យទេ។ មិនអាចបោះបង់បានទេ ប្រសិនបើបានរាយការណ៍ថារួចរាល់ហើយ។',
+      selectPlaceholder: '-- ជ្រើសរើស --',
+      saving: 'កំពុងរក្សាទុក...',
+      editStartFailed: 'កែប្រែមិនជោគជ័យទេ។ សូមព្យាយាមម្ដងទៀត។',
+      confirmCancelComplete: 'បោះបង់របាយការណ៍ថារួចរាល់ឬ？',
+      cancelCompleteFailed: 'បោះបង់មិនជោគជ័យទេ។',
+      selectTimeAlert: 'សូមជ្រើសរើសម៉ោង',
+      sending: 'កំពុងផ្ញើ...',
+      reportSendFailed: 'បញ្ជូនរបាយការណ៍មិនជោគជ័យទេ។ សូមព្យាយាមម្ដងទៀត។',
+      reportSent: 'បានបញ្ជូនរបាយការណ៍ការងាររួចរាល់',
+    },
+  };
+
+  let uiLang = localStorage.getItem('staffLang') || 'ja';
+
+  function st(key, ...args) {
+    const dict = STAFF_I18N[uiLang] ?? STAFF_I18N.ja;
+    const val = dict[key] ?? STAFF_I18N.ja[key];
+    return typeof val === 'function' ? val(...args) : val;
+  }
+
+  function setUiLang(lang) {
+    uiLang = lang;
+    localStorage.setItem('staffLang', lang);
+    applyStaffI18n();
+    renderReportHouseGrid();
+    renderReportFieldGrid('north');
+    renderReportFieldGrid('south');
+    document.getElementById('todayLabel').textContent = formatDateJa(getToday());
+    loadTasks();
+  }
+
+  function applyStaffI18n() {
+    document.querySelectorAll('.ui-lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === uiLang));
+    document.getElementById('logoutBtnLabel').textContent   = st('logout');
+    document.getElementById('loadingLabel').textContent     = st('loading');
+    document.getElementById('fabOnionLabel').textContent    = st('fabOnion');
+    document.getElementById('fabReportLabel').textContent   = st('fabReport');
+    document.getElementById('fieldMapTitle').textContent    = st('fieldMapTitle');
+    document.getElementById('fieldMapNorthLabel').textContent = st('fieldNorth');
+    document.getElementById('fieldMapSouthLabel').textContent = st('fieldSouth');
+    document.getElementById('fieldMapCloseBtn').textContent = st('close');
+    document.getElementById('reportModalTitle').textContent = st('reportModalTitle');
+    document.getElementById('reportCropLabel').textContent  = st('cropLabel');
+    document.getElementById('reportCrop').placeholder       = st('cropPlaceholder');
+    document.getElementById('reportTaskNameLabel').textContent = st('taskNameLabel');
+    document.getElementById('reportTaskName').placeholder   = st('taskNamePlaceholder');
+    document.getElementById('reportLocationLabel').textContent = st('locationLabel');
+    document.getElementById('reportLocHouseBtn').textContent = st('locHouse');
+    document.getElementById('reportLocFieldBtn').textContent = st('locField');
+    document.getElementById('reportFieldNorthLabel').textContent = st('fieldNorth');
+    document.getElementById('reportFieldSouthLabel').textContent = st('fieldSouth');
+    document.getElementById('reportStartLabel').textContent = st('startLabel');
+    document.getElementById('reportEndLabel').textContent   = st('endLabel');
+    document.getElementById('reportWorkerCountLabel').textContent = st('workerCountLabel');
+    document.getElementById('reportNoteLabel').textContent  = st('noteLabel');
+    document.getElementById('reportNote').placeholder       = st('notePlaceholder');
+    document.getElementById('reportCancelBtn').textContent  = st('cancel');
+    document.getElementById('reportSubmitBtn').textContent  = st('reportSubmit');
+    document.getElementById('editStartTitle').textContent   = st('editStartTitle');
+    document.getElementById('editStartFieldLabel').textContent = st('editStartFieldLabel');
+    document.getElementById('editStartCancelBtn').textContent = st('cancel');
+    document.getElementById('editStartSubmitBtn').textContent = st('save');
+    populateReportTimeSelects();
+    populateEditStartTimeSelect();
+  }
+
   // ── 休憩時間定義（管理者が「休憩時間変更」で変更可能。DBから取得できるまでの初期値） ──
   let BREAKS = [
-    { type: 'break', label: '☕ 休憩（きゅうけい）',   start: '10:00', end: '10:30' },
-    { type: 'break', label: '🍱 昼休憩（ひるきゅうけい）', start: '12:00', end: '13:00' },
-    { type: 'break', label: '☕ 休憩（きゅうけい）',   start: '15:00', end: '15:30' },
+    { type: 'break', labelKey: 'breakMorning', start: '10:00', end: '10:30' },
+    { type: 'break', labelKey: 'breakLunch',    start: '12:00', end: '13:00' },
+    { type: 'break', labelKey: 'breakAfternoon', start: '15:00', end: '15:30' },
   ];
 
   async function loadBreakSettings() {
@@ -1069,9 +1289,9 @@
     if (error) console.error(error);
     if (!data) return; // 未設定の場合は初期値のまま
     BREAKS = [
-      { type: 'break', label: '☕ 休憩（きゅうけい）',   start: fmt(data.am_start),    end: fmt(data.am_end) },
-      { type: 'break', label: '🍱 昼休憩（ひるきゅうけい）', start: fmt(data.lunch_start), end: fmt(data.lunch_end) },
-      { type: 'break', label: '☕ 休憩（きゅうけい）',   start: fmt(data.pm_start),    end: fmt(data.pm_end) },
+      { type: 'break', labelKey: 'breakMorning',  start: fmt(data.am_start),    end: fmt(data.am_end) },
+      { type: 'break', labelKey: 'breakLunch',     start: fmt(data.lunch_start), end: fmt(data.lunch_end) },
+      { type: 'break', labelKey: 'breakAfternoon', start: fmt(data.pm_start),    end: fmt(data.pm_end) },
     ];
   }
 
@@ -1101,7 +1321,7 @@
 
   function formatDateJa(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
-    const w = ['日','月','火','水','木','金','土'][d.getDay()];
+    const w = st('weekdays')[d.getDay()];
     return `${d.getMonth()+1}月${d.getDate()}日（${w}）`;
   }
 
@@ -1135,14 +1355,14 @@
     const started = task.task_starts?.[0];
 
     const badge =
-      status === 'started' ? `<div class="status-badge active">▶ 作業中（さぎょうちゅう）</div>` :
-      status === 'active'  ? `<div class="status-badge active">▶ 作業中（さぎょうちゅう）</div>` :
-      status === 'next'    ? `<div class="status-badge next">⏭ 次の作業（つぎのさぎょう）</div>` : '';
+      status === 'started' ? `<div class="status-badge active">${st('badgeActive')}</div>` :
+      status === 'active'  ? `<div class="status-badge active">${st('badgeActive')}</div>` :
+      status === 'next'    ? `<div class="status-badge next">${st('badgeNext')}</div>` : '';
 
     const editStartLink = (started && started.started_by === currentProfile?.id)
-      ? `<button type="button" class="btn-edit-link" onclick="openEditStartModal('${task.id}','${started.started_at}')">✏️ 修正（しゅうせい）</button>` : '';
+      ? `<button type="button" class="btn-edit-link" onclick="openEditStartModal('${task.id}','${started.started_at}')">${st('editLink')}</button>` : '';
     const startedInfo = started
-      ? `<div class="started-info"><span>⏱ ${fmtHM(new Date(started.started_at))} 開始（かいし）</span>${editStartLink}</div>` : '';
+      ? `<div class="started-info"><span>${st('startedAt', fmtHM(new Date(started.started_at)))}</span>${editStartLink}</div>` : '';
 
     const note = task.note
       ? `<div class="task-note">${task.note}</div>` : '';
@@ -1151,29 +1371,29 @@
     const houseLocations = locations.filter(l => l.location_type === 'house');
     const fieldLocations = locations.filter(l => l.location_type === 'field');
     const locationBadge = houseLocations.length
-      ? `<span class="location-badge">🏠 ハウス ${houseLocations.map(l => l.location_code).join('・')}</span>`
+      ? `<span class="location-badge">${st('houseBadge', houseLocations.map(l => l.location_code).join('・'))}</span>`
       : fieldLocations.length
-        ? `<span class="location-badge">🌾 露地（ろじ）</span>`
+        ? `<span class="location-badge">${st('fieldBadge')}</span>`
         : '';
     const fieldCodesJson = JSON.stringify(fieldLocations.map(l => l.location_code)).replace(/"/g, '&quot;');
     const mapCheckBtn = fieldLocations.length
-      ? `<button type="button" class="btn-map-check" onclick="openFieldMapModal(${fieldCodesJson})">🗺 mapを確認（かくにん）</button>`
+      ? `<button type="button" class="btn-map-check" onclick="openFieldMapModal(${fieldCodesJson})">${st('mapCheckBtn')}</button>`
       : '';
 
     let action;
     if (status === 'completed') {
-      const at = comp ? `（${fmtHM(new Date(comp.completed_at))}完了）` : '';
+      const at = comp ? st('completedAt', fmtHM(new Date(comp.completed_at))) : '';
       const cancelLink = (comp && comp.completed_by === currentProfile?.id)
-        ? `<button class="btn-cancel-link" onclick="handleCancelComplete('${task.id}')">取消（とりけし）</button>` : '';
-      action = `<div class="completed-info"><span>✅</span><span>完了済み（かんりょうずみ）${at}</span>${cancelLink}</div>`;
+        ? `<button class="btn-cancel-link" onclick="handleCancelComplete('${task.id}')">${st('cancelLink')}</button>` : '';
+      action = `<div class="completed-info"><span>✅</span><span>${st('completedInfo', at)}</span>${cancelLink}</div>`;
     } else if (status === 'started') {
       const cancelBtn = (started && started.started_by === currentProfile?.id)
-        ? `<button class="btn-cancel" onclick="handleCancelStart('${task.id}')">開始（かいし）を取消（とりけし）</button>` : '';
-      action = `<button class="btn-complete" onclick="handleComplete('${task.id}','${task.scheduled_start}')">✓ 完了（かんりょう）</button>${cancelBtn}`;
+        ? `<button class="btn-cancel" onclick="handleCancelStart('${task.id}')">${st('cancelStartBtn')}</button>` : '';
+      action = `<button class="btn-complete" onclick="handleComplete('${task.id}','${task.scheduled_start}')">${st('completeBtn')}</button>${cancelBtn}`;
     } else if (status === 'active' || status === 'next') {
-      action = `<button class="btn-start" onclick="handleStart('${task.id}')">▶ 開始（かいし）</button>`;
+      action = `<button class="btn-start" onclick="handleStart('${task.id}')">${st('startBtn')}</button>`;
     } else {
-      action = `<button class="btn-start subtle" onclick="handleStart('${task.id}')">開始する（かいしする）</button>`;
+      action = `<button class="btn-start subtle" onclick="handleStart('${task.id}')">${st('startBtnSubtle')}</button>`;
     }
 
     return `
@@ -1833,7 +2053,7 @@
       el.innerHTML = `
         <div class="empty-state">
           <div class="icon">📭</div>
-          <p>本日（ほんじつ）の作業（さぎょう）タスクは<br>まだ登録（とうろく）されていません</p>
+          <p>${st('emptyState')}</p>
         </div>`;
       return;
     }
@@ -1859,7 +2079,7 @@
       if (item.type === 'break') {
         return `
           <div class="break-card">
-            <span>${item.label}</span>
+            <span>${st(item.labelKey)}</span>
             <span class="break-time">${item.start} 〜 ${item.end}</span>
           </div>`;
       }
@@ -1870,7 +2090,7 @@
   // ── 完了ボタン処理 ─────────────────────────────────────
   async function handleComplete(taskId, scheduledStart) {
     const btn = document.querySelector(`#task-${taskId} .btn-complete`);
-    if (btn) { btn.disabled = true; btn.textContent = '記録中（きろくちゅう）...'; }
+    if (btn) { btn.disabled = true; btn.textContent = st('recording'); }
 
     const now = new Date();
     const startDate = new Date(`${getToday()}T${scheduledStart.substring(0,8)}`);
@@ -1887,9 +2107,9 @@
 
     if (error && error.code !== '23505') {
       // 重複以外の本当のエラーだけアラート
-      alert('エラーが発生（はっせい）しました。もう一度（いちど）お試（ため）しください。');
+      alert(st('errorGeneral'));
       console.error(error);
-      if (btn) { btn.disabled = false; btn.textContent = '✓ 完了（かんりょう）'; }
+      if (btn) { btn.disabled = false; btn.textContent = st('completeBtn'); }
       return;
     }
 
@@ -1902,7 +2122,7 @@
   // ── 開始ボタン処理 ─────────────────────────────────────
   async function handleStart(taskId) {
     const btn = document.querySelector(`#task-${taskId} .btn-start`);
-    if (btn) { btn.disabled = true; btn.textContent = '記録中（きろくちゅう）...'; }
+    if (btn) { btn.disabled = true; btn.textContent = st('recording'); }
 
     const now = new Date();
 
@@ -1920,8 +2140,8 @@
 
     if (error && error.code !== '23505') {
       localStartedTasks.delete(taskId);
-      alert('エラーが発生（はっせい）しました。もう一度（いちど）お試（ため）しください。');
-      if (btn) { btn.disabled = false; btn.textContent = '▶ 開始（かいし）'; }
+      alert(st('errorGeneral'));
+      if (btn) { btn.disabled = false; btn.textContent = st('startBtn'); }
       return;
     }
     // loadTasks() は呼ばない。markTaskStarted() のDOM更新のみで確定させる。
@@ -1930,7 +2150,7 @@
 
   // ── 開始キャンセル処理 ─────────────────────────────────
   async function handleCancelStart(taskId) {
-    if (!confirm('開始（かいし）を取り消しますか？')) return;
+    if (!confirm(st('confirmCancelStart'))) return;
 
     const { error } = await supabaseClient
       .from('task_starts')
@@ -1938,7 +2158,7 @@
       .eq('task_id', taskId);
 
     if (error) {
-      alert('取消（とりけし）に失敗（しっぱい）しました。すでに完了報告（かんりょうほうこく）されている場合（ばあい）は取り消せません。');
+      alert(st('cancelStartFailed'));
       console.error(error);
       return;
     }
@@ -1952,7 +2172,7 @@
 
   // 4:00〜20:00 を15分刻みでselectに設定
   function populateEditStartTimeSelect() {
-    const options = ['<option value="">-- 選択（せんたく） --</option>'];
+    const options = [`<option value="">${st('selectPlaceholder')}</option>`];
     for (let h = 4; h <= 20; h++) {
       for (let m = 0; m < 60; m += 15) {
         const hh = String(h).padStart(2, '0');
@@ -1990,7 +2210,7 @@
 
     const btn = document.getElementById('editStartSubmitBtn');
     btn.disabled = true;
-    btn.textContent = '保存中（ほぞんちゅう）...';
+    btn.textContent = st('saving');
 
     const newStartedAt = new Date(`${getToday()}T${timeVal}:00`);
 
@@ -2000,10 +2220,10 @@
       .eq('task_id', taskId);
 
     btn.disabled = false;
-    btn.textContent = '保存する（ほぞんする）';
+    btn.textContent = st('save');
 
     if (error) {
-      alert('修正（しゅうせい）に失敗（しっぱい）しました。もう一度（いちど）お試（ため）しください。');
+      alert(st('editStartFailed'));
       console.error(error);
       return;
     }
@@ -2015,7 +2235,7 @@
 
   // ── 完了キャンセル処理 ─────────────────────────────────
   async function handleCancelComplete(taskId) {
-    if (!confirm('完了報告（かんりょうほうこく）を取り消しますか？')) return;
+    if (!confirm(st('confirmCancelComplete'))) return;
 
     const { error } = await supabaseClient
       .from('task_completions')
@@ -2023,7 +2243,7 @@
       .eq('task_id', taskId);
 
     if (error) {
-      alert('取消（とりけし）に失敗（しっぱい）しました。');
+      alert(st('cancelCompleteFailed'));
       console.error(error);
       return;
     }
@@ -2041,11 +2261,11 @@
     let badge = card.querySelector('.status-badge');
     if (badge) {
       badge.className = 'status-badge active';
-      badge.textContent = '▶ 作業中（さぎょうちゅう）';
+      badge.textContent = st('badgeActive');
     } else {
       badge = document.createElement('div');
       badge.className = 'status-badge active';
-      badge.textContent = '▶ 作業中（さぎょうちゅう）';
+      badge.textContent = st('badgeActive');
       card.querySelector('.task-header').insertAdjacentElement('afterend', badge);
     }
 
@@ -2053,8 +2273,8 @@
     if (!card.querySelector('.started-info')) {
       const div = document.createElement('div');
       div.className = 'started-info';
-      div.innerHTML = `<span>⏱ ${fmtHM(startedAt)} 開始（かいし）</span>` +
-        `<button type="button" class="btn-edit-link" onclick="openEditStartModal('${taskId}','${startedAt.toISOString()}')">✏️ 修正（しゅうせい）</button>`;
+      div.innerHTML = `<span>${st('startedAt', fmtHM(startedAt))}</span>` +
+        `<button type="button" class="btn-edit-link" onclick="openEditStartModal('${taskId}','${startedAt.toISOString()}')">${st('editLink')}</button>`;
       badge.insertAdjacentElement('afterend', div);
     }
 
@@ -2065,13 +2285,13 @@
       const completeBtn = document.createElement('button');
       completeBtn.className = 'btn-complete';
       completeBtn.onclick = () => handleComplete(taskId, scheduledStart);
-      completeBtn.textContent = '✓ 完了（かんりょう）';
+      completeBtn.textContent = st('completeBtn');
       startBtn.replaceWith(completeBtn);
 
       const cancelBtn = document.createElement('button');
       cancelBtn.className = 'btn-cancel';
       cancelBtn.onclick = () => handleCancelStart(taskId);
-      cancelBtn.textContent = '開始（かいし）を取消（とりけし）';
+      cancelBtn.textContent = st('cancelStartBtn');
       completeBtn.insertAdjacentElement('afterend', cancelBtn);
     }
   }
@@ -2096,8 +2316,8 @@
     if (btn) {
       const div = document.createElement('div');
       div.className = 'completed-info';
-      div.innerHTML = `<span class="completed-stamp">✅</span><span>完了済み（かんりょうずみ）（${fmtHM(completedAt)}完了）</span>` +
-        `<button class="btn-cancel-link" onclick="handleCancelComplete('${taskId}')">取消（とりけし）</button>`;
+      div.innerHTML = `<span class="completed-stamp">✅</span><span>${st('completedInfo', st('completedAt', fmtHM(completedAt)))}</span>` +
+        `<button class="btn-cancel-link" onclick="handleCancelComplete('${taskId}')">${st('cancelLink')}</button>`;
       btn.replaceWith(div);
     }
   }
@@ -2179,7 +2399,7 @@
   // ── 自発的な作業報告 ───────────────────────────────────
   // ── 作業報告：時刻セレクト（6:00〜20:00 を15分刻み） ────
   function populateReportTimeSelects() {
-    const options = ['<option value="">-- 選択（せんたく） --</option>'];
+    const options = [`<option value="">${st('selectPlaceholder')}</option>`];
     for (let h = 6; h <= 20; h++) {
       for (let m = 0; m < 60; m += 15) {
         const hh = String(h).padStart(2, '0');
@@ -2287,14 +2507,14 @@
     const taskName  = document.getElementById('reportTaskName').value.trim();
     const startTime = document.getElementById('reportStartTime').value;
     const endTime   = document.getElementById('reportEndTime').value;
-    if (!startTime || !endTime) { alert('時刻（じこく）を選択（せんたく）してください'); return; }
+    if (!startTime || !endTime) { alert(st('selectTimeAlert')); return; }
     const workerCount = parseInt(document.getElementById('reportWorkerCount').value, 10);
     const note      = document.getElementById('reportNote').value.trim();
     const locations = getReportSelectedLocations();
 
     const btn = document.getElementById('reportSubmitBtn');
     btn.disabled = true;
-    btn.textContent = '送信中（そうしんちゅう）...';
+    btn.textContent = st('sending');
 
     const { data: report, error } = await supabaseClient
       .from('work_reports')
@@ -2318,16 +2538,16 @@
     }
 
     btn.disabled = false;
-    btn.textContent = '報告する（ほうこくする）';
+    btn.textContent = st('reportSubmit');
 
     if (error) {
-      alert('報告（ほうこく）の送信（そうしん）に失敗（しっぱい）しました。もう一度（いちど）お試（ため）しください。');
+      alert(st('reportSendFailed'));
       console.error(error);
       return;
     }
 
     closeReportModal();
-    alert('作業報告（さぎょうほうこく）を送信（そうしん）しました');
+    alert(st('reportSent'));
   }
 
   // ── 初期化 ────────────────────────────────────────────
@@ -2336,6 +2556,7 @@
     if (!currentProfile) return;
 
     document.getElementById('userName').textContent = currentProfile.name;
+    applyStaffI18n();
     document.getElementById('todayLabel').textContent = formatDateJa(getToday());
 
     updateClock();
@@ -2344,8 +2565,6 @@
     // 1分ごとに再描画（作業中/次の作業の切り替えのため）
     setInterval(loadTasks, 60000);
 
-    populateReportTimeSelects();
-    populateEditStartTimeSelect();
     await loadBreakSettings();
     await loadFieldPlotsCache();
     await loadTasks();
