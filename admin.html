@@ -694,6 +694,7 @@
     <button class="tab-btn" data-tab="progress" onclick="showTab('progress')">📊 進捗確認</button>
     <button class="tab-btn" data-tab="reports" onclick="showTab('reports')">📋 自発報告</button>
     <button class="tab-btn" data-tab="export" onclick="showTab('export')">📥 データ出力</button>
+    <button class="tab-btn" data-tab="kintai" onclick="showTab('kintai')">⏰ 勤怠</button>
     <a class="tab-btn" href="melon.html" style="text-decoration:none;text-align:center;">🍈 インスタ・EC</a>
   </div>
 </header>
@@ -849,6 +850,50 @@
   </div>
 </div>
 
+<!-- ── 勤怠タブ ── -->
+<div id="tab-kintai" class="tab-content">
+  <div class="container">
+    <div class="date-bar">
+      <label>開始日</label>
+      <input type="date" id="kintaiFrom" onchange="loadKintaiRecords()">
+      <label>終了日</label>
+      <input type="date" id="kintaiTo" onchange="loadKintaiRecords()">
+    </div>
+
+    <div class="form-card">
+      <h2>📥 勤怠記録のエクスポート</h2>
+      <p style="font-size:13px;color:#888;margin-bottom:16px;">
+        上記の期間で、日別の出退勤記録とスタッフ別の月次集計（合計労働時間）をExcel出力します。休憩時間は差し引かず、出退勤の時刻をそのまま集計します。
+      </p>
+      <button class="btn-submit" id="kintaiExportBtn" onclick="exportKintaiExcel()">Excelダウンロード</button>
+      <div id="kintaiExportMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
+    </div>
+
+    <div class="section-title" id="kintaiListTitle">勤怠記録</div>
+    <div id="kintaiList"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="kintaiEditModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title" id="kintaiEditTitle">勤怠記録の修正</div>
+    <div class="form-group">
+      <label>出勤時刻</label>
+      <select id="kintaiEditClockIn"></select>
+    </div>
+    <div class="form-group">
+      <label>退勤時刻</label>
+      <select id="kintaiEditClockOut"></select>
+    </div>
+    <div id="kintaiEditMsg" style="font-size:13px;color:#c0392b;margin-bottom:10px;"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" onclick="closeKintaiEditModal()">キャンセル</button>
+      <button type="button" class="btn-modal-submit" id="kintaiEditSaveBtn" onclick="saveKintaiEdit()">保存する</button>
+    </div>
+    <button type="button" class="btn-delete" style="width:100%;margin-top:10px;padding:10px;font-size:13px;" onclick="deleteKintaiRecord()">この日の記録を削除する</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="breakSettingsModalOverlay">
   <div class="modal-sheet">
     <div class="modal-title" id="breakSettingsModalTitle">休憩時間変更</div>
@@ -890,6 +935,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="js/supabase.js"></script>
 <script>
 
@@ -964,6 +1010,226 @@
     if (tab === 'reports') {
       loadReports();
     }
+    if (tab === 'kintai') {
+      loadKintaiRecords();
+    }
+  }
+
+  // ── 勤怠管理 ──────────────────────────────────────────────
+  let kintaiRecordsCache = [];
+  let kintaiEditingId = null;
+
+  // 0:00〜23:45 を15分刻みでselectに設定（未設定を選べるよう空欄オプション付き）
+  function kintaiTimeOptionsHtml(selected) {
+    let html = `<option value="">-- 未設定 --</option>`;
+    for (let h = 0; h <= 23; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        const v = `${hh}:${mm}`;
+        html += `<option value="${v}" ${v === selected ? 'selected' : ''}>${v}</option>`;
+      }
+    }
+    return html;
+  }
+
+  function formatMinutesHM(mins) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h}時間${m}分`;
+  }
+
+  async function loadKintaiRecords() {
+    const from = document.getElementById('kintaiFrom').value;
+    const to   = document.getElementById('kintaiTo').value;
+    if (!from || !to) return;
+
+    const { data, error } = await supabaseClient
+      .from('attendance_records')
+      .select('id, staff_id, date, clock_in, clock_out, profiles(name)')
+      .gte('date', from)
+      .lte('date', to);
+
+    if (error) { console.error(error); return; }
+
+    const records = (data ?? []).slice().sort((a, b) => {
+      if (a.date !== b.date) return a.date < b.date ? 1 : -1; // 日付降順
+      return (a.profiles?.name ?? '').localeCompare(b.profiles?.name ?? '', 'ja');
+    });
+
+    renderKintaiList(records);
+  }
+
+  function renderKintaiList(records) {
+    kintaiRecordsCache = records;
+    const el = document.getElementById('kintaiList');
+
+    if (!records.length) {
+      el.innerHTML = `<div class="empty-state" style="text-align:center;padding:40px;color:#bbb;">この期間の勤怠記録はありません</div>`;
+      return;
+    }
+
+    el.innerHTML = records.map(r => {
+      const name = r.profiles?.name ?? '—';
+      const clockInStr  = r.clock_in  ? fmtHM(new Date(r.clock_in))  : '—';
+      const clockOutStr = r.clock_out ? fmtHM(new Date(r.clock_out)) : '—';
+      let durationStr = '—';
+      if (r.clock_in && r.clock_out) {
+        const mins = Math.round((new Date(r.clock_out) - new Date(r.clock_in)) / 60000);
+        durationStr = formatMinutesHM(mins);
+      }
+
+      return `
+        <div class="task-item">
+          <div class="task-item-left">
+            <div class="task-item-header">
+              <span class="crop-badge">${r.date}</span>
+              <span class="task-item-name">${name}</span>
+            </div>
+            <div class="task-item-meta">出勤 ${clockInStr}　退勤 ${clockOutStr}　労働時間 ${durationStr}</div>
+          </div>
+          <div class="task-item-actions">
+            <button class="btn-edit" onclick="openKintaiEditModal('${r.id}')">編集</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function openKintaiEditModal(recordId) {
+    const r = kintaiRecordsCache.find(x => x.id === recordId);
+    if (!r) return;
+
+    kintaiEditingId = recordId;
+    document.getElementById('kintaiEditTitle').textContent = `${r.profiles?.name ?? ''}さん（${r.date}）の勤怠を修正`;
+    document.getElementById('kintaiEditClockIn').innerHTML  = kintaiTimeOptionsHtml(r.clock_in  ? fmtHM(new Date(r.clock_in))  : '');
+    document.getElementById('kintaiEditClockOut').innerHTML = kintaiTimeOptionsHtml(r.clock_out ? fmtHM(new Date(r.clock_out)) : '');
+    document.getElementById('kintaiEditMsg').textContent = '';
+    document.getElementById('kintaiEditModalOverlay').classList.add('open');
+  }
+
+  function closeKintaiEditModal() {
+    document.getElementById('kintaiEditModalOverlay').classList.remove('open');
+    kintaiEditingId = null;
+  }
+
+  async function saveKintaiEdit() {
+    const r = kintaiRecordsCache.find(x => x.id === kintaiEditingId);
+    if (!r) return;
+
+    const inVal  = document.getElementById('kintaiEditClockIn').value;
+    const outVal = document.getElementById('kintaiEditClockOut').value;
+    const msg = document.getElementById('kintaiEditMsg');
+    msg.textContent = '';
+
+    if (outVal && !inVal) { msg.textContent = '出勤時刻を入力してください'; return; }
+    if (inVal && outVal && outVal <= inVal) { msg.textContent = '退勤時刻は出勤時刻より後にしてください'; return; }
+
+    const btn = document.getElementById('kintaiEditSaveBtn');
+    btn.disabled = true;
+    btn.textContent = '保存中...';
+
+    const clockIn  = inVal  ? new Date(`${r.date}T${inVal}:00`).toISOString()  : null;
+    const clockOut = outVal ? new Date(`${r.date}T${outVal}:00`).toISOString() : null;
+
+    const { error } = await supabaseClient
+      .from('attendance_records')
+      .update({ clock_in: clockIn, clock_out: clockOut, updated_at: new Date().toISOString() })
+      .eq('id', r.id);
+
+    btn.disabled = false;
+    btn.textContent = '保存する';
+
+    if (error) { msg.textContent = '保存に失敗しました'; console.error(error); return; }
+
+    closeKintaiEditModal();
+    await loadKintaiRecords();
+  }
+
+  async function deleteKintaiRecord() {
+    const r = kintaiRecordsCache.find(x => x.id === kintaiEditingId);
+    if (!r) return;
+    if (!confirm(`${r.profiles?.name ?? ''}さんの${r.date}の勤怠記録を削除しますか？この操作は取り消せません。`)) return;
+
+    const { error } = await supabaseClient.from('attendance_records').delete().eq('id', r.id);
+    if (error) { alert('削除に失敗しました'); console.error(error); return; }
+
+    closeKintaiEditModal();
+    await loadKintaiRecords();
+  }
+
+  async function exportKintaiExcel() {
+    const from = document.getElementById('kintaiFrom').value;
+    const to   = document.getElementById('kintaiTo').value;
+    const msg  = document.getElementById('kintaiExportMsg');
+    const btn  = document.getElementById('kintaiExportBtn');
+
+    if (!from || !to) { msg.textContent = '開始日と終了日を選択してください'; return; }
+    if (from > to)    { msg.textContent = '開始日は終了日より前にしてください'; return; }
+
+    btn.disabled = true;
+    btn.textContent = '取得中...';
+    msg.textContent = '';
+
+    const { data, error } = await supabaseClient
+      .from('attendance_records')
+      .select('date, clock_in, clock_out, profiles(name)')
+      .gte('date', from)
+      .lte('date', to);
+
+    btn.disabled = false;
+    btn.textContent = 'Excelダウンロード';
+
+    if (error || !data?.length) {
+      msg.textContent = 'この期間にデータがありません';
+      if (error) console.error(error);
+      return;
+    }
+
+    const dailyRows = [['日付', 'スタッフ名', '出勤時刻', '退勤時刻', '労働時間(分)', '労働時間']];
+    const staffTotals = {}; // name -> { days, totalMins }
+
+    data
+      .slice()
+      .sort((a, b) => {
+        if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+        return (a.profiles?.name ?? '').localeCompare(b.profiles?.name ?? '', 'ja');
+      })
+      .forEach(r => {
+        const name = r.profiles?.name ?? '—';
+        const clockInStr  = r.clock_in  ? fmtHM(new Date(r.clock_in))  : '';
+        const clockOutStr = r.clock_out ? fmtHM(new Date(r.clock_out)) : '';
+        let mins = '';
+        if (r.clock_in && r.clock_out) {
+          mins = Math.round((new Date(r.clock_out) - new Date(r.clock_in)) / 60000);
+        }
+        dailyRows.push([r.date, name, clockInStr, clockOutStr, mins, mins !== '' ? formatMinutesHM(mins) : '']);
+
+        if (!staffTotals[name]) staffTotals[name] = { days: 0, totalMins: 0 };
+        if (mins !== '') {
+          staffTotals[name].days += 1;
+          staffTotals[name].totalMins += mins;
+        }
+      });
+
+    const summaryRows = [['スタッフ名', '出勤日数', '合計労働時間(分)', '合計労働時間']];
+    Object.keys(staffTotals).sort((a, b) => a.localeCompare(b, 'ja')).forEach(name => {
+      const t = staffTotals[name];
+      summaryRows.push([name, t.days, t.totalMins, formatMinutesHM(t.totalMins)]);
+    });
+
+    const wb = XLSX.utils.book_new();
+
+    const wsDaily = XLSX.utils.aoa_to_sheet(dailyRows);
+    wsDaily['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsDaily, '日別勤怠記録');
+
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }];
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'スタッフ別集計');
+
+    XLSX.writeFile(wb, `村上農園_勤怠記録_${from}_${to}.xlsx`);
+
+    msg.textContent = `${dailyRows.length - 1}件のデータをダウンロードしました`;
   }
 
   // ── CSVエクスポート ──────────────────────────────────────
@@ -1770,6 +2036,10 @@
     document.getElementById('userName').textContent = currentProfile.name;
     document.getElementById('selectedDate').value = getToday();
     document.getElementById('reportsDate').value = getToday();
+    // 勤怠タブのデフォルト期間：今月1日〜今日
+    const todayStr = getToday();
+    document.getElementById('kintaiFrom').value = todayStr.substring(0, 8) + '01';
+    document.getElementById('kintaiTo').value   = todayStr;
     populateTimeSelects();
 
     // スタッフ一覧取得

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 - 勤怠打刻</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f7f0;
+      min-height: 100vh;
+      padding-bottom: 40px;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    header {
+      background: #2e5c28;
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    }
+
+    .header-title { font-size: 20px; font-weight: 800; }
+
+    .header-right { text-align: right; }
+
+    .header-right .today-label { font-size: 13px; opacity: 0.85; }
+    .header-right #currentTime { font-size: 26px; font-weight: 800; letter-spacing: 0.04em; }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* ── 名前選択画面 ── */
+    .staff-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 14px;
+    }
+
+    .staff-btn {
+      background: #fff;
+      border: 2px solid #dde8dd;
+      border-radius: 16px;
+      padding: 22px 10px;
+      font-size: 18px;
+      font-weight: 800;
+      color: #1a3d17;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform 0.1s, background 0.15s;
+    }
+
+    .staff-btn:active { transform: scale(0.96); background: #e8f5e9; }
+
+    .staff-btn .status-dot {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 8px;
+      color: #999;
+    }
+
+    .staff-btn.working .status-dot { color: #2e7d32; }
+    .staff-btn.done .status-dot { color: #888; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #bbb;
+      font-size: 15px;
+    }
+
+    /* ── アクション画面 ── */
+    .action-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 36px 28px;
+      max-width: 420px;
+      margin: 0 auto;
+      box-shadow: 0 6px 32px rgba(0, 80, 0, 0.10);
+      text-align: center;
+    }
+
+    .action-staff-name {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1a3d17;
+      margin-bottom: 6px;
+    }
+
+    .action-status {
+      font-size: 14px;
+      color: #777;
+      margin-bottom: 26px;
+      line-height: 1.7;
+    }
+
+    .btn-clock {
+      width: 100%;
+      padding: 26px;
+      border: none;
+      border-radius: 16px;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      margin-bottom: 14px;
+      transition: transform 0.1s;
+    }
+
+    .btn-clock:active { transform: scale(0.97); }
+
+    .btn-clock-in  { background: #2e5c28; color: #fff; }
+    .btn-clock-out { background: #c0392b; color: #fff; }
+    .btn-clock:disabled { background: #bbb; cursor: not-allowed; }
+
+    .action-cancel-link {
+      display: inline-block;
+      background: none;
+      border: none;
+      color: #b71c1c;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 6px;
+      margin-bottom: 10px;
+    }
+
+    .btn-back {
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      color: #888;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    /* ── フィードバック ── */
+    .feedback-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .feedback-overlay.show { display: flex; }
+
+    .feedback-box {
+      background: #fff;
+      border-radius: 20px;
+      padding: 40px 32px;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+    }
+
+    .feedback-icon { font-size: 48px; margin-bottom: 12px; }
+
+    .feedback-message {
+      font-size: 19px;
+      font-weight: 800;
+      color: #1a3d17;
+      line-height: 1.6;
+    }
+
+    /* ── ログアウトリンク（管理用、目立たせない） ── */
+    .logout-link {
+      position: fixed;
+      right: 10px;
+      bottom: 8px;
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 6px 10px;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #bbb;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">🌿 村上農園 勤怠打刻</div>
+  <div class="header-right">
+    <div class="today-label" id="todayLabel"></div>
+    <div id="currentTime"></div>
+  </div>
+</header>
+
+<div class="container">
+  <div id="nameSelectView">
+    <div class="staff-grid" id="staffGrid">
+      <div class="loading-state">読み込み中（よみこみちゅう）...</div>
+    </div>
+  </div>
+
+  <div id="actionView" style="display:none">
+    <div class="action-card">
+      <div class="action-staff-name" id="actionStaffName"></div>
+      <div class="action-status" id="actionStatus"></div>
+      <div id="actionButtons"></div>
+      <button type="button" class="btn-back" onclick="showNameSelect()">← 名前一覧にもどる</button>
+    </div>
+  </div>
+</div>
+
+<div class="feedback-overlay" id="feedbackOverlay">
+  <div class="feedback-box">
+    <div class="feedback-icon" id="feedbackIcon">✅</div>
+    <div class="feedback-message" id="feedbackMessage"></div>
+  </div>
+</div>
+
+<button type="button" class="logout-link" onclick="logout()">ログアウト（設定変更用）</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script>
+
+  let staffList = [];
+  let currentStaff = null;
+  let currentRecord = null; // { id, clock_in, clock_out }
+  let actionIdleTimer = null;
+
+  function getToday() {
+    const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    return jst.toISOString().split('T')[0];
+  }
+
+  function fmtHM(dateOrIso) {
+    const d = typeof dateOrIso === 'string' ? new Date(dateOrIso) : dateOrIso;
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function formatDateJa(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const w = ['日','月','火','水','木','金','土'][d.getDay()];
+    return `${d.getMonth()+1}月${d.getDate()}日（${w}）`;
+  }
+
+  function updateClock() {
+    document.getElementById('currentTime').textContent = fmtHM(new Date());
+  }
+
+  // ── スタッフ一覧の読み込み・描画 ────────────────────────
+  async function loadStaffList() {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('id, name')
+      .eq('role', 'staff')
+      .order('name');
+
+    if (error) { console.error(error); return; }
+    staffList = data ?? [];
+
+    // 本日の全員分の記録をまとめて取得し、状態表示に使う
+    const { data: records } = await supabaseClient
+      .from('attendance_records')
+      .select('staff_id, clock_in, clock_out')
+      .eq('date', getToday());
+
+    const recordMap = {};
+    records?.forEach(r => { recordMap[r.staff_id] = r; });
+
+    renderStaffGrid(recordMap);
+  }
+
+  function renderStaffGrid(recordMap) {
+    const el = document.getElementById('staffGrid');
+    if (!staffList.length) {
+      el.innerHTML = `<div class="empty-state">スタッフが登録されていません</div>`;
+      return;
+    }
+
+    el.innerHTML = staffList.map(s => {
+      const r = recordMap[s.id];
+      let statusClass = '';
+      let statusText = '未出勤（みしゅっきん）';
+      if (r?.clock_in && !r?.clock_out) { statusClass = 'working'; statusText = `出勤中（しゅっきんちゅう） ${fmtHM(r.clock_in)}〜`; }
+      else if (r?.clock_in && r?.clock_out) { statusClass = 'done'; statusText = `退勤済み（たいきんずみ） ${fmtHM(r.clock_out)}`; }
+
+      return `
+        <button type="button" class="staff-btn ${statusClass}" onclick="selectStaff('${s.id}')">
+          ${s.name}
+          <span class="status-dot">${statusText}</span>
+        </button>`;
+    }).join('');
+  }
+
+  // ── アクション画面 ──────────────────────────────────────
+  async function selectStaff(staffId) {
+    currentStaff = staffList.find(s => s.id === staffId);
+    if (!currentStaff) return;
+
+    document.getElementById('nameSelectView').style.display = 'none';
+    document.getElementById('actionView').style.display = 'block';
+    document.getElementById('actionStaffName').textContent = currentStaff.name;
+    document.getElementById('actionStatus').textContent = '読み込み中（よみこみちゅう）...';
+    document.getElementById('actionButtons').innerHTML = '';
+
+    await refreshCurrentRecord();
+    renderActionView();
+    resetActionIdleTimer();
+  }
+
+  async function refreshCurrentRecord() {
+    const { data } = await supabaseClient
+      .from('attendance_records')
+      .select('id, clock_in, clock_out')
+      .eq('staff_id', currentStaff.id)
+      .eq('date', getToday())
+      .maybeSingle();
+    currentRecord = data ?? null;
+  }
+
+  function renderActionView() {
+    const statusEl  = document.getElementById('actionStatus');
+    const btnsEl    = document.getElementById('actionButtons');
+
+    if (!currentRecord?.clock_in) {
+      statusEl.textContent = 'まだ本日の記録（きろく）はありません';
+      btnsEl.innerHTML = `<button type="button" class="btn-clock btn-clock-in" id="clockInBtn" onclick="handleClockIn()">🟢 出勤する（しゅっきんする）</button>`;
+    } else if (currentRecord.clock_in && !currentRecord.clock_out) {
+      statusEl.textContent = `出勤（しゅっきん）：${fmtHM(currentRecord.clock_in)}`;
+      btnsEl.innerHTML = `
+        <button type="button" class="btn-clock btn-clock-out" id="clockOutBtn" onclick="handleClockOut()">🔴 退勤する（たいきんする）</button>
+        <button type="button" class="action-cancel-link" onclick="handleCancelClockIn()">出勤の記録を取り消す（とりけす）</button>`;
+    } else {
+      statusEl.textContent = `出勤（しゅっきん）：${fmtHM(currentRecord.clock_in)}　退勤（たいきん）：${fmtHM(currentRecord.clock_out)}\n本日の記録は完了しています`;
+      btnsEl.innerHTML = `<button type="button" class="action-cancel-link" onclick="handleCancelClockOut()">退勤の記録を取り消す（とりけす）</button>`;
+    }
+  }
+
+  function showNameSelect() {
+    clearActionIdleTimer();
+    currentStaff = null;
+    currentRecord = null;
+    document.getElementById('actionView').style.display = 'none';
+    document.getElementById('nameSelectView').style.display = 'block';
+    loadStaffList();
+  }
+
+  // 一定時間操作がなければ自動で名前一覧へ戻る（次の人が使いやすいように）
+  function resetActionIdleTimer() {
+    clearActionIdleTimer();
+    actionIdleTimer = setTimeout(showNameSelect, 20000);
+  }
+
+  function clearActionIdleTimer() {
+    if (actionIdleTimer) { clearTimeout(actionIdleTimer); actionIdleTimer = null; }
+  }
+
+  function showFeedback(icon, message) {
+    document.getElementById('feedbackIcon').textContent = icon;
+    document.getElementById('feedbackMessage').textContent = message;
+    document.getElementById('feedbackOverlay').classList.add('show');
+    setTimeout(() => {
+      document.getElementById('feedbackOverlay').classList.remove('show');
+      showNameSelect();
+    }, 1600);
+  }
+
+  // ── 出勤・退勤処理 ──────────────────────────────────────
+  async function handleClockIn() {
+    const btn = document.getElementById('clockInBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '記録中（きろくちゅう）...'; }
+
+    const now = new Date();
+    const { error } = await supabaseClient
+      .from('attendance_records')
+      .insert({ staff_id: currentStaff.id, date: getToday(), clock_in: now.toISOString() });
+
+    if (error) {
+      alert('記録に失敗しました。もう一度お試しください。');
+      console.error(error);
+      if (btn) { btn.disabled = false; btn.textContent = '🟢 出勤する（しゅっきんする）'; }
+      return;
+    }
+
+    showFeedback('🟢', `${currentStaff.name}さん\n出勤を記録しました（${fmtHM(now)}）`);
+  }
+
+  async function handleClockOut() {
+    const btn = document.getElementById('clockOutBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '記録中（きろくちゅう）...'; }
+
+    const now = new Date();
+    const { error } = await supabaseClient
+      .from('attendance_records')
+      .update({ clock_out: now.toISOString(), updated_at: now.toISOString() })
+      .eq('id', currentRecord.id);
+
+    if (error) {
+      alert('記録に失敗しました。もう一度お試しください。');
+      console.error(error);
+      if (btn) { btn.disabled = false; btn.textContent = '🔴 退勤する（たいきんする）'; }
+      return;
+    }
+
+    showFeedback('🔴', `${currentStaff.name}さん\nお疲れ様でした。退勤を記録しました（${fmtHM(now)}）`);
+  }
+
+  async function handleCancelClockIn() {
+    if (!confirm('出勤の記録を取り消しますか？')) { resetActionIdleTimer(); return; }
+
+    const { error } = await supabaseClient
+      .from('attendance_records')
+      .delete()
+      .eq('id', currentRecord.id);
+
+    if (error) {
+      alert('取消に失敗しました。');
+      console.error(error);
+      return;
+    }
+
+    await refreshCurrentRecord();
+    renderActionView();
+    resetActionIdleTimer();
+  }
+
+  async function handleCancelClockOut() {
+    if (!confirm('退勤の記録を取り消しますか？')) { resetActionIdleTimer(); return; }
+
+    const { error } = await supabaseClient
+      .from('attendance_records')
+      .update({ clock_out: null })
+      .eq('id', currentRecord.id);
+
+    if (error) {
+      alert('取消に失敗しました。');
+      console.error(error);
+      return;
+    }
+
+    await refreshCurrentRecord();
+    renderActionView();
+    resetActionIdleTimer();
+  }
+
+  // ── 初期化 ────────────────────────────────────────────
+  (async () => {
+    const profile = await requireAuth('kiosk');
+    if (!profile) return;
+
+    document.getElementById('todayLabel').textContent = formatDateJa(getToday());
+    updateClock();
+    setInterval(updateClock, 30000);
+
+    await loadStaffList();
+    // 他のタブレット操作や日付をまたいだ変化に追従するため定期的に一覧を再取得
+    setInterval(() => { if (!currentStaff) loadStaffList(); }, 30000);
+
+    // アクション画面での操作でアイドルタイマーをリセット
+    document.getElementById('actionView').addEventListener('click', () => {
+      if (currentStaff) resetActionIdleTimer();
+    });
+  })();
+
+</script>
+</body>
+</html>
