@@ -255,8 +255,9 @@
 
     applyLoginI18n();
 
-    // すでにログイン済みならリダイレクト
+    // すでにログイン済みならリダイレクト（ログアウト直後はスキップし、確実にログイン画面に留まる）
     (async () => {
+      if (new URLSearchParams(window.location.search).get('loggedout') === '1') return;
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) redirectByRole(session.user.id);
     })();
