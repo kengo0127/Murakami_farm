@@ -294,7 +294,7 @@
         .eq('id', userId)
         .single();
 
-      window.location.href = profile?.role === 'admin' ? 'admin.html' : 'staff.html';
+      window.location.href = roleHomePage(profile?.role);
     }
 
     function errorMessage(msg) {

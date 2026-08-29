@@ -30,7 +30,7 @@ async function requireAuth(expectedRole = null) {
   }
 
   if (expectedRole && profile.role !== expectedRole) {
-    window.location.href = profile.role === 'admin' ? 'admin.html' : 'staff.html';
+    window.location.href = roleHomePage(profile.role);
     return null;
   }
 
@@ -40,4 +40,10 @@ async function requireAuth(expectedRole = null) {
 async function logout() {
   await supabaseClient.auth.signOut();
   window.location.href = 'login.html';
+}
+
+function roleHomePage(role) {
+  if (role === 'admin') return 'admin.html';
+  if (role === 'kiosk') return 'kintai.html';
+  return 'staff.html';
 }
