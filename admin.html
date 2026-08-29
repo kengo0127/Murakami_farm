@@ -853,6 +853,29 @@
 <!-- ── 勤怠タブ ── -->
 <div id="tab-kintai" class="tab-content">
   <div class="container">
+    <div class="form-card">
+      <h2>👥 勤怠メンバー管理</h2>
+      <div id="kintaiStaffList"></div>
+      <div class="form-row" style="margin-top:14px;">
+        <div class="form-group">
+          <label>名前</label>
+          <input type="text" id="kintaiStaffName" placeholder="例：ヴィチェカー">
+        </div>
+        <div class="form-group">
+          <label>分類（任意）</label>
+          <input type="text" id="kintaiStaffCategory" placeholder="例：カンボジア">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>資格・雇用形態（任意）</label>
+        <input type="text" id="kintaiStaffStatus" placeholder="例：技能実習生3号／社員／パート">
+      </div>
+      <button type="button" class="btn-submit" id="kintaiStaffAddBtn" onclick="addKintaiStaff()">＋ メンバーを追加</button>
+      <label style="display:flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;color:#777;font-weight:600;">
+        <input type="checkbox" id="kintaiStaffShowInactive" onchange="loadKintaiStaffList()"> 退職済みメンバーも表示する
+      </label>
+    </div>
+
     <div class="date-bar">
       <label>開始日</label>
       <input type="date" id="kintaiFrom" onchange="loadKintaiRecords()">
@@ -891,6 +914,33 @@
       <button type="button" class="btn-modal-submit" id="kintaiEditSaveBtn" onclick="saveKintaiEdit()">保存する</button>
     </div>
     <button type="button" class="btn-delete" style="width:100%;margin-top:10px;padding:10px;font-size:13px;" onclick="deleteKintaiRecord()">この日の記録を削除する</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="kintaiStaffEditModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title">メンバー情報の編集</div>
+    <div class="form-group">
+      <label>名前</label>
+      <input type="text" id="kintaiStaffEditName">
+    </div>
+    <div class="form-group">
+      <label>分類（任意）</label>
+      <input type="text" id="kintaiStaffEditCategory">
+    </div>
+    <div class="form-group">
+      <label>資格・雇用形態（任意）</label>
+      <input type="text" id="kintaiStaffEditStatus">
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;margin-bottom:14px;font-size:13px;font-weight:700;color:#555;">
+      <input type="checkbox" id="kintaiStaffEditActive"> 在籍中（打刻対象にする）
+    </label>
+    <div id="kintaiStaffEditMsg" style="font-size:13px;color:#c0392b;margin-bottom:10px;"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" onclick="closeKintaiStaffEditModal()">キャンセル</button>
+      <button type="button" class="btn-modal-submit" id="kintaiStaffEditSaveBtn" onclick="saveKintaiStaffEdit()">保存する</button>
+    </div>
+    <button type="button" class="btn-delete" style="width:100%;margin-top:10px;padding:10px;font-size:13px;" onclick="deleteKintaiStaff()">このメンバーを完全に削除する</button>
   </div>
 </div>
 
@@ -1011,8 +1061,133 @@
       loadReports();
     }
     if (tab === 'kintai') {
+      loadKintaiStaffList();
       loadKintaiRecords();
     }
+  }
+
+  // ── 勤怠メンバー管理 ──────────────────────────────────────
+  let kintaiStaffCache = [];
+  let kintaiStaffEditingId = null;
+
+  async function loadKintaiStaffList() {
+    const showInactive = document.getElementById('kintaiStaffShowInactive').checked;
+    let query = supabaseClient.from('kintai_staff').select('id, name, category, status, active, sort_order').order('sort_order');
+    if (!showInactive) query = query.eq('active', true);
+
+    const { data, error } = await query;
+    if (error) { console.error(error); return; }
+    kintaiStaffCache = data ?? [];
+    renderKintaiStaffList();
+  }
+
+  function renderKintaiStaffList() {
+    const el = document.getElementById('kintaiStaffList');
+    if (!kintaiStaffCache.length) {
+      el.innerHTML = `<div class="empty-state" style="text-align:center;padding:20px;color:#bbb;">メンバーが登録されていません</div>`;
+      return;
+    }
+
+    el.innerHTML = kintaiStaffCache.map(s => {
+      const meta = [s.category, s.status].filter(Boolean).join('　');
+      return `
+        <div class="task-item" style="${s.active ? '' : 'opacity:0.5;'}">
+          <div class="task-item-left">
+            <div class="task-item-header">
+              <span class="task-item-name">${s.name}${s.active ? '' : '（退職済み）'}</span>
+            </div>
+            <div class="task-item-meta">${meta || '—'}</div>
+          </div>
+          <div class="task-item-actions">
+            <button class="btn-edit" onclick="openKintaiStaffEditModal('${s.id}')">編集</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  async function addKintaiStaff() {
+    const nameEl = document.getElementById('kintaiStaffName');
+    const name = nameEl.value.trim();
+    if (!name) { alert('名前を入力してください'); return; }
+    const category = document.getElementById('kintaiStaffCategory').value.trim();
+    const status   = document.getElementById('kintaiStaffStatus').value.trim();
+
+    const btn = document.getElementById('kintaiStaffAddBtn');
+    btn.disabled = true;
+    btn.textContent = '追加中...';
+
+    const maxSortOrder = kintaiStaffCache.reduce((m, s) => Math.max(m, s.sort_order ?? 0), 0);
+    const { error } = await supabaseClient
+      .from('kintai_staff')
+      .insert({ name, category: category || null, status: status || null, sort_order: maxSortOrder + 1 });
+
+    btn.disabled = false;
+    btn.textContent = '＋ メンバーを追加';
+
+    if (error) { alert('追加に失敗しました'); console.error(error); return; }
+
+    nameEl.value = '';
+    document.getElementById('kintaiStaffCategory').value = '';
+    document.getElementById('kintaiStaffStatus').value = '';
+    await loadKintaiStaffList();
+  }
+
+  function openKintaiStaffEditModal(id) {
+    const s = kintaiStaffCache.find(x => x.id === id);
+    if (!s) return;
+
+    kintaiStaffEditingId = id;
+    document.getElementById('kintaiStaffEditName').value = s.name;
+    document.getElementById('kintaiStaffEditCategory').value = s.category ?? '';
+    document.getElementById('kintaiStaffEditStatus').value = s.status ?? '';
+    document.getElementById('kintaiStaffEditActive').checked = s.active;
+    document.getElementById('kintaiStaffEditMsg').textContent = '';
+    document.getElementById('kintaiStaffEditModalOverlay').classList.add('open');
+  }
+
+  function closeKintaiStaffEditModal() {
+    document.getElementById('kintaiStaffEditModalOverlay').classList.remove('open');
+    kintaiStaffEditingId = null;
+  }
+
+  async function saveKintaiStaffEdit() {
+    const name = document.getElementById('kintaiStaffEditName').value.trim();
+    const msg = document.getElementById('kintaiStaffEditMsg');
+    msg.textContent = '';
+    if (!name) { msg.textContent = '名前を入力してください'; return; }
+
+    const category = document.getElementById('kintaiStaffEditCategory').value.trim();
+    const status   = document.getElementById('kintaiStaffEditStatus').value.trim();
+    const active   = document.getElementById('kintaiStaffEditActive').checked;
+
+    const btn = document.getElementById('kintaiStaffEditSaveBtn');
+    btn.disabled = true;
+    btn.textContent = '保存中...';
+
+    const { error } = await supabaseClient
+      .from('kintai_staff')
+      .update({ name, category: category || null, status: status || null, active })
+      .eq('id', kintaiStaffEditingId);
+
+    btn.disabled = false;
+    btn.textContent = '保存する';
+
+    if (error) { msg.textContent = '保存に失敗しました'; console.error(error); return; }
+
+    closeKintaiStaffEditModal();
+    await loadKintaiStaffList();
+  }
+
+  async function deleteKintaiStaff() {
+    const s = kintaiStaffCache.find(x => x.id === kintaiStaffEditingId);
+    if (!s) return;
+    if (!confirm(`${s.name}さんを完全に削除しますか？\n過去の勤怠記録も一緒に削除されます。この操作は取り消せません。\n\n退職者として記録だけ残したい場合は、代わりに「在籍中」のチェックを外して保存してください。`)) return;
+
+    const { error } = await supabaseClient.from('kintai_staff').delete().eq('id', s.id);
+    if (error) { alert('削除に失敗しました'); console.error(error); return; }
+
+    closeKintaiStaffEditModal();
+    await loadKintaiStaffList();
   }
 
   // ── 勤怠管理 ──────────────────────────────────────────────
@@ -1046,7 +1221,7 @@
 
     const { data, error } = await supabaseClient
       .from('attendance_records')
-      .select('id, staff_id, date, clock_in, clock_out, profiles(name)')
+      .select('id, staff_id, date, clock_in, clock_out, kintai_staff(name)')
       .gte('date', from)
       .lte('date', to);
 
@@ -1054,7 +1229,7 @@
 
     const records = (data ?? []).slice().sort((a, b) => {
       if (a.date !== b.date) return a.date < b.date ? 1 : -1; // 日付降順
-      return (a.profiles?.name ?? '').localeCompare(b.profiles?.name ?? '', 'ja');
+      return (a.kintai_staff?.name ?? '').localeCompare(b.kintai_staff?.name ?? '', 'ja');
     });
 
     renderKintaiList(records);
@@ -1070,7 +1245,7 @@
     }
 
     el.innerHTML = records.map(r => {
-      const name = r.profiles?.name ?? '—';
+      const name = r.kintai_staff?.name ?? '—';
       const clockInStr  = r.clock_in  ? fmtHM(new Date(r.clock_in))  : '—';
       const clockOutStr = r.clock_out ? fmtHM(new Date(r.clock_out)) : '—';
       let durationStr = '—';
@@ -1100,7 +1275,7 @@
     if (!r) return;
 
     kintaiEditingId = recordId;
-    document.getElementById('kintaiEditTitle').textContent = `${r.profiles?.name ?? ''}さん（${r.date}）の勤怠を修正`;
+    document.getElementById('kintaiEditTitle').textContent = `${r.kintai_staff?.name ?? ''}さん（${r.date}）の勤怠を修正`;
     document.getElementById('kintaiEditClockIn').innerHTML  = kintaiTimeOptionsHtml(r.clock_in  ? fmtHM(new Date(r.clock_in))  : '');
     document.getElementById('kintaiEditClockOut').innerHTML = kintaiTimeOptionsHtml(r.clock_out ? fmtHM(new Date(r.clock_out)) : '');
     document.getElementById('kintaiEditMsg').textContent = '';
@@ -1148,7 +1323,7 @@
   async function deleteKintaiRecord() {
     const r = kintaiRecordsCache.find(x => x.id === kintaiEditingId);
     if (!r) return;
-    if (!confirm(`${r.profiles?.name ?? ''}さんの${r.date}の勤怠記録を削除しますか？この操作は取り消せません。`)) return;
+    if (!confirm(`${r.kintai_staff?.name ?? ''}さんの${r.date}の勤怠記録を削除しますか？この操作は取り消せません。`)) return;
 
     const { error } = await supabaseClient.from('attendance_records').delete().eq('id', r.id);
     if (error) { alert('削除に失敗しました'); console.error(error); return; }
@@ -1172,7 +1347,7 @@
 
     const { data, error } = await supabaseClient
       .from('attendance_records')
-      .select('date, clock_in, clock_out, profiles(name)')
+      .select('date, clock_in, clock_out, kintai_staff(name)')
       .gte('date', from)
       .lte('date', to);
 
@@ -1192,10 +1367,10 @@
       .slice()
       .sort((a, b) => {
         if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-        return (a.profiles?.name ?? '').localeCompare(b.profiles?.name ?? '', 'ja');
+        return (a.kintai_staff?.name ?? '').localeCompare(b.kintai_staff?.name ?? '', 'ja');
       })
       .forEach(r => {
-        const name = r.profiles?.name ?? '—';
+        const name = r.kintai_staff?.name ?? '—';
         const clockInStr  = r.clock_in  ? fmtHM(new Date(r.clock_in))  : '';
         const clockOutStr = r.clock_out ? fmtHM(new Date(r.clock_out)) : '';
         let mins = '';
