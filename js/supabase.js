@@ -38,8 +38,8 @@ async function requireAuth(expectedRole = null) {
 }
 
 async function logout() {
-  await supabaseClient.auth.signOut();
-  window.location.href = 'login.html';
+  await supabaseClient.auth.signOut({ scope: 'local' });
+  window.location.href = 'login.html?loggedout=1';
 }
 
 function roleHomePage(role) {
