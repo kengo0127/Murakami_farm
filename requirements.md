@@ -327,3 +327,10 @@ Edge Function（サービスロール）専用のテーブル。クライアン�
 - **DB設計**：新テーブル`attendance_records`（1スタッフ・1日1レコード、`clock_in`/`clock_out`）。`profiles.role`に`'kiosk'`を追加（CHECK制約更新）。関連migration：`migration_2026-08-29_kintai.sql`（Supabase SQL Editorで実行が必要）
 - **セットアップ手順**：migration実行後、Supabaseダッシュボード（Authentication → Users）で事務所タブレット用の共有アカウントを作成し、`update public.profiles set role = 'kiosk' where id = '（作成したユーザーのUUID）';`でroleを変更する。ログイン後、自動的に`kintai.html`へリダイレクトされる
 - `js/supabase.js`の`requireAuth`/ログイン後リダイレクト先の判定を`roleHomePage(role)`関数に共通化し、admin/staff/kioskの3ロールに対応
+
+### 勤怠打刻対象メンバーの独立管理（2026-08-30追加）
+
+- **背景**：勤怠管理の対象は、パート・社員・技能実習生・特定技能者を含む全従業員（R8.8時点で24名）であり、タスク管理アプリのスタッフ（`profiles`、Supabase Authの個別ログインアカウントを持つ人）とは一致しない。また打刻自体に個別ログインは不要なため、`profiles`とは別に専用マスタで管理する方式に変更
+- 新テーブル`kintai_staff`（名前・分類・在留資格や雇用形態・並び順・在籍中フラグ）を新設し、`attendance_records.staff_id`の参照先を`profiles`から`kintai_staff`に変更。関連migration：`migration_2026-08-30_kintai_staff.sql`（`migration_2026-08-29_kintai.sql`の後に実行が必要）
+- 初期データとして`従業員R8.8.pdf`の24名を登録済み。打刻ボタンの表示名は簡潔にするため、外国人スタッフは本人が呼ばれている名前1語（インドネシア人は名が先頭のためローマ字表記の最初の単語、カンボジア人は姓が先頭のため2番目の単語）のカタカナ表記、日本人は苗字のみを採用
+- admin.htmlの「⏰ 勤怠」タブに「👥 勤怠メンバー管理」セクションを追加。名前・分類・資格を入力してメンバーを追加でき、既存メンバーは「編集」から名前変更・退職済みへの切り替え（`active=false`、打刻対象から外れるが過去記録は残る）・完全削除（`attendance_records`も連動削除されるため要注意、退職者は基本的に非アクティブ化で対応する運用を想定）ができる

@@ -5,6 +5,9 @@ supabase/.temp/
 # 顧客個人情報を含むため公開リポジトリにコミットしない
 seed_customers.sql
 
+# 従業員個人情報（生年月日・在留資格等）を含むため公開リポジトリにコミットしない
+従業員R8.8.pdf
+
 # Python
 __pycache__/
 *.pyc
