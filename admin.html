@@ -513,6 +513,22 @@
       flex-shrink: 0;
     }
 
+    .missing-badge {
+      display: inline-block;
+      background: #fff3e0;
+      color: #8a4b00;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+
+    .missing-badge-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
     .task-item-name {
       font-size: 15px;
       font-weight: 700;
@@ -853,6 +869,34 @@
 <!-- ── 勤怠タブ ── -->
 <div id="tab-kintai" class="tab-content">
   <div class="container">
+
+    <!-- ── 勤怠管理 ── -->
+    <div class="form-card">
+      <h2>⚠️ 本日まだ出勤していないメンバー</h2>
+      <div id="kintaiMissingList"></div>
+    </div>
+
+    <div class="date-bar">
+      <label>開始日</label>
+      <input type="date" id="kintaiFrom" onchange="loadKintaiRecords()">
+      <label>終了日</label>
+      <input type="date" id="kintaiTo" onchange="loadKintaiRecords()">
+    </div>
+
+    <div class="section-title" id="kintaiListTitle">勤怠記録</div>
+    <div id="kintaiList"></div>
+
+    <!-- ── 勤怠管理のエクスポート ── -->
+    <div class="form-card">
+      <h2>📥 勤怠管理のエクスポート</h2>
+      <p style="font-size:13px;color:#888;margin-bottom:16px;">
+        上記の期間で、日別の出退勤記録とスタッフ別の月次集計（合計労働時間）をExcel出力します。休憩時間は差し引かず、出退勤の時刻をそのまま集計します。
+      </p>
+      <button class="btn-submit" id="kintaiExportBtn" onclick="exportKintaiExcel()">Excelダウンロード</button>
+      <div id="kintaiExportMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
+    </div>
+
+    <!-- ── 勤怠メンバー管理 ── -->
     <div class="form-card">
       <h2>👥 勤怠メンバー管理</h2>
       <div id="kintaiStaffList"></div>
@@ -876,24 +920,6 @@
       </label>
     </div>
 
-    <div class="date-bar">
-      <label>開始日</label>
-      <input type="date" id="kintaiFrom" onchange="loadKintaiRecords()">
-      <label>終了日</label>
-      <input type="date" id="kintaiTo" onchange="loadKintaiRecords()">
-    </div>
-
-    <div class="form-card">
-      <h2>📥 勤怠記録のエクスポート</h2>
-      <p style="font-size:13px;color:#888;margin-bottom:16px;">
-        上記の期間で、日別の出退勤記録とスタッフ別の月次集計（合計労働時間）をExcel出力します。休憩時間は差し引かず、出退勤の時刻をそのまま集計します。
-      </p>
-      <button class="btn-submit" id="kintaiExportBtn" onclick="exportKintaiExcel()">Excelダウンロード</button>
-      <div id="kintaiExportMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
-    </div>
-
-    <div class="section-title" id="kintaiListTitle">勤怠記録</div>
-    <div id="kintaiList"></div>
   </div>
 </div>
 
@@ -1061,9 +1087,47 @@
       loadReports();
     }
     if (tab === 'kintai') {
+      loadKintaiMissingList();
       loadKintaiStaffList();
       loadKintaiRecords();
     }
+  }
+
+  // ── 未出勤メンバー一覧（本日、出勤ボタンの押し忘れフォロー用） ──
+  async function loadKintaiMissingList() {
+    const today = getToday();
+
+    const { data: staffData, error: staffErr } = await supabaseClient
+      .from('kintai_staff')
+      .select('id, name')
+      .eq('active', true)
+      .order('sort_order');
+
+    if (staffErr) { console.error(staffErr); return; }
+
+    const { data: records, error: recErr } = await supabaseClient
+      .from('attendance_records')
+      .select('staff_id')
+      .eq('date', today)
+      .not('clock_in', 'is', null);
+
+    if (recErr) { console.error(recErr); return; }
+
+    const clockedInIds = new Set((records ?? []).map(r => r.staff_id));
+    const missing = (staffData ?? []).filter(s => !clockedInIds.has(s.id));
+    renderKintaiMissingList(missing);
+  }
+
+  function renderKintaiMissingList(missing) {
+    const el = document.getElementById('kintaiMissingList');
+    if (!missing.length) {
+      el.innerHTML = `<div class="empty-state" style="text-align:center;padding:20px;color:#bbb;">全員、本日の出勤が記録されています</div>`;
+      return;
+    }
+    el.innerHTML = `
+      <div class="missing-badge-wrap">
+        ${missing.map(s => `<span class="missing-badge">${s.name}</span>`).join('')}
+      </div>`;
   }
 
   // ── 勤怠メンバー管理 ──────────────────────────────────────
@@ -1347,7 +1411,7 @@
 
     const { data, error } = await supabaseClient
       .from('attendance_records')
-      .select('date, clock_in, clock_out, kintai_staff(name)')
+      .select('date, clock_in, clock_out, kintai_staff(name, status)')
       .gte('date', from)
       .lte('date', to);
 
@@ -1361,7 +1425,7 @@
     }
 
     const dailyRows = [['日付', 'スタッフ名', '出勤時刻', '退勤時刻', '労働時間(分)', '労働時間']];
-    const staffTotals = {}; // name -> { days, totalMins }
+    const staffTotals = {}; // name -> { status, days, totalMins }
 
     data
       .slice()
@@ -1371,6 +1435,7 @@
       })
       .forEach(r => {
         const name = r.kintai_staff?.name ?? '—';
+        const status = r.kintai_staff?.status ?? '';
         const clockInStr  = r.clock_in  ? fmtHM(new Date(r.clock_in))  : '';
         const clockOutStr = r.clock_out ? fmtHM(new Date(r.clock_out)) : '';
         let mins = '';
@@ -1379,17 +1444,19 @@
         }
         dailyRows.push([r.date, name, clockInStr, clockOutStr, mins, mins !== '' ? formatMinutesHM(mins) : '']);
 
-        if (!staffTotals[name]) staffTotals[name] = { days: 0, totalMins: 0 };
+        if (!staffTotals[name]) staffTotals[name] = { status, days: 0, totalMins: 0 };
         if (mins !== '') {
           staffTotals[name].days += 1;
           staffTotals[name].totalMins += mins;
         }
       });
 
-    const summaryRows = [['スタッフ名', '出勤日数', '合計労働時間(分)', '合計労働時間']];
+    // 技能実習生3号は法定労働時間（1日8時間・週40時間）の制限対象のため、
+    // 属性（在留資格・雇用形態）を集計表にも表示する
+    const summaryRows = [['スタッフ名', '属性', '出勤日数', '合計労働時間(分)', '合計労働時間']];
     Object.keys(staffTotals).sort((a, b) => a.localeCompare(b, 'ja')).forEach(name => {
       const t = staffTotals[name];
-      summaryRows.push([name, t.days, t.totalMins, formatMinutesHM(t.totalMins)]);
+      summaryRows.push([name, t.status, t.days, t.totalMins, formatMinutesHM(t.totalMins)]);
     });
 
     const wb = XLSX.utils.book_new();
@@ -1399,7 +1466,7 @@
     XLSX.utils.book_append_sheet(wb, wsDaily, '日別勤怠記録');
 
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
-    wsSummary['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }];
+    wsSummary['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }];
     XLSX.utils.book_append_sheet(wb, wsSummary, 'スタッフ別集計');
 
     XLSX.writeFile(wb, `村上農園_勤怠記録_${from}_${to}.xlsx`);

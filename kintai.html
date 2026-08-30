@@ -86,8 +86,11 @@
       color: #999;
     }
 
-    .staff-btn.working .status-dot { color: #2e7d32; }
-    .staff-btn.done .status-dot { color: #888; }
+    .staff-btn.working { background: #c8e6c9; border-color: #81c784; }
+    .staff-btn.working .status-dot { color: #1b5e20; }
+
+    .staff-btn.done { background: #e0e0e0; border-color: #bdbdbd; }
+    .staff-btn.done .status-dot { color: #616161; }
 
     .empty-state {
       text-align: center;
@@ -139,6 +142,21 @@
     .btn-clock-in  { background: #2e5c28; color: #fff; }
     .btn-clock-out { background: #c0392b; color: #fff; }
     .btn-clock:disabled { background: #bbb; cursor: not-allowed; }
+
+    .btn-time-select {
+      width: 100%;
+      padding: 16px;
+      background: #f5f5f5;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #555;
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+
+    .btn-time-select:active { background: #ececec; }
 
     .action-cancel-link {
       display: inline-block;
@@ -202,6 +220,80 @@
       padding: 60px 20px;
       color: #bbb;
     }
+
+    /* ── 時刻選択モーダル ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 600;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-sheet {
+      background: #fff;
+      width: 100%;
+      max-width: 380px;
+      border-radius: 20px;
+      padding: 28px 24px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1a3d17;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+
+    .modal-time-select {
+      width: 100%;
+      padding: 16px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 12px;
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      color: #222;
+      background: #fafffe;
+      margin-bottom: 20px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-modal-cancel {
+      flex: 1;
+      padding: 14px;
+      background: transparent;
+      color: #888;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-modal-submit {
+      flex: 2;
+      padding: 14px;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-modal-submit:disabled { background: #bbb; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -238,6 +330,17 @@
   <div class="feedback-box">
     <div class="feedback-icon" id="feedbackIcon">✅</div>
     <div class="feedback-message" id="feedbackMessage"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="timeSelectModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title" id="timeSelectTitle"></div>
+    <select class="modal-time-select" id="timeSelectInput"></select>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" onclick="closeTimeSelectModal()">キャンセル</button>
+      <button type="button" class="btn-modal-submit" id="timeSelectSubmitBtn" onclick="submitTimeSelect()">記録する</button>
+    </div>
   </div>
 </div>
 
@@ -347,11 +450,14 @@
 
     if (!currentRecord?.clock_in) {
       statusEl.textContent = 'まだ本日の記録（きろく）はありません';
-      btnsEl.innerHTML = `<button type="button" class="btn-clock btn-clock-in" id="clockInBtn" onclick="handleClockIn()">🟢 出勤する（しゅっきんする）</button>`;
+      btnsEl.innerHTML = `
+        <button type="button" class="btn-clock btn-clock-in" id="clockInBtn" onclick="handleClockIn()">🟢 出勤する（しゅっきんする）</button>
+        <button type="button" class="btn-time-select" onclick="openTimeSelectModal('clockIn')">🕐 出勤時間を選択する（せんたくする）</button>`;
     } else if (currentRecord.clock_in && !currentRecord.clock_out) {
       statusEl.textContent = `出勤（しゅっきん）：${fmtHM(currentRecord.clock_in)}`;
       btnsEl.innerHTML = `
         <button type="button" class="btn-clock btn-clock-out" id="clockOutBtn" onclick="handleClockOut()">🔴 退勤する（たいきんする）</button>
+        <button type="button" class="btn-time-select" onclick="openTimeSelectModal('clockOut')">🕐 退勤時間を選択する（せんたくする）</button>
         <button type="button" class="action-cancel-link" onclick="handleCancelClockIn()">出勤の記録を取り消す（とりけす）</button>`;
     } else {
       statusEl.textContent = `出勤（しゅっきん）：${fmtHM(currentRecord.clock_in)}　退勤（たいきん）：${fmtHM(currentRecord.clock_out)}\n本日の記録は完了しています`;
@@ -386,6 +492,87 @@
       document.getElementById('feedbackOverlay').classList.remove('show');
       showNameSelect();
     }, 1600);
+  }
+
+  // ── 時刻選択（押し忘れ対応） ─────────────────────────────
+  let timeSelectMode = null; // 'clockIn' | 'clockOut'
+
+  // 現在時刻を15分単位に切り捨て（例：12:39 → 12:30）
+  function floorTo15(date) {
+    const totalMin = Math.floor((date.getHours() * 60 + date.getMinutes()) / 15) * 15;
+    const hh = String(Math.floor(totalMin / 60)).padStart(2, '0');
+    const mm = String(totalMin % 60).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+
+  // 0:00〜現在時刻（15分単位に切り捨て）までの選択肢を生成。過去の時刻のみ選べる
+  function pastTimeOptionsHtml(selected) {
+    const now = new Date();
+    const maxMin = Math.floor((now.getHours() * 60 + now.getMinutes()) / 15) * 15;
+    let html = '';
+    for (let m = 0; m <= maxMin; m += 15) {
+      const hh = String(Math.floor(m / 60)).padStart(2, '0');
+      const mm = String(m % 60).padStart(2, '0');
+      const v = `${hh}:${mm}`;
+      html += `<option value="${v}" ${v === selected ? 'selected' : ''}>${v}</option>`;
+    }
+    return html;
+  }
+
+  function openTimeSelectModal(mode) {
+    clearActionIdleTimer(); // モーダル操作中に名前一覧へ戻されないようにする
+    timeSelectMode = mode;
+    document.getElementById('timeSelectTitle').textContent =
+      mode === 'clockIn' ? '出勤時間を選択（せんたく）する' : '退勤時間を選択（せんたく）する';
+    document.getElementById('timeSelectInput').innerHTML = pastTimeOptionsHtml(floorTo15(new Date()));
+    document.getElementById('timeSelectModalOverlay').classList.add('open');
+  }
+
+  function closeTimeSelectModal() {
+    document.getElementById('timeSelectModalOverlay').classList.remove('open');
+    timeSelectMode = null;
+    resetActionIdleTimer();
+  }
+
+  async function submitTimeSelect() {
+    const timeVal = document.getElementById('timeSelectInput').value;
+    if (!timeVal) return;
+
+    const btn = document.getElementById('timeSelectSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = '記録中（きろくちゅう）...';
+
+    const recordedAt = new Date(`${getToday()}T${timeVal}:00`);
+    let error;
+
+    if (timeSelectMode === 'clockIn') {
+      ({ error } = await supabaseClient
+        .from('attendance_records')
+        .insert({ staff_id: currentStaff.id, date: getToday(), clock_in: recordedAt.toISOString() }));
+    } else {
+      ({ error } = await supabaseClient
+        .from('attendance_records')
+        .update({ clock_out: recordedAt.toISOString(), updated_at: new Date().toISOString() })
+        .eq('id', currentRecord.id));
+    }
+
+    btn.disabled = false;
+    btn.textContent = '記録する';
+
+    if (error) {
+      alert('記録に失敗しました。もう一度お試しください。');
+      console.error(error);
+      return;
+    }
+
+    const mode = timeSelectMode;
+    document.getElementById('timeSelectModalOverlay').classList.remove('open');
+    timeSelectMode = null;
+
+    showFeedback(
+      mode === 'clockIn' ? '🟢' : '🔴',
+      `${currentStaff.name}さん\n${mode === 'clockIn' ? '出勤' : '退勤'}を記録しました（${timeVal}）`
+    );
   }
 
   // ── 出勤・退勤処理 ──────────────────────────────────────
