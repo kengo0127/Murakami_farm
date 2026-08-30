@@ -371,6 +371,8 @@
 
   function updateClock() {
     document.getElementById('currentTime').textContent = fmtHM(new Date());
+    // 日付が変わっても表示が古いままにならないよう、時計と合わせて日付ラベルも更新する
+    document.getElementById('todayLabel').textContent = formatDateJa(getToday());
   }
 
   // ── スタッフ一覧の読み込み・描画 ────────────────────────
@@ -658,7 +660,6 @@
     const profile = await requireAuth('kiosk');
     if (!profile) return;
 
-    document.getElementById('todayLabel').textContent = formatDateJa(getToday());
     updateClock();
     setInterval(updateClock, 30000);
 
