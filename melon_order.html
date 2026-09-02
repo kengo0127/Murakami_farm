@@ -89,6 +89,30 @@
 
     .qty-item input { text-align: center; }
 
+    .contact-type-toggle {
+      display: flex;
+      gap: 10px;
+    }
+
+    .contact-type-btn {
+      flex: 1;
+      padding: 12px;
+      background: #f5f5f5;
+      border: 1.5px solid #dde8dd;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #555;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .contact-type-btn.active {
+      background: #e8f5e9;
+      border-color: #2e5c28;
+      color: #1a3d17;
+    }
+
     .section-title {
       font-size: 14px;
       font-weight: 800;
@@ -236,8 +260,21 @@
     </div>
 
     <div class="form-group">
-      <label>ご連絡先 <span class="hint">必須・お電話番号・メールアドレス・インスタのユーザー名など</span></label>
-      <input type="text" id="fContact" placeholder="例：090-1234-5678 / @murakami_taro" required>
+      <label>ご連絡方法 <span class="hint">必須</span></label>
+      <div class="contact-type-toggle">
+        <button type="button" class="contact-type-btn" data-type="instagram" onclick="setContactType('instagram')">📷 インスタ</button>
+        <button type="button" class="contact-type-btn" data-type="email_or_tel" onclick="setContactType('email_or_tel')">📞 メールまたは電話</button>
+      </div>
+    </div>
+
+    <div class="form-group" id="contactInstaGroup" style="display:none">
+      <label>インスタのユーザー名 <span class="hint">必須</span></label>
+      <input type="text" id="fContactInsta" placeholder="例：@murakami_taro">
+    </div>
+
+    <div class="form-group" id="contactEmailTelGroup" style="display:none">
+      <label>メールアドレスまたは電話番号 <span class="hint">必須</span></label>
+      <input type="text" id="fContactEmailTel" placeholder="例：090-1234-5678 / example@mail.com">
     </div>
 
     <div class="section-title">ご来店希望日</div>
@@ -286,6 +323,10 @@
       <label>玉ねぎ <span class="hint">kg</span> <span class="unit-price" id="priceOnion"></span></label>
       <input type="number" id="fOnion" min="0" step="0.1" value="0" oninput="updateTotal()">
     </div>
+
+    <div class="section-title">野菜</div>
+
+    <div class="qty-grid" id="veggieGrid"></div>
 
     <div class="total-box" id="totalBox">
       <span class="total-label">合計金額（目安）</span>
@@ -350,6 +391,44 @@
 
   let currentPrices = { ...DEFAULT_PRICES };
 
+  // 野菜：品目ごとの入力欄をこの定義から動的に生成する
+  const VEGGIE_ITEMS = [
+    { id: 'kokabuKikaku', qtyKey: 'qty_kokabu_kikaku', priceKey: 'kokabuKikaku', label: 'こかぶ 規格外(10玉1セット)', unit: 'セット' },
+    { id: 'kokabuNaka',   qtyKey: 'qty_kokabu_naka',   priceKey: 'kokabuNaka',   label: 'こかぶ 中かぶ',            unit: '玉' },
+    { id: 'daikonS',      qtyKey: 'qty_daikon_s',      priceKey: 'daikonS',      label: '大根 S',                   unit: '本' },
+    { id: 'daikonM',      qtyKey: 'qty_daikon_m',      priceKey: 'daikonM',      label: '大根 M',                   unit: '本' },
+    { id: 'daikonL',      qtyKey: 'qty_daikon_l',      priceKey: 'daikonL',      label: '大根 L',                   unit: '本' },
+    { id: 'daikon2l',     qtyKey: 'qty_daikon_2l',     priceKey: 'daikon2l',     label: '大根 2L',                  unit: '本' },
+    { id: 'daikonKiri',   qtyKey: 'qty_daikon_kiri',   priceKey: 'daikonKiri',   label: '切り大根(1kg)',             unit: 'kg' },
+    { id: 'kabochaKikaku', qtyKey: 'qty_kabocha_kikaku', priceKey: 'kabochaKikaku', label: 'かぼちゃ 規格外(100g)', unit: '×100g' },
+    { id: 'ninjinKikaku',  qtyKey: 'qty_ninjin_kikaku',  priceKey: 'ninjinKikaku',  label: 'にんじん 規格外(10kg)', unit: '×10kg' },
+  ];
+
+  function renderVeggieGrid() {
+    document.getElementById('veggieGrid').innerHTML = VEGGIE_ITEMS.map(it => `
+      <div class="qty-item form-group">
+        <label>${it.label} <span class="hint">${it.unit}</span> <span class="unit-price" id="price_${it.id}"></span></label>
+        <input type="number" id="f_${it.id}" min="0" step="1" value="0" oninput="updateTotal()">
+      </div>`).join('');
+  }
+  renderVeggieGrid();
+
+  function getVeggieQuantities() {
+    const q = {};
+    VEGGIE_ITEMS.forEach(it => { q[it.id] = Math.max(0, parseInt(document.getElementById(`f_${it.id}`).value || '0', 10)); });
+    return q;
+  }
+
+  // ── ご連絡方法 ──────────────────────────────────────────
+  let contactType = null; // 'instagram' | 'email_or_tel'
+
+  function setContactType(type) {
+    contactType = type;
+    document.querySelectorAll('.contact-type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
+    document.getElementById('contactInstaGroup').style.display    = type === 'instagram'    ? 'block' : 'none';
+    document.getElementById('contactEmailTelGroup').style.display = type === 'email_or_tel' ? 'block' : 'none';
+  }
+
   function updateWeekdayPreview() {
     const val = document.getElementById('fDate').value;
     document.getElementById('weekdayPreview').textContent = val ? formatDateJa(val) : '';
@@ -364,6 +443,9 @@
     document.getElementById('priceArusu2l').textContent = `@${formatYen(currentPrices.arusu2l)}`;
     document.getElementById('priceArusu3l').textContent = `@${formatYen(currentPrices.arusu3l)}`;
     document.getElementById('priceOnion').textContent = `@${formatYen(currentPrices.onion)}/kg`;
+    VEGGIE_ITEMS.forEach(it => {
+      document.getElementById(`price_${it.id}`).textContent = `@${formatYen(currentPrices[it.priceKey])}`;
+    });
   }
 
   function updateTotal() {
@@ -374,10 +456,12 @@
     const arusu2l = Math.max(0, parseInt(document.getElementById('fArusu2l').value || '0', 10));
     const arusu3l = Math.max(0, parseInt(document.getElementById('fArusu3l').value || '0', 10));
     const onionKg = Math.max(0, parseFloat(document.getElementById('fOnion').value || '0'));
+    const veggieQty = getVeggieQuantities();
 
-    const total = qty3l * currentPrices.qty3l + qty4l * currentPrices.qty4l + qty5l * currentPrices.qty5l
+    let total = qty3l * currentPrices.qty3l + qty4l * currentPrices.qty4l + qty5l * currentPrices.qty5l
       + arusuL * currentPrices.arusuL + arusu2l * currentPrices.arusu2l + arusu3l * currentPrices.arusu3l
       + onionKg * currentPrices.onion;
+    VEGGIE_ITEMS.forEach(it => { total += veggieQty[it.id] * currentPrices[it.priceKey]; });
 
     document.getElementById('totalAmount').textContent = formatYen(Math.round(total));
   }
@@ -415,7 +499,7 @@
   updatePriceLabels();
   updateTotal();
 
-  function renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, arusuL, arusu2l, arusu3l, onionKg, prices }) {
+  function renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, arusuL, arusu2l, arusu3l, onionKg, veggieQty, prices }) {
     document.getElementById('summaryReqNo').textContent = requestNo;
     document.getElementById('summaryDate').textContent = formatDateJa(date);
 
@@ -427,6 +511,10 @@
     if (arusu2l > 0) items.push({ label: `メロン(アールス) 2L × ${arusu2l}`, amount: arusu2l * prices.arusu2l });
     if (arusu3l > 0) items.push({ label: `メロン(アールス) 3L × ${arusu3l}`, amount: arusu3l * prices.arusu3l });
     if (onionKg > 0) items.push({ label: `玉ねぎ × ${onionKg}kg`, amount: onionKg * prices.onion });
+    VEGGIE_ITEMS.forEach(it => {
+      const q = veggieQty[it.id];
+      if (q > 0) items.push({ label: `${it.label} × ${q}`, amount: q * prices[it.priceKey] });
+    });
 
     document.getElementById('summaryItems').innerHTML = items
       .map(i => `<div class="summary-item-row"><span>${i.label}</span><span>${formatYen(Math.round(i.amount))}</span></div>`)
@@ -454,6 +542,10 @@
     document.getElementById('orderForm').style.display = 'block';
     clearError();
     currentPrices = { ...DEFAULT_PRICES };
+    contactType = null;
+    document.querySelectorAll('.contact-type-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('contactInstaGroup').style.display = 'none';
+    document.getElementById('contactEmailTelGroup').style.display = 'none';
     updatePriceLabels();
     updateTotal();
   }
@@ -466,7 +558,6 @@
     if (document.getElementById('hpField').value) return;
 
     const name = document.getElementById('fName').value.trim();
-    const contact = document.getElementById('fContact').value.trim();
     const date = document.getElementById('fDate').value;
     const qty3l = Math.max(0, parseInt(document.getElementById('fQty3l').value || '0', 10));
     const qty4l = Math.max(0, parseInt(document.getElementById('fQty4l').value || '0', 10));
@@ -475,13 +566,22 @@
     const arusu2l = Math.max(0, parseInt(document.getElementById('fArusu2l').value || '0', 10));
     const arusu3l = Math.max(0, parseInt(document.getElementById('fArusu3l').value || '0', 10));
     const onionKg = Math.max(0, parseFloat(document.getElementById('fOnion').value || '0'));
+    const veggieQty = getVeggieQuantities();
+    const veggieTotalQty = VEGGIE_ITEMS.reduce((sum, it) => sum + veggieQty[it.id], 0);
     const note = document.getElementById('fNote').value.trim();
 
     if (!name) { showError('お名前をご入力ください。'); return; }
-    if (!contact) { showError('ご連絡先をご入力ください。'); return; }
+    if (!contactType) { showError('ご連絡方法（インスタ／メールまたは電話）を選択してください。'); return; }
+    const contact = contactType === 'instagram'
+      ? document.getElementById('fContactInsta').value.trim()
+      : document.getElementById('fContactEmailTel').value.trim();
+    if (!contact) {
+      showError(contactType === 'instagram' ? 'インスタのユーザー名をご入力ください。' : 'メールアドレスまたは電話番号をご入力ください。');
+      return;
+    }
     if (!date) { showError('ご来店希望日をご入力ください。'); return; }
     if (date < todayStrJST()) { showError('ご来店希望日は本日以降の日付をお選びください。'); return; }
-    if (qty3l + qty4l + qty5l + arusuL + arusu2l + arusu3l <= 0 && onionKg <= 0) {
+    if (qty3l + qty4l + qty5l + arusuL + arusu2l + arusu3l + veggieTotalQty <= 0 && onionKg <= 0) {
       showError('ご注文内容を1つ以上ご入力ください。');
       return;
     }
@@ -494,7 +594,8 @@
 
     const { error } = await supabaseClient.from('melon_order_requests').insert({
       customer_name: name,
-      contact: contact || null,
+      contact: contact,
+      contact_type: contactType,
       entry_date: date,
       qty_3l: qty3l,
       qty_4l: qty4l,
@@ -503,6 +604,15 @@
       qty_arusu_2l: arusu2l,
       qty_arusu_3l: arusu3l,
       onion_kg: onionKg,
+      qty_kokabu_kikaku: veggieQty.kokabuKikaku,
+      qty_kokabu_naka: veggieQty.kokabuNaka,
+      qty_daikon_s: veggieQty.daikonS,
+      qty_daikon_m: veggieQty.daikonM,
+      qty_daikon_l: veggieQty.daikonL,
+      qty_daikon_2l: veggieQty.daikon2l,
+      qty_daikon_kiri: veggieQty.daikonKiri,
+      qty_kabocha_kikaku: veggieQty.kabochaKikaku,
+      qty_ninjin_kikaku: veggieQty.ninjinKikaku,
       note: note || null,
       request_no: requestNo,
     });
@@ -516,7 +626,7 @@
       return;
     }
 
-    renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, arusuL, arusu2l, arusu3l, onionKg, prices: currentPrices });
+    renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, arusuL, arusu2l, arusu3l, onionKg, veggieQty, prices: currentPrices });
 
     document.getElementById('orderForm').style.display = 'none';
     document.getElementById('successState').classList.add('show');
