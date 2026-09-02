@@ -358,3 +358,10 @@ Edge Function（サービスロール）専用のテーブル。クライアン�
 - **対応範囲**：社内の予約管理表（melon_sheet.html）だけでなく、**お客様向け注文フォーム（melon_order.html）・承認画面（melon_requests.html）でも新品種を扱えるようにした**（従来、直近のスイカ・野菜追加はmelon_sheet.htmlにしか反映されておらず、お客様側の注文フォームは非対応のままだった）
 - 変更したファイル：`js/melon-common.js`（単価デフォルト値）、`melon_sheet.html`（品種グループ・単価一覧）、`melon_order.html`（入力欄・合計金額計算・送信内容）、`melon_requests.html`（表示・承認時の予約表登録）
 - 関連migration：`migration_2026-09-02_arusu_melon.sql`（`melon_entries`／`melon_price_periods`／`melon_order_requests`への列追加。Supabase SQL Editorでの実行が必要）
+- **不具合修正（2026-09-02）**：`melon_order_requests`の数量チェック制約が、アールスメロンの数量を対象に含めておらず、アールスメロンだけを注文しようとすると送信エラーになる不具合があった。`migration_2026-09-02b_fix_order_qty_check.sql`で修正
+
+### お客様向け注文フォームに野菜を追加・ご連絡方法の選択式化（2026-09-03追加）
+
+- **野菜の追加**：お客様向け注文フォーム（melon_order.html）に「野菜」セクションを追加し、こかぶ（規格外／中かぶ）・大根（S/M/L/2L／切り大根）・かぼちゃ規格外・にんじん規格外の9品目を注文できるようにした。承認画面（melon_requests.html）・予約表登録処理もあわせて対応
+- **ご連絡方法の選択式化**：従来は自由入力1欄だった「ご連絡先」を、「📷 インスタ」「📞 メールまたは電話」のいずれかを選択するボタン式に変更。選択に応じて対応する入力欄（インスタのユーザー名 or メールアドレス/電話番号）が表示され、必須入力になる。選択結果は`contact_type`列（`instagram` / `email_or_tel`）に保存し、承認画面での連絡先表示にも種別ラベルを表示するようにした
+- 関連migration：`migration_2026-09-03_order_veggie_contact.sql`（`melon_order_requests`への野菜列・`contact_type`列の追加、数量チェック制約の再作成）

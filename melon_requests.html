@@ -264,6 +264,18 @@
   let requests = [];
   let currentTab = 'pending';
 
+  const VEGGIE_ITEMS = [
+    { key: 'qty_kokabu_kikaku', label: 'こかぶ規格外', unit: 'セット' },
+    { key: 'qty_kokabu_naka',   label: '中かぶ',       unit: '玉' },
+    { key: 'qty_daikon_s',      label: '大根S',        unit: '本' },
+    { key: 'qty_daikon_m',      label: '大根M',        unit: '本' },
+    { key: 'qty_daikon_l',      label: '大根L',        unit: '本' },
+    { key: 'qty_daikon_2l',     label: '大根2L',       unit: '本' },
+    { key: 'qty_daikon_kiri',   label: '切り大根',     unit: 'kg' },
+    { key: 'qty_kabocha_kikaku', label: 'かぼちゃ規格外', unit: '×100g' },
+    { key: 'qty_ninjin_kikaku',  label: 'にんじん規格外', unit: '×10kg' },
+  ];
+
   function itemChips(r) {
     const chips = [];
     if (r.qty_3l) chips.push(`マルセイユ3L ${r.qty_3l}玉`);
@@ -273,6 +285,7 @@
     if (r.qty_arusu_2l) chips.push(`アールス2L ${r.qty_arusu_2l}玉`);
     if (r.qty_arusu_3l) chips.push(`アールス3L ${r.qty_arusu_3l}玉`);
     if (r.onion_kg) chips.push(`玉ねぎ ${r.onion_kg}kg`);
+    VEGGIE_ITEMS.forEach(it => { if (r[it.key]) chips.push(`${it.label} ${r[it.key]}${it.unit}`); });
     if (r.qty_other) chips.push(`その他 ${r.qty_other}${r.other_label ? '（' + r.other_label + '）' : ''}`);
     return chips;
   }
@@ -293,10 +306,11 @@
         ? '<div class="req-status-label rejected">✕ 却下</div>'
         : '';
 
+    const contactLabel = r.contact_type === 'instagram' ? '📷 インスタ' : r.contact_type === 'email_or_tel' ? '📞 連絡先' : '連絡先';
     const contactCopy = r.status === 'pending' ? (
       r.contact
         ? `<div class="req-contact-copy">
-            <span class="req-contact-copy-label">連絡先</span>
+            <span class="req-contact-copy-label">${contactLabel}</span>
             <button type="button" class="btn-copy-contact" data-contact="${escHtml(r.contact)}" onclick="copyContact(this)">${escHtml(r.contact)}</button>
           </div>`
         : `<div class="req-contact-empty">⚠ 連絡先の入力がありません（承認・却下の結果はお客様へご自身で伝えてください）</div>`
@@ -313,7 +327,7 @@
         <div class="req-top">
           <div>
             <div class="req-name">${escHtml(r.customer_name)}</div>
-            ${r.contact ? `<div class="req-contact">${escHtml(r.contact)}</div>` : ''}
+            ${r.contact ? `<div class="req-contact">${contactLabel}：${escHtml(r.contact)}</div>` : ''}
           </div>
           <div>
             <div class="req-submitted">${formatSubmittedAt(r.created_at)}</div>
@@ -433,6 +447,12 @@
         price_3l: DEFAULT_PRICES.qty3l, price_4l: DEFAULT_PRICES.qty4l, price_5l: DEFAULT_PRICES.qty5l,
         price_arusu_l: DEFAULT_PRICES.arusuL, price_arusu_2l: DEFAULT_PRICES.arusu2l, price_arusu_3l: DEFAULT_PRICES.arusu3l,
         price_onion: DEFAULT_PRICES.onion, price_box2: DEFAULT_PRICES.box2, price_box35: DEFAULT_PRICES.box35,
+        price_kokabu_kikaku: DEFAULT_PRICES.kokabuKikaku, price_kokabu_naka: DEFAULT_PRICES.kokabuNaka,
+        price_daikon_s: DEFAULT_PRICES.daikonS, price_daikon_m: DEFAULT_PRICES.daikonM,
+        price_daikon_l: DEFAULT_PRICES.daikonL, price_daikon_2l: DEFAULT_PRICES.daikon2l,
+        price_daikon_kiri: DEFAULT_PRICES.daikonKiri,
+        price_kabocha_kikaku: DEFAULT_PRICES.kabochaKikaku,
+        price_ninjin_kikaku: DEFAULT_PRICES.ninjinKikaku,
       })
       .select()
       .single();
@@ -464,7 +484,7 @@
 
       const noteLines = [];
       if (req.note) noteLines.push(req.note);
-      if (req.contact) noteLines.push(`連絡先：${req.contact}`);
+      if (req.contact) noteLines.push(`連絡先（${req.contact_type === 'instagram' ? 'インスタ' : 'メール/電話'}）：${req.contact}`);
       if (req.request_no) noteLines.push(`受付No：${req.request_no}`);
 
       const { data: entry, error: insErr } = await supabaseClient
@@ -480,6 +500,15 @@
           qty_arusu_l: req.qty_arusu_l,
           qty_arusu_2l: req.qty_arusu_2l,
           qty_arusu_3l: req.qty_arusu_3l,
+          qty_kokabu_kikaku: req.qty_kokabu_kikaku,
+          qty_kokabu_naka: req.qty_kokabu_naka,
+          qty_daikon_s: req.qty_daikon_s,
+          qty_daikon_m: req.qty_daikon_m,
+          qty_daikon_l: req.qty_daikon_l,
+          qty_daikon_2l: req.qty_daikon_2l,
+          qty_daikon_kiri: req.qty_daikon_kiri,
+          qty_kabocha_kikaku: req.qty_kabocha_kikaku,
+          qty_ninjin_kikaku: req.qty_ninjin_kikaku,
           qty_other: req.qty_other,
           other_label: req.other_label,
           onion_kg: req.onion_kg,
@@ -490,6 +519,15 @@
           unit_price_arusu_l: prices.arusuL,
           unit_price_arusu_2l: prices.arusu2l,
           unit_price_arusu_3l: prices.arusu3l,
+          unit_price_kokabu_kikaku: prices.kokabuKikaku,
+          unit_price_kokabu_naka: prices.kokabuNaka,
+          unit_price_daikon_s: prices.daikonS,
+          unit_price_daikon_m: prices.daikonM,
+          unit_price_daikon_l: prices.daikonL,
+          unit_price_daikon_2l: prices.daikon2l,
+          unit_price_daikon_kiri: prices.daikonKiri,
+          unit_price_kabocha_kikaku: prices.kabochaKikaku,
+          unit_price_ninjin_kikaku: prices.ninjinKikaku,
           onion_unit_price: prices.onion,
           box_unit_price_2: prices.box2,
           box_unit_price_35: prices.box35,
