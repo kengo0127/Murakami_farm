@@ -248,7 +248,7 @@
       <div class="weekday-preview" id="weekdayPreview"></div>
     </div>
 
-    <div class="section-title">メロン</div>
+    <div class="section-title">メロン（マルセイユ）</div>
 
     <div class="qty-grid">
       <div class="qty-item form-group">
@@ -262,6 +262,23 @@
       <div class="qty-item form-group">
         <label>5L <span class="unit-price" id="priceQty5l"></span></label>
         <input type="number" id="fQty5l" min="0" step="1" value="0" oninput="updateTotal()">
+      </div>
+    </div>
+
+    <div class="section-title">メロン（アールス）</div>
+
+    <div class="qty-grid">
+      <div class="qty-item form-group">
+        <label>L <span class="unit-price" id="priceArusuL"></span></label>
+        <input type="number" id="fArusuL" min="0" step="1" value="0" oninput="updateTotal()">
+      </div>
+      <div class="qty-item form-group">
+        <label>2L <span class="unit-price" id="priceArusu2l"></span></label>
+        <input type="number" id="fArusu2l" min="0" step="1" value="0" oninput="updateTotal()">
+      </div>
+      <div class="qty-item form-group">
+        <label>3L <span class="unit-price" id="priceArusu3l"></span></label>
+        <input type="number" id="fArusu3l" min="0" step="1" value="0" oninput="updateTotal()">
       </div>
     </div>
 
@@ -343,6 +360,9 @@
     document.getElementById('priceQty3l').textContent = `@${formatYen(currentPrices.qty3l)}`;
     document.getElementById('priceQty4l').textContent = `@${formatYen(currentPrices.qty4l)}`;
     document.getElementById('priceQty5l').textContent = `@${formatYen(currentPrices.qty5l)}`;
+    document.getElementById('priceArusuL').textContent  = `@${formatYen(currentPrices.arusuL)}`;
+    document.getElementById('priceArusu2l').textContent = `@${formatYen(currentPrices.arusu2l)}`;
+    document.getElementById('priceArusu3l').textContent = `@${formatYen(currentPrices.arusu3l)}`;
     document.getElementById('priceOnion').textContent = `@${formatYen(currentPrices.onion)}/kg`;
   }
 
@@ -350,9 +370,13 @@
     const qty3l = Math.max(0, parseInt(document.getElementById('fQty3l').value || '0', 10));
     const qty4l = Math.max(0, parseInt(document.getElementById('fQty4l').value || '0', 10));
     const qty5l = Math.max(0, parseInt(document.getElementById('fQty5l').value || '0', 10));
+    const arusuL  = Math.max(0, parseInt(document.getElementById('fArusuL').value  || '0', 10));
+    const arusu2l = Math.max(0, parseInt(document.getElementById('fArusu2l').value || '0', 10));
+    const arusu3l = Math.max(0, parseInt(document.getElementById('fArusu3l').value || '0', 10));
     const onionKg = Math.max(0, parseFloat(document.getElementById('fOnion').value || '0'));
 
     const total = qty3l * currentPrices.qty3l + qty4l * currentPrices.qty4l + qty5l * currentPrices.qty5l
+      + arusuL * currentPrices.arusuL + arusu2l * currentPrices.arusu2l + arusu3l * currentPrices.arusu3l
       + onionKg * currentPrices.onion;
 
     document.getElementById('totalAmount').textContent = formatYen(Math.round(total));
@@ -391,14 +415,17 @@
   updatePriceLabels();
   updateTotal();
 
-  function renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, onionKg, prices }) {
+  function renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, arusuL, arusu2l, arusu3l, onionKg, prices }) {
     document.getElementById('summaryReqNo').textContent = requestNo;
     document.getElementById('summaryDate').textContent = formatDateJa(date);
 
     const items = [];
-    if (qty3l > 0) items.push({ label: `メロン 3L × ${qty3l}`, amount: qty3l * prices.qty3l });
-    if (qty4l > 0) items.push({ label: `メロン 4L × ${qty4l}`, amount: qty4l * prices.qty4l });
-    if (qty5l > 0) items.push({ label: `メロン 5L × ${qty5l}`, amount: qty5l * prices.qty5l });
+    if (qty3l > 0) items.push({ label: `メロン(マルセイユ) 3L × ${qty3l}`, amount: qty3l * prices.qty3l });
+    if (qty4l > 0) items.push({ label: `メロン(マルセイユ) 4L × ${qty4l}`, amount: qty4l * prices.qty4l });
+    if (qty5l > 0) items.push({ label: `メロン(マルセイユ) 5L × ${qty5l}`, amount: qty5l * prices.qty5l });
+    if (arusuL  > 0) items.push({ label: `メロン(アールス) L × ${arusuL}`,  amount: arusuL  * prices.arusuL });
+    if (arusu2l > 0) items.push({ label: `メロン(アールス) 2L × ${arusu2l}`, amount: arusu2l * prices.arusu2l });
+    if (arusu3l > 0) items.push({ label: `メロン(アールス) 3L × ${arusu3l}`, amount: arusu3l * prices.arusu3l });
     if (onionKg > 0) items.push({ label: `玉ねぎ × ${onionKg}kg`, amount: onionKg * prices.onion });
 
     document.getElementById('summaryItems').innerHTML = items
@@ -444,6 +471,9 @@
     const qty3l = Math.max(0, parseInt(document.getElementById('fQty3l').value || '0', 10));
     const qty4l = Math.max(0, parseInt(document.getElementById('fQty4l').value || '0', 10));
     const qty5l = Math.max(0, parseInt(document.getElementById('fQty5l').value || '0', 10));
+    const arusuL  = Math.max(0, parseInt(document.getElementById('fArusuL').value  || '0', 10));
+    const arusu2l = Math.max(0, parseInt(document.getElementById('fArusu2l').value || '0', 10));
+    const arusu3l = Math.max(0, parseInt(document.getElementById('fArusu3l').value || '0', 10));
     const onionKg = Math.max(0, parseFloat(document.getElementById('fOnion').value || '0'));
     const note = document.getElementById('fNote').value.trim();
 
@@ -451,8 +481,8 @@
     if (!contact) { showError('ご連絡先をご入力ください。'); return; }
     if (!date) { showError('ご来店希望日をご入力ください。'); return; }
     if (date < todayStrJST()) { showError('ご来店希望日は本日以降の日付をお選びください。'); return; }
-    if (qty3l + qty4l + qty5l <= 0 && onionKg <= 0) {
-      showError('ご注文内容（3L/4L/5L・玉ねぎのいずれか）を1つ以上ご入力ください。');
+    if (qty3l + qty4l + qty5l + arusuL + arusu2l + arusu3l <= 0 && onionKg <= 0) {
+      showError('ご注文内容を1つ以上ご入力ください。');
       return;
     }
 
@@ -469,6 +499,9 @@
       qty_3l: qty3l,
       qty_4l: qty4l,
       qty_5l: qty5l,
+      qty_arusu_l: arusuL,
+      qty_arusu_2l: arusu2l,
+      qty_arusu_3l: arusu3l,
       onion_kg: onionKg,
       note: note || null,
       request_no: requestNo,
@@ -483,7 +516,7 @@
       return;
     }
 
-    renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, onionKg, prices: currentPrices });
+    renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, arusuL, arusu2l, arusu3l, onionKg, prices: currentPrices });
 
     document.getElementById('orderForm').style.display = 'none';
     document.getElementById('successState').classList.add('show');
