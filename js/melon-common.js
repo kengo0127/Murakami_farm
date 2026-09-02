@@ -10,6 +10,8 @@ const DEFAULT_PRICES = {
   box2: 250,
   box35: 350,
 
+  arusuL: 1000, arusu2l: 1100, arusu3l: 1200,
+
   andes3l: 1000, andes4l: 1100, andes5l: 1200,
   yogurkissM: 300, yogurkissL: 500,
   pureNormal: 1000, pureLarge: 1100, pureXlarge: 1100,
@@ -62,6 +64,8 @@ function getPricesForDateFrom(pricePeriods, dateStr) {
     return {
       qty3l: period.price_3l, qty4l: period.price_4l, qty5l: period.price_5l,
       onion: period.price_onion, box2: period.price_box2, box35: period.price_box35,
+
+      arusuL: period.price_arusu_l, arusu2l: period.price_arusu_2l, arusu3l: period.price_arusu_3l,
 
       andes3l: period.price_andes_3l, andes4l: period.price_andes_4l, andes5l: period.price_andes_5l,
       yogurkissM: period.price_yogurkiss_m, yogurkissL: period.price_yogurkiss_l,

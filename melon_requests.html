@@ -266,9 +266,12 @@
 
   function itemChips(r) {
     const chips = [];
-    if (r.qty_3l) chips.push(`3L ${r.qty_3l}玉`);
-    if (r.qty_4l) chips.push(`4L ${r.qty_4l}玉`);
-    if (r.qty_5l) chips.push(`5L ${r.qty_5l}玉`);
+    if (r.qty_3l) chips.push(`マルセイユ3L ${r.qty_3l}玉`);
+    if (r.qty_4l) chips.push(`マルセイユ4L ${r.qty_4l}玉`);
+    if (r.qty_5l) chips.push(`マルセイユ5L ${r.qty_5l}玉`);
+    if (r.qty_arusu_l)  chips.push(`アールスL ${r.qty_arusu_l}玉`);
+    if (r.qty_arusu_2l) chips.push(`アールス2L ${r.qty_arusu_2l}玉`);
+    if (r.qty_arusu_3l) chips.push(`アールス3L ${r.qty_arusu_3l}玉`);
     if (r.onion_kg) chips.push(`玉ねぎ ${r.onion_kg}kg`);
     if (r.qty_other) chips.push(`その他 ${r.qty_other}${r.other_label ? '（' + r.other_label + '）' : ''}`);
     return chips;
@@ -428,6 +431,7 @@
         sheet_id: sheetId,
         start_date: monthStart,
         price_3l: DEFAULT_PRICES.qty3l, price_4l: DEFAULT_PRICES.qty4l, price_5l: DEFAULT_PRICES.qty5l,
+        price_arusu_l: DEFAULT_PRICES.arusuL, price_arusu_2l: DEFAULT_PRICES.arusu2l, price_arusu_3l: DEFAULT_PRICES.arusu3l,
         price_onion: DEFAULT_PRICES.onion, price_box2: DEFAULT_PRICES.box2, price_box35: DEFAULT_PRICES.box35,
       })
       .select()
@@ -473,6 +477,9 @@
           qty_3l: req.qty_3l,
           qty_4l: req.qty_4l,
           qty_5l: req.qty_5l,
+          qty_arusu_l: req.qty_arusu_l,
+          qty_arusu_2l: req.qty_arusu_2l,
+          qty_arusu_3l: req.qty_arusu_3l,
           qty_other: req.qty_other,
           other_label: req.other_label,
           onion_kg: req.onion_kg,
@@ -480,6 +487,9 @@
           unit_price_3l: prices.qty3l,
           unit_price_4l: prices.qty4l,
           unit_price_5l: prices.qty5l,
+          unit_price_arusu_l: prices.arusuL,
+          unit_price_arusu_2l: prices.arusu2l,
+          unit_price_arusu_3l: prices.arusu3l,
           onion_unit_price: prices.onion,
           box_unit_price_2: prices.box2,
           box_unit_price_35: prices.box35,
