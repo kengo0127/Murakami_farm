@@ -1569,16 +1569,24 @@
     const prices = getPricesForDate(entry.entry_date);
 
     function render() {
-      // 非表示にした品種は基本的に隠すが、既にデータが入っている場合はデータ消失を防ぐため強制的に表示する
-      const visibleGroups = groups.filter(g => isProductVisible(g.label) || g.items.some(it => entry[it.qtyKey] > 0));
-
-      body.innerHTML = visibleGroups.map((g, gi) => {
+      // 品種名と表示/非表示ボタンは常に表示し続け、非表示にした品種は個数入力欄などの本体部分だけを隠す
+      // （見出しごと消してしまうと、再度表示に戻すボタンが押せなくなるため）
+      // ただし、既にデータが入っている場合はデータ消失を防ぐため本体部分も強制的に表示する
+      body.innerHTML = groups.map((g, gi) => {
         const visible = isProductVisible(g.label);
+        const hasData = g.items.some(it => entry[it.qtyKey] > 0);
+        const showBody = visible || hasData;
+
         const heading = `
           <div class="modal-group-heading">
             <span>${g.label}</span>
             <button type="button" class="product-toggle-btn ${visible ? '' : 'hidden-product'}" style="margin-left:8px;" onclick="toggleProductVisibilityInModal('${g.label}')">${visible ? '👁 表示中' : '🚫 非表示'}</button>
           </div>`;
+
+        if (!showBody) {
+          return `<div class="modal-group-band ${gi % 2 === 0 ? 'band-a' : 'band-b'}">${heading}</div>`;
+        }
+
         const rows = g.items.map(it => {
           const defaultPrice = prices[it.priceDefaultKey];
           const currentPrice = entry[it.priceKey] ?? defaultPrice;
