@@ -284,6 +284,8 @@
     if (r.qty_arusu_l)  chips.push(`アールスL ${r.qty_arusu_l}玉`);
     if (r.qty_arusu_2l) chips.push(`アールス2L ${r.qty_arusu_2l}玉`);
     if (r.qty_arusu_3l) chips.push(`アールス3L ${r.qty_arusu_3l}玉`);
+    if (r.qty_arusu_4l) chips.push(`アールス4L ${r.qty_arusu_4l}玉`);
+    if (r.qty_arusu_5l) chips.push(`アールス5L ${r.qty_arusu_5l}玉`);
     if (r.onion_kg) chips.push(`玉ねぎ ${r.onion_kg}kg`);
     VEGGIE_ITEMS.forEach(it => { if (r[it.key]) chips.push(`${it.label} ${r[it.key]}${it.unit}`); });
     if (r.qty_other) chips.push(`その他 ${r.qty_other}${r.other_label ? '（' + r.other_label + '）' : ''}`);
@@ -446,6 +448,7 @@
         start_date: monthStart,
         price_3l: DEFAULT_PRICES.qty3l, price_4l: DEFAULT_PRICES.qty4l, price_5l: DEFAULT_PRICES.qty5l,
         price_arusu_l: DEFAULT_PRICES.arusuL, price_arusu_2l: DEFAULT_PRICES.arusu2l, price_arusu_3l: DEFAULT_PRICES.arusu3l,
+        price_arusu_4l: DEFAULT_PRICES.arusu4l, price_arusu_5l: DEFAULT_PRICES.arusu5l,
         price_onion: DEFAULT_PRICES.onion, price_box2: DEFAULT_PRICES.box2, price_box35: DEFAULT_PRICES.box35,
         price_kokabu_kikaku: DEFAULT_PRICES.kokabuKikaku, price_kokabu_naka: DEFAULT_PRICES.kokabuNaka,
         price_daikon_s: DEFAULT_PRICES.daikonS, price_daikon_m: DEFAULT_PRICES.daikonM,
@@ -500,6 +503,8 @@
           qty_arusu_l: req.qty_arusu_l,
           qty_arusu_2l: req.qty_arusu_2l,
           qty_arusu_3l: req.qty_arusu_3l,
+          qty_arusu_4l: req.qty_arusu_4l,
+          qty_arusu_5l: req.qty_arusu_5l,
           qty_kokabu_kikaku: req.qty_kokabu_kikaku,
           qty_kokabu_naka: req.qty_kokabu_naka,
           qty_daikon_s: req.qty_daikon_s,
@@ -519,6 +524,8 @@
           unit_price_arusu_l: prices.arusuL,
           unit_price_arusu_2l: prices.arusu2l,
           unit_price_arusu_3l: prices.arusu3l,
+          unit_price_arusu_4l: prices.arusu4l,
+          unit_price_arusu_5l: prices.arusu5l,
           unit_price_kokabu_kikaku: prices.kokabuKikaku,
           unit_price_kokabu_naka: prices.kokabuNaka,
           unit_price_daikon_s: prices.daikonS,

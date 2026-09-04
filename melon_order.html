@@ -317,6 +317,14 @@
         <label>3L <span class="unit-price" id="priceArusu3l"></span></label>
         <input type="number" id="fArusu3l" min="0" step="1" value="0" oninput="updateTotal()">
       </div>
+      <div class="qty-item form-group">
+        <label>4L <span class="unit-price" id="priceArusu4l"></span></label>
+        <input type="number" id="fArusu4l" min="0" step="1" value="0" oninput="updateTotal()">
+      </div>
+      <div class="qty-item form-group">
+        <label>5L <span class="unit-price" id="priceArusu5l"></span></label>
+        <input type="number" id="fArusu5l" min="0" step="1" value="0" oninput="updateTotal()">
+      </div>
     </div>
 
     <div class="form-group" style="margin-top:16px;">
@@ -442,6 +450,8 @@
     document.getElementById('priceArusuL').textContent  = `@${formatYen(currentPrices.arusuL)}`;
     document.getElementById('priceArusu2l').textContent = `@${formatYen(currentPrices.arusu2l)}`;
     document.getElementById('priceArusu3l').textContent = `@${formatYen(currentPrices.arusu3l)}`;
+    document.getElementById('priceArusu4l').textContent = `@${formatYen(currentPrices.arusu4l)}`;
+    document.getElementById('priceArusu5l').textContent = `@${formatYen(currentPrices.arusu5l)}`;
     document.getElementById('priceOnion').textContent = `@${formatYen(currentPrices.onion)}/kg`;
     VEGGIE_ITEMS.forEach(it => {
       document.getElementById(`price_${it.id}`).textContent = `@${formatYen(currentPrices[it.priceKey])}`;
@@ -455,11 +465,14 @@
     const arusuL  = Math.max(0, parseInt(document.getElementById('fArusuL').value  || '0', 10));
     const arusu2l = Math.max(0, parseInt(document.getElementById('fArusu2l').value || '0', 10));
     const arusu3l = Math.max(0, parseInt(document.getElementById('fArusu3l').value || '0', 10));
+    const arusu4l = Math.max(0, parseInt(document.getElementById('fArusu4l').value || '0', 10));
+    const arusu5l = Math.max(0, parseInt(document.getElementById('fArusu5l').value || '0', 10));
     const onionKg = Math.max(0, parseFloat(document.getElementById('fOnion').value || '0'));
     const veggieQty = getVeggieQuantities();
 
     let total = qty3l * currentPrices.qty3l + qty4l * currentPrices.qty4l + qty5l * currentPrices.qty5l
       + arusuL * currentPrices.arusuL + arusu2l * currentPrices.arusu2l + arusu3l * currentPrices.arusu3l
+      + arusu4l * currentPrices.arusu4l + arusu5l * currentPrices.arusu5l
       + onionKg * currentPrices.onion;
     VEGGIE_ITEMS.forEach(it => { total += veggieQty[it.id] * currentPrices[it.priceKey]; });
 
@@ -499,7 +512,7 @@
   updatePriceLabels();
   updateTotal();
 
-  function renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, arusuL, arusu2l, arusu3l, onionKg, veggieQty, prices }) {
+  function renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, arusuL, arusu2l, arusu3l, arusu4l, arusu5l, onionKg, veggieQty, prices }) {
     document.getElementById('summaryReqNo').textContent = requestNo;
     document.getElementById('summaryDate').textContent = formatDateJa(date);
 
@@ -510,6 +523,8 @@
     if (arusuL  > 0) items.push({ label: `メロン(アールス) L × ${arusuL}`,  amount: arusuL  * prices.arusuL });
     if (arusu2l > 0) items.push({ label: `メロン(アールス) 2L × ${arusu2l}`, amount: arusu2l * prices.arusu2l });
     if (arusu3l > 0) items.push({ label: `メロン(アールス) 3L × ${arusu3l}`, amount: arusu3l * prices.arusu3l });
+    if (arusu4l > 0) items.push({ label: `メロン(アールス) 4L × ${arusu4l}`, amount: arusu4l * prices.arusu4l });
+    if (arusu5l > 0) items.push({ label: `メロン(アールス) 5L × ${arusu5l}`, amount: arusu5l * prices.arusu5l });
     if (onionKg > 0) items.push({ label: `玉ねぎ × ${onionKg}kg`, amount: onionKg * prices.onion });
     VEGGIE_ITEMS.forEach(it => {
       const q = veggieQty[it.id];
@@ -565,6 +580,8 @@
     const arusuL  = Math.max(0, parseInt(document.getElementById('fArusuL').value  || '0', 10));
     const arusu2l = Math.max(0, parseInt(document.getElementById('fArusu2l').value || '0', 10));
     const arusu3l = Math.max(0, parseInt(document.getElementById('fArusu3l').value || '0', 10));
+    const arusu4l = Math.max(0, parseInt(document.getElementById('fArusu4l').value || '0', 10));
+    const arusu5l = Math.max(0, parseInt(document.getElementById('fArusu5l').value || '0', 10));
     const onionKg = Math.max(0, parseFloat(document.getElementById('fOnion').value || '0'));
     const veggieQty = getVeggieQuantities();
     const veggieTotalQty = VEGGIE_ITEMS.reduce((sum, it) => sum + veggieQty[it.id], 0);
@@ -581,7 +598,7 @@
     }
     if (!date) { showError('ご来店希望日をご入力ください。'); return; }
     if (date < todayStrJST()) { showError('ご来店希望日は本日以降の日付をお選びください。'); return; }
-    if (qty3l + qty4l + qty5l + arusuL + arusu2l + arusu3l + veggieTotalQty <= 0 && onionKg <= 0) {
+    if (qty3l + qty4l + qty5l + arusuL + arusu2l + arusu3l + arusu4l + arusu5l + veggieTotalQty <= 0 && onionKg <= 0) {
       showError('ご注文内容を1つ以上ご入力ください。');
       return;
     }
@@ -603,6 +620,8 @@
       qty_arusu_l: arusuL,
       qty_arusu_2l: arusu2l,
       qty_arusu_3l: arusu3l,
+      qty_arusu_4l: arusu4l,
+      qty_arusu_5l: arusu5l,
       onion_kg: onionKg,
       qty_kokabu_kikaku: veggieQty.kokabuKikaku,
       qty_kokabu_naka: veggieQty.kokabuNaka,
@@ -626,7 +645,7 @@
       return;
     }
 
-    renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, arusuL, arusu2l, arusu3l, onionKg, veggieQty, prices: currentPrices });
+    renderOrderSummary({ requestNo, date, qty3l, qty4l, qty5l, arusuL, arusu2l, arusu3l, arusu4l, arusu5l, onionKg, veggieQty, prices: currentPrices });
 
     document.getElementById('orderForm').style.display = 'none';
     document.getElementById('successState').classList.add('show');

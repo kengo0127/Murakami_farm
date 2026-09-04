@@ -328,6 +328,31 @@
     }
     .price-group-title:first-child { margin-top: 0; }
 
+    .product-visibility-toggles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+
+    .product-toggle-btn {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      color: #1a3d17;
+      border-radius: 14px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .product-toggle-btn.hidden-product {
+      background: #f5f5f5;
+      border-color: #ddd;
+      color: #999;
+      text-decoration: line-through;
+    }
+
     .modal-group-heading {
       font-size: 13px;
       font-weight: 800;
@@ -558,16 +583,17 @@
   </div>
   <div class="summary-body">
     <div class="price-group-title">🍈 メロン単価</div>
+    <div class="product-visibility-toggles" id="productToggles_melon"></div>
     <table class="mini-table">
       <thead>
         <tr>
           <th>開始日</th><th>終了日</th>
-          <th>マルセイユ3L</th><th>マルセイユ4L</th><th>マルセイユ5L</th>
-          <th>アールスL</th><th>アールス2L</th><th>アールス3L</th>
-          <th>アンデス3L</th><th>アンデス4L</th><th>アンデス5L</th>
-          <th>ヨーグル中</th><th>ヨーグル大</th>
-          <th>ピュア並</th><th>ピュア大</th><th>ピュア特大</th>
-          <th>日焼け</th><th>ハミー中</th><th>ハミー大</th>
+          <th data-product="マルセイユ">マルセイユ3L</th><th data-product="マルセイユ">マルセイユ4L</th><th data-product="マルセイユ">マルセイユ5L</th>
+          <th data-product="アールス">アールスL</th><th data-product="アールス">アールス2L</th><th data-product="アールス">アールス3L</th><th data-product="アールス">アールス4L</th><th data-product="アールス">アールス5L</th>
+          <th data-product="アンデス">アンデス3L</th><th data-product="アンデス">アンデス4L</th><th data-product="アンデス">アンデス5L</th>
+          <th data-product="ヨーグルキッス">ヨーグル中</th><th data-product="ヨーグルキッス">ヨーグル大</th>
+          <th data-product="ピュアリモーネ">ピュア並</th><th data-product="ピュアリモーネ">ピュア大</th><th data-product="ピュアリモーネ">ピュア特大</th>
+          <th data-product="日焼け（ハネ）">日焼け</th><th data-product="サクサクハミー">ハミー中</th><th data-product="サクサクハミー">ハミー大</th>
           <th></th>
         </tr>
       </thead>
@@ -575,12 +601,13 @@
     </table>
 
     <div class="price-group-title">🍉 スイカ単価</div>
+    <div class="product-visibility-toggles" id="productToggles_suika"></div>
     <table class="mini-table">
       <thead>
         <tr>
           <th>開始日</th><th>終了日</th>
-          <th>正規 2L</th><th>正規 3L</th><th>正規 4L</th>
-          <th>訳あり S</th><th>訳あり M</th><th>訳あり L</th><th>訳あり 2L</th><th>訳あり 3L</th><th>訳あり 4L</th><th>訳あり 5L</th>
+          <th data-product="正規品">正規 2L</th><th data-product="正規品">正規 3L</th><th data-product="正規品">正規 4L</th>
+          <th data-product="訳あり">訳あり S</th><th data-product="訳あり">訳あり M</th><th data-product="訳あり">訳あり L</th><th data-product="訳あり">訳あり 2L</th><th data-product="訳あり">訳あり 3L</th><th data-product="訳あり">訳あり 4L</th><th data-product="訳あり">訳あり 5L</th>
           <th></th>
         </tr>
       </thead>
@@ -588,13 +615,14 @@
     </table>
 
     <div class="price-group-title">🥬 野菜単価</div>
+    <div class="product-visibility-toggles" id="productToggles_veggie"></div>
     <table class="mini-table">
       <thead>
         <tr>
           <th>開始日</th><th>終了日</th>
-          <th>こかぶ規格外</th><th>中かぶ</th>
-          <th>大根S</th><th>大根M</th><th>大根L</th><th>大根2L</th><th>切り大根</th>
-          <th>かぼちゃ規格外</th><th>にんじん規格外</th>
+          <th data-product="こかぶ">こかぶ規格外</th><th data-product="こかぶ">中かぶ</th>
+          <th data-product="大根">大根S</th><th data-product="大根">大根M</th><th data-product="大根">大根L</th><th data-product="大根">大根2L</th><th data-product="大根">切り大根</th>
+          <th data-product="かぼちゃ">かぼちゃ規格外</th><th data-product="にんじん">にんじん規格外</th>
           <th></th>
         </tr>
       </thead>
@@ -729,6 +757,8 @@
         { qtyKey: 'qty_arusu_l',  priceKey: 'unit_price_arusu_l',  priceDefaultKey: 'arusuL',  label: 'L' },
         { qtyKey: 'qty_arusu_2l', priceKey: 'unit_price_arusu_2l', priceDefaultKey: 'arusu2l', label: '2L' },
         { qtyKey: 'qty_arusu_3l', priceKey: 'unit_price_arusu_3l', priceDefaultKey: 'arusu3l', label: '3L' },
+        { qtyKey: 'qty_arusu_4l', priceKey: 'unit_price_arusu_4l', priceDefaultKey: 'arusu4l', label: '4L' },
+        { qtyKey: 'qty_arusu_5l', priceKey: 'unit_price_arusu_5l', priceDefaultKey: 'arusu5l', label: '5L' },
     ]},
     { label: 'アンデス', items: [
         { qtyKey: 'qty_andes_3l', priceKey: 'unit_price_andes_3l', priceDefaultKey: 'andes3l', label: '3L' },
@@ -792,6 +822,65 @@
 
   // 単価の初期セット（addRow）・CSV出力で使う、全SKUのフラットな一覧
   const ALL_ITEM_GROUPS = [...MELON_GROUPS, ...SUIKA_GROUPS, ...VEGGIE_GROUPS];
+
+  // ── 商品（品種）ごとの表示/非表示 ─────────────────────────
+  // 今シーズン扱っていない品種を、単価一覧・セル編集モーダルから非表示にできる。
+  // 設定は melon_product_visibility テーブルで全期間・全員共通に保存する。
+  const PRODUCT_GROUPS_BY_CATEGORY = {
+    melon:  MELON_GROUPS.map(g => g.label),
+    suika:  SUIKA_GROUPS.map(g => g.label),
+    veggie: VEGGIE_GROUPS.map(g => g.label),
+  };
+
+  let productVisibility = {}; // label -> boolean（未登録＝表示扱い）
+
+  function isProductVisible(label) {
+    return productVisibility[label] !== false;
+  }
+
+  async function loadProductVisibility() {
+    const { data, error } = await supabaseClient.from('melon_product_visibility').select('group_label, visible');
+    if (error) { console.error(error); return; }
+    productVisibility = {};
+    (data ?? []).forEach(r => { productVisibility[r.group_label] = r.visible; });
+  }
+
+  function renderProductToggles() {
+    Object.keys(PRODUCT_GROUPS_BY_CATEGORY).forEach(cat => {
+      const el = document.getElementById(`productToggles_${cat}`);
+      if (!el) return;
+      el.innerHTML = PRODUCT_GROUPS_BY_CATEGORY[cat].map(label => {
+        const visible = isProductVisible(label);
+        return `<button type="button" class="product-toggle-btn ${visible ? '' : 'hidden-product'}" onclick="toggleProductVisibility('${label}')">${visible ? '👁' : '🚫'} ${label}</button>`;
+      }).join('');
+    });
+  }
+
+  function applyProductVisibility() {
+    document.querySelectorAll('[data-product]').forEach(el => {
+      el.style.display = isProductVisible(el.dataset.product) ? '' : 'none';
+    });
+  }
+
+  async function toggleProductVisibility(label) {
+    const newVisible = !isProductVisible(label);
+    const prevValue = productVisibility[label];
+    productVisibility[label] = newVisible;
+    renderProductToggles();
+    applyProductVisibility();
+
+    const { error } = await supabaseClient
+      .from('melon_product_visibility')
+      .upsert({ group_label: label, visible: newVisible, updated_by: currentProfile.id, updated_at: new Date().toISOString() }, { onConflict: 'group_label' });
+
+    if (error) {
+      alert('表示設定の更新に失敗しました。');
+      console.error(error);
+      productVisibility[label] = prevValue;
+      renderProductToggles();
+      applyProductVisibility();
+    }
+  }
 
   // ── 列定義 ──────────────────────────────────────────────
   const COLUMN_DEFS = {
@@ -1035,6 +1124,8 @@
     { key: 'arusuL',  dbCol: 'price_arusu_l',  label: 'アールスL',  group: 'melon' },
     { key: 'arusu2l', dbCol: 'price_arusu_2l', label: 'アールス2L', group: 'melon' },
     { key: 'arusu3l', dbCol: 'price_arusu_3l', label: 'アールス3L', group: 'melon' },
+    { key: 'arusu4l', dbCol: 'price_arusu_4l', label: 'アールス4L', group: 'melon' },
+    { key: 'arusu5l', dbCol: 'price_arusu_5l', label: 'アールス5L', group: 'melon' },
     { key: 'andes3l', dbCol: 'price_andes_3l', label: 'アンデス3L', group: 'melon' },
     { key: 'andes4l', dbCol: 'price_andes_4l', label: 'アンデス4L', group: 'melon' },
     { key: 'andes5l', dbCol: 'price_andes_5l', label: 'アンデス5L', group: 'melon' },
@@ -1078,6 +1169,10 @@
 
   const PRICE_TABLE_GROUPS = ['melon', 'suika', 'veggie', 'box'];
 
+  // 単価一覧の各列（key）が、どの品種グループ（表示/非表示の単位）に属するかの対応表
+  const PRODUCT_LABEL_BY_KEY = {};
+  ALL_ITEM_GROUPS.forEach(g => g.items.forEach(it => { PRODUCT_LABEL_BY_KEY[it.priceDefaultKey] = g.label; }));
+
   async function loadPricePeriods() {
     const { data, error } = await supabaseClient
       .from('melon_price_periods')
@@ -1113,11 +1208,12 @@
           <td><input type="date" value="${p.start_date || ''}" onchange="updatePricePeriodDate('${p.id}','start_date',this.value)"></td>
           <td><input type="date" value="${p.end_date || ''}" onchange="updatePricePeriodDate('${p.id}','end_date',this.value)"></td>
           ${cols.map(c => `
-            <td><button type="button" class="price-cell-btn" onclick="editPricePeriodAmount('${p.id}','${c.key}')">${formatYen(p[c.dbCol])}</button></td>
+            <td ${PRODUCT_LABEL_BY_KEY[c.key] ? `data-product="${PRODUCT_LABEL_BY_KEY[c.key]}"` : ''}><button type="button" class="price-cell-btn" onclick="editPricePeriodAmount('${p.id}','${c.key}')">${formatYen(p[c.dbCol])}</button></td>
           `).join('')}
           <td><button type="button" class="btn-del-row" onclick="deletePricePeriod('${p.id}')">🗑</button></td>
         </tr>`).join('');
     });
+    applyProductVisibility();
   }
 
   async function addPricePeriod() {
@@ -1342,6 +1438,7 @@
   function closeCellModal() {
     document.getElementById('cellModalOverlay').classList.remove('open');
     currentModalOkHandler = null;
+    currentGroupedModalRerender = null;
   }
 
   async function handleCellModalOk() {
@@ -1464,35 +1561,53 @@
   }
 
   // ── メロン／スイカ／野菜共通モーダル（商品グループごとに個数・単価を編集） ──
+  // モーダルが開いている間、商品表示トグルを押したときに再描画するための参照
+  let currentGroupedModalRerender = null;
+
   function groupedModal(body, entry, groups) {
     body.dataset.entryId = entry.id;
     const prices = getPricesForDate(entry.entry_date);
 
-    body.innerHTML = groups.map((g, gi) => {
-      const heading = `<div class="modal-group-heading">${g.label}</div>`;
-      const rows = g.items.map(it => {
-        const defaultPrice = prices[it.priceDefaultKey];
-        const currentPrice = entry[it.priceKey] ?? defaultPrice;
-        const priceChanged = currentPrice !== defaultPrice;
-        const itemLabel = it.label ? `${it.label} ` : '';
-        return `
-        <div class="modal-group">
-          <label>${itemLabel}個数（基本 ${formatYen(defaultPrice)}）</label>
-          <input type="number" id="mQty_${it.qtyKey}" min="0" step="1" value="${entry[it.qtyKey] || 0}">
-          <button type="button" class="price-toggle" id="priceToggleBtn_${it.qtyKey}" onclick="toggleGroupedPriceInput('${it.qtyKey}')">${priceChanged ? '単価を変更中 ▲' : '単価を変更する ▼'}</button>
-          <div class="price-input-row ${priceChanged ? 'open' : ''}" id="priceInputRow_${it.qtyKey}">
-            <input type="number" id="mPrice_${it.qtyKey}" min="0" step="1" value="${currentPrice}">
-            <span>円</span>
-          </div>
-        </div>`;
+    function render() {
+      // 非表示にした品種は基本的に隠すが、既にデータが入っている場合はデータ消失を防ぐため強制的に表示する
+      const visibleGroups = groups.filter(g => isProductVisible(g.label) || g.items.some(it => entry[it.qtyKey] > 0));
+
+      body.innerHTML = visibleGroups.map((g, gi) => {
+        const visible = isProductVisible(g.label);
+        const heading = `
+          <div class="modal-group-heading">
+            <span>${g.label}</span>
+            <button type="button" class="product-toggle-btn ${visible ? '' : 'hidden-product'}" style="margin-left:8px;" onclick="toggleProductVisibilityInModal('${g.label}')">${visible ? '👁 表示中' : '🚫 非表示'}</button>
+          </div>`;
+        const rows = g.items.map(it => {
+          const defaultPrice = prices[it.priceDefaultKey];
+          const currentPrice = entry[it.priceKey] ?? defaultPrice;
+          const priceChanged = currentPrice !== defaultPrice;
+          const itemLabel = it.label ? `${it.label} ` : '';
+          return `
+          <div class="modal-group">
+            <label>${itemLabel}個数（基本 ${formatYen(defaultPrice)}）</label>
+            <input type="number" id="mQty_${it.qtyKey}" min="0" step="1" value="${entry[it.qtyKey] || 0}">
+            <button type="button" class="price-toggle" id="priceToggleBtn_${it.qtyKey}" onclick="toggleGroupedPriceInput('${it.qtyKey}')">${priceChanged ? '単価を変更中 ▲' : '単価を変更する ▼'}</button>
+            <div class="price-input-row ${priceChanged ? 'open' : ''}" id="priceInputRow_${it.qtyKey}">
+              <input type="number" id="mPrice_${it.qtyKey}" min="0" step="1" value="${currentPrice}">
+              <span>円</span>
+            </div>
+          </div>`;
+        }).join('');
+        return `<div class="modal-group-band ${gi % 2 === 0 ? 'band-a' : 'band-b'}">${heading}${rows}</div>`;
       }).join('');
-      return `<div class="modal-group-band ${gi % 2 === 0 ? 'band-a' : 'band-b'}">${heading}${rows}</div>`;
-    }).join('');
+    }
+
+    render();
+    currentGroupedModalRerender = render;
 
     return async () => {
       const patch = {};
       groups.forEach(g => g.items.forEach(it => {
-        patch[it.qtyKey] = Math.max(0, parseInt(document.getElementById(`mQty_${it.qtyKey}`).value || '0', 10));
+        const qtyInput = document.getElementById(`mQty_${it.qtyKey}`);
+        if (!qtyInput) return; // 非表示中の品目は変更しない（既存の値を保持する）
+        patch[it.qtyKey] = Math.max(0, parseInt(qtyInput.value || '0', 10));
         const priceRow = document.getElementById(`priceInputRow_${it.qtyKey}`);
         if (priceRow.classList.contains('open')) {
           patch[it.priceKey] = Math.max(0, parseInt(document.getElementById(`mPrice_${it.qtyKey}`).value || '0', 10));
@@ -1507,6 +1622,11 @@
     const btn = document.getElementById(`priceToggleBtn_${qtyKey}`);
     const open = row.classList.toggle('open');
     btn.textContent = open ? '単価を変更中 ▲' : '単価を変更する ▼';
+  }
+
+  async function toggleProductVisibilityInModal(label) {
+    await toggleProductVisibility(label);
+    if (currentGroupedModalRerender) currentGroupedModalRerender();
   }
 
   function renderMelonModal(body, entry)  { return groupedModal(body, entry, MELON_GROUPS); }
@@ -1678,6 +1798,8 @@
       return;
     }
 
+    await loadProductVisibility();
+    renderProductToggles();
     await loadPricePeriods();
     await loadEntries();
   })();
