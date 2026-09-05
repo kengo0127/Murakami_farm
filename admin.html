@@ -890,7 +890,7 @@
     <div class="form-card">
       <h2>📥 勤怠管理のエクスポート</h2>
       <p style="font-size:13px;color:#888;margin-bottom:16px;">
-        上記の期間で、日別の出退勤記録とスタッフ別の月次集計（合計労働時間）をExcel出力します。休憩時間は差し引かず、出退勤の時刻をそのまま集計します。
+        上記の期間で、日別の出退勤記録とスタッフ別の月次集計（合計労働時間・時給が設定されている場合は合計賃金）をExcel出力します。休憩時間は差し引かず、出退勤の時刻をそのまま集計します。
       </p>
       <button class="btn-submit" id="kintaiExportBtn" onclick="exportKintaiExcel()">Excelダウンロード</button>
       <div id="kintaiExportMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
@@ -956,11 +956,29 @@
     </div>
     <div class="form-group">
       <label>資格・雇用形態（任意）</label>
-      <input type="text" id="kintaiStaffEditStatus">
+      <input type="text" id="kintaiStaffEditStatus" oninput="updateKintaiWageSectionVisibility()">
     </div>
     <label style="display:flex;align-items:center;gap:6px;margin-bottom:14px;font-size:13px;font-weight:700;color:#555;">
       <input type="checkbox" id="kintaiStaffEditActive"> 在籍中（打刻対象にする）
     </label>
+
+    <div class="form-group" id="kintaiWageSection" style="display:none;background:#f6faf5;border-radius:10px;padding:12px;">
+      <label>時給</label>
+      <div id="kintaiWageHistory" style="margin-bottom:10px;"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>新しい時給（円）</label>
+          <input type="number" id="kintaiWageAmount" min="0" step="1">
+        </div>
+        <div class="form-group">
+          <label>適用開始日</label>
+          <input type="date" id="kintaiWageStartDate">
+        </div>
+      </div>
+      <button type="button" class="btn-submit" id="kintaiWageAddBtn" onclick="addKintaiWage()" style="margin-top:0;">＋ 時給を設定</button>
+      <div id="kintaiWageMsg" style="font-size:13px;color:#c0392b;margin-top:8px;"></div>
+    </div>
+
     <div id="kintaiStaffEditMsg" style="font-size:13px;color:#c0392b;margin-bottom:10px;"></div>
     <div class="modal-actions">
       <button type="button" class="btn-modal-cancel" onclick="closeKintaiStaffEditModal()">キャンセル</button>
@@ -1196,7 +1214,7 @@
     await loadKintaiStaffList();
   }
 
-  function openKintaiStaffEditModal(id) {
+  async function openKintaiStaffEditModal(id) {
     const s = kintaiStaffCache.find(x => x.id === id);
     if (!s) return;
 
@@ -1206,6 +1224,10 @@
     document.getElementById('kintaiStaffEditStatus').value = s.status ?? '';
     document.getElementById('kintaiStaffEditActive').checked = s.active;
     document.getElementById('kintaiStaffEditMsg').textContent = '';
+    document.getElementById('kintaiWageAmount').value = '';
+    document.getElementById('kintaiWageStartDate').value = getToday();
+    updateKintaiWageSectionVisibility();
+    await loadKintaiWagesForStaff(id);
     document.getElementById('kintaiStaffEditModalOverlay').classList.add('open');
   }
 
@@ -1252,6 +1274,77 @@
 
     closeKintaiStaffEditModal();
     await loadKintaiStaffList();
+  }
+
+  // ── 時給管理（「社員」以外のメンバーのみ、開始日ごとの履歴で管理） ──
+  let kintaiWagesCache = [];
+
+  function updateKintaiWageSectionVisibility() {
+    const status = document.getElementById('kintaiStaffEditStatus').value.trim();
+    document.getElementById('kintaiWageSection').style.display = status === '社員' ? 'none' : 'block';
+  }
+
+  async function loadKintaiWagesForStaff(staffId) {
+    const { data, error } = await supabaseClient
+      .from('kintai_hourly_wages')
+      .select('id, wage, start_date')
+      .eq('staff_id', staffId)
+      .order('start_date', { ascending: false });
+
+    kintaiWagesCache = error ? [] : (data ?? []);
+    if (error) console.error(error);
+    renderKintaiWageHistory();
+  }
+
+  function renderKintaiWageHistory() {
+    const el = document.getElementById('kintaiWageHistory');
+    if (!kintaiWagesCache.length) {
+      el.innerHTML = `<div style="font-size:13px;color:#999;">まだ時給が設定されていません</div>`;
+      return;
+    }
+    el.innerHTML = kintaiWagesCache.map(w => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #e5e5e5;font-size:13px;">
+        <span>${w.start_date} 〜　${w.wage.toLocaleString()}円</span>
+        <button type="button" class="btn-delete" style="padding:4px 10px;font-size:11px;" onclick="deleteKintaiWage('${w.id}')">削除</button>
+      </div>`).join('');
+  }
+
+  async function addKintaiWage() {
+    const wage = parseInt(document.getElementById('kintaiWageAmount').value, 10);
+    const startDate = document.getElementById('kintaiWageStartDate').value;
+    const msg = document.getElementById('kintaiWageMsg');
+    msg.textContent = '';
+
+    if (!Number.isInteger(wage) || wage < 0) { msg.textContent = '時給を正しく入力してください'; return; }
+    if (!startDate) { msg.textContent = '適用開始日を選択してください'; return; }
+
+    const btn = document.getElementById('kintaiWageAddBtn');
+    btn.disabled = true;
+    btn.textContent = '設定中...';
+
+    const { error } = await supabaseClient
+      .from('kintai_hourly_wages')
+      .upsert(
+        { staff_id: kintaiStaffEditingId, wage, start_date: startDate, created_by: currentProfile.id },
+        { onConflict: 'staff_id,start_date' }
+      );
+
+    btn.disabled = false;
+    btn.textContent = '＋ 時給を設定';
+
+    if (error) { msg.textContent = '設定に失敗しました'; console.error(error); return; }
+
+    document.getElementById('kintaiWageAmount').value = '';
+    await loadKintaiWagesForStaff(kintaiStaffEditingId);
+  }
+
+  async function deleteKintaiWage(id) {
+    if (!confirm('この時給設定を削除しますか？')) return;
+
+    const { error } = await supabaseClient.from('kintai_hourly_wages').delete().eq('id', id);
+    if (error) { alert('削除に失敗しました'); console.error(error); return; }
+
+    await loadKintaiWagesForStaff(kintaiStaffEditingId);
   }
 
   // ── 勤怠管理 ──────────────────────────────────────────────
@@ -1411,9 +1504,13 @@
 
     const { data, error } = await supabaseClient
       .from('attendance_records')
-      .select('date, clock_in, clock_out, kintai_staff(name, status)')
+      .select('date, clock_in, clock_out, staff_id, kintai_staff(name, status)')
       .gte('date', from)
       .lte('date', to);
+
+    const { data: wagesData, error: wagesError } = await supabaseClient
+      .from('kintai_hourly_wages')
+      .select('staff_id, wage, start_date');
 
     btn.disabled = false;
     btn.textContent = 'Excelダウンロード';
@@ -1423,9 +1520,21 @@
       if (error) console.error(error);
       return;
     }
+    if (wagesError) console.error(wagesError);
 
-    const dailyRows = [['日付', 'スタッフ名', '出勤時刻', '退勤時刻', '労働時間(分)', '労働時間']];
-    const staffTotals = {}; // name -> { status, days, totalMins }
+    // スタッフごとの時給履歴から、指定日時点で有効な時給（開始日が指定日以前で最も新しいもの）を求める
+    const wagesByStaff = {};
+    (wagesData ?? []).forEach(w => { (wagesByStaff[w.staff_id] ??= []).push(w); });
+    function getWageForDate(staffId, dateStr) {
+      const wages = wagesByStaff[staffId];
+      if (!wages?.length) return null;
+      const applicable = wages.filter(w => w.start_date <= dateStr);
+      if (!applicable.length) return null;
+      return applicable.reduce((latest, w) => (w.start_date > latest.start_date ? w : latest)).wage;
+    }
+
+    const dailyRows = [['日付', 'スタッフ名', '出勤時刻', '退勤時刻', '労働時間(分)', '労働時間', '時給(円)', '賃金(円)']];
+    const staffTotals = {}; // name -> { status, days, totalMins, totalPay }
 
     data
       .slice()
@@ -1439,34 +1548,39 @@
         const clockInStr  = r.clock_in  ? fmtHM(new Date(r.clock_in))  : '';
         const clockOutStr = r.clock_out ? fmtHM(new Date(r.clock_out)) : '';
         let mins = '';
+        let wage = null;
+        let pay = '';
         if (r.clock_in && r.clock_out) {
           mins = Math.round((new Date(r.clock_out) - new Date(r.clock_in)) / 60000);
+          wage = getWageForDate(r.staff_id, r.date);
+          if (wage != null) pay = Math.round(wage * mins / 60);
         }
-        dailyRows.push([r.date, name, clockInStr, clockOutStr, mins, mins !== '' ? formatMinutesHM(mins) : '']);
+        dailyRows.push([r.date, name, clockInStr, clockOutStr, mins, mins !== '' ? formatMinutesHM(mins) : '', wage ?? '', pay]);
 
-        if (!staffTotals[name]) staffTotals[name] = { status, days: 0, totalMins: 0 };
+        if (!staffTotals[name]) staffTotals[name] = { status, days: 0, totalMins: 0, totalPay: 0, hasPay: false };
         if (mins !== '') {
           staffTotals[name].days += 1;
           staffTotals[name].totalMins += mins;
+          if (pay !== '') { staffTotals[name].totalPay += pay; staffTotals[name].hasPay = true; }
         }
       });
 
     // 技能実習生3号は法定労働時間（1日8時間・週40時間）の制限対象のため、
     // 属性（在留資格・雇用形態）を集計表にも表示する
-    const summaryRows = [['スタッフ名', '属性', '出勤日数', '合計労働時間(分)', '合計労働時間']];
+    const summaryRows = [['スタッフ名', '属性', '出勤日数', '合計労働時間(分)', '合計労働時間', '合計賃金(円)']];
     Object.keys(staffTotals).sort((a, b) => a.localeCompare(b, 'ja')).forEach(name => {
       const t = staffTotals[name];
-      summaryRows.push([name, t.status, t.days, t.totalMins, formatMinutesHM(t.totalMins)]);
+      summaryRows.push([name, t.status, t.days, t.totalMins, formatMinutesHM(t.totalMins), t.hasPay ? t.totalPay : '']);
     });
 
     const wb = XLSX.utils.book_new();
 
     const wsDaily = XLSX.utils.aoa_to_sheet(dailyRows);
-    wsDaily['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }];
+    wsDaily['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
     XLSX.utils.book_append_sheet(wb, wsDaily, '日別勤怠記録');
 
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
-    wsSummary['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }];
+    wsSummary['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
     XLSX.utils.book_append_sheet(wb, wsSummary, 'スタッフ別集計');
 
     XLSX.writeFile(wb, `村上農園_勤怠記録_${from}_${to}.xlsx`);
