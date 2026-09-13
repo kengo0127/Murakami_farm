@@ -139,8 +139,9 @@
 
     .btn-clock:active { transform: scale(0.97); }
 
-    .btn-clock-in  { background: #2e5c28; color: #fff; }
-    .btn-clock-out { background: #c0392b; color: #fff; }
+    .btn-clock-in    { background: #2e5c28; color: #fff; }
+    .btn-clock-out   { background: #c0392b; color: #fff; }
+    .btn-clock-break { background: #e67e22; color: #fff; }
     .btn-clock:disabled { background: #bbb; cursor: not-allowed; }
 
     .btn-time-select {
@@ -344,6 +345,23 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="breakSelectModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title">休憩時間をえらぶ（きゅうけいじかんをえらぶ）</div>
+    <select class="modal-time-select" id="breakSelectInput">
+      <option value="15">15分</option>
+      <option value="60">60分</option>
+      <option value="75">75分</option>
+      <option value="90">90分</option>
+      <option value="120">120分</option>
+    </select>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" onclick="closeBreakSelectModal()">キャンセル</button>
+      <button type="button" class="btn-modal-submit" id="breakSelectSubmitBtn" onclick="submitBreakSelect()">記録する</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script>
@@ -439,7 +457,7 @@
   async function refreshCurrentRecord() {
     const { data } = await supabaseClient
       .from('attendance_records')
-      .select('id, clock_in, clock_out')
+      .select('id, clock_in, clock_out, break_minutes')
       .eq('staff_id', currentStaff.id)
       .eq('date', getToday())
       .maybeSingle();
@@ -456,13 +474,24 @@
         <button type="button" class="btn-clock btn-clock-in" id="clockInBtn" onclick="handleClockIn()">🟢 出勤する（しゅっきんする）</button>
         <button type="button" class="btn-time-select" onclick="openTimeSelectModal('clockIn')">🕐 出勤時間を選択する（せんたくする）</button>`;
     } else if (currentRecord.clock_in && !currentRecord.clock_out) {
-      statusEl.textContent = `出勤（しゅっきん）：${fmtHM(currentRecord.clock_in)}`;
-      btnsEl.innerHTML = `
-        <button type="button" class="btn-clock btn-clock-out" id="clockOutBtn" onclick="handleClockOut()">🔴 退勤する（たいきんする）</button>
-        <button type="button" class="btn-time-select" onclick="openTimeSelectModal('clockOut')">🕐 退勤時間を選択する（せんたくする）</button>
-        <button type="button" class="action-cancel-link" onclick="handleCancelClockIn()">出勤の記録を取り消す（とりけす）</button>`;
+      const breakMinutes = currentRecord.break_minutes;
+      statusEl.textContent = `出勤（しゅっきん）：${fmtHM(currentRecord.clock_in)}` +
+        (breakMinutes ? `　休憩（きゅうけい）：${breakMinutes}分` : '');
+      if (breakMinutes) {
+        btnsEl.innerHTML = `
+          <button type="button" class="btn-clock btn-clock-out" id="clockOutBtn" onclick="handleClockOut()">🔴 退勤する（たいきんする）</button>
+          <button type="button" class="btn-time-select" onclick="openBreakSelectModal()">☕ 休憩時間を変更する（へんこうする）</button>
+          <button type="button" class="btn-time-select" onclick="openTimeSelectModal('clockOut')">🕐 退勤時間を選択する（せんたくする）</button>
+          <button type="button" class="action-cancel-link" onclick="handleCancelClockIn()">出勤の記録を取り消す（とりけす）</button>`;
+      } else {
+        btnsEl.innerHTML = `
+          <button type="button" class="btn-clock btn-clock-break" id="breakSelectBtn" onclick="openBreakSelectModal()">☕ 休憩時間をえらぶ（えらぶ）</button>
+          <button type="button" class="action-cancel-link" onclick="handleCancelClockIn()">出勤の記録を取り消す（とりけす）</button>`;
+      }
     } else {
-      statusEl.textContent = `出勤（しゅっきん）：${fmtHM(currentRecord.clock_in)}　退勤（たいきん）：${fmtHM(currentRecord.clock_out)}\n本日の記録は完了しています`;
+      statusEl.textContent = `出勤（しゅっきん）：${fmtHM(currentRecord.clock_in)}　退勤（たいきん）：${fmtHM(currentRecord.clock_out)}` +
+        (currentRecord.break_minutes ? `　休憩（きゅうけい）：${currentRecord.break_minutes}分` : '') +
+        `\n本日の記録は完了しています`;
       btnsEl.innerHTML = `<button type="button" class="action-cancel-link" onclick="handleCancelClockOut()">退勤の記録を取り消す（とりけす）</button>`;
     }
   }
@@ -575,6 +604,46 @@
       mode === 'clockIn' ? '🟢' : '🔴',
       `${currentStaff.name}さん\n${mode === 'clockIn' ? '出勤' : '退勤'}を記録しました（${timeVal}）`
     );
+  }
+
+  // ── 休憩時間選択 ────────────────────────────────────────
+  function openBreakSelectModal() {
+    clearActionIdleTimer(); // モーダル操作中に名前一覧へ戻されないようにする
+    document.getElementById('breakSelectInput').value = String(currentRecord?.break_minutes ?? 15);
+    document.getElementById('breakSelectModalOverlay').classList.add('open');
+  }
+
+  function closeBreakSelectModal() {
+    document.getElementById('breakSelectModalOverlay').classList.remove('open');
+    resetActionIdleTimer();
+  }
+
+  async function submitBreakSelect() {
+    const breakMinutes = Number(document.getElementById('breakSelectInput').value);
+
+    const btn = document.getElementById('breakSelectSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = '記録中（きろくちゅう）...';
+
+    const { error } = await supabaseClient
+      .from('attendance_records')
+      .update({ break_minutes: breakMinutes, updated_at: new Date().toISOString() })
+      .eq('id', currentRecord.id);
+
+    btn.disabled = false;
+    btn.textContent = '記録する';
+
+    if (error) {
+      alert('記録に失敗しました。もう一度お試しください。');
+      console.error(error);
+      return;
+    }
+
+    document.getElementById('breakSelectModalOverlay').classList.remove('open');
+
+    await refreshCurrentRecord();
+    renderActionView();
+    resetActionIdleTimer();
   }
 
   // ── 出勤・退勤処理 ──────────────────────────────────────
