@@ -979,6 +979,11 @@
       <div id="kintaiWageMsg" style="font-size:13px;color:#c0392b;margin-top:8px;"></div>
     </div>
 
+    <div class="form-group" id="kintaiMonthlyWageSection" style="display:none;background:#f6faf5;border-radius:10px;padding:12px;">
+      <label>月給（円）</label>
+      <input type="number" id="kintaiMonthlyWageAmount" min="0" step="1">
+    </div>
+
     <div id="kintaiStaffEditMsg" style="font-size:13px;color:#c0392b;margin-bottom:10px;"></div>
     <div class="modal-actions">
       <button type="button" class="btn-modal-cancel" onclick="closeKintaiStaffEditModal()">キャンセル</button>
@@ -1161,9 +1166,11 @@
   let kintaiStaffCache = [];
   let kintaiStaffEditingId = null;
 
+  const KINTAI_DEFAULT_MONTHLY_WAGE = 990000;
+
   async function loadKintaiStaffList() {
     const showInactive = document.getElementById('kintaiStaffShowInactive').checked;
-    let query = supabaseClient.from('kintai_staff').select('id, name, category, status, active, sort_order').order('sort_order');
+    let query = supabaseClient.from('kintai_staff').select('id, name, category, status, active, sort_order, monthly_wage').order('sort_order');
     if (!showInactive) query = query.eq('active', true);
 
     const { data, error } = await query;
@@ -1235,6 +1242,7 @@
     document.getElementById('kintaiStaffEditMsg').textContent = '';
     document.getElementById('kintaiWageAmount').value = '';
     document.getElementById('kintaiWageStartDate').value = getToday();
+    document.getElementById('kintaiMonthlyWageAmount').value = s.monthly_wage ?? KINTAI_DEFAULT_MONTHLY_WAGE;
     updateKintaiWageSectionVisibility();
     await loadKintaiWagesForStaff(id);
     document.getElementById('kintaiStaffEditModalOverlay').classList.add('open');
@@ -1255,13 +1263,19 @@
     const status   = document.getElementById('kintaiStaffEditStatus').value.trim();
     const active   = document.getElementById('kintaiStaffEditActive').checked;
 
+    let monthlyWage = null;
+    if (status === '社員') {
+      monthlyWage = parseInt(document.getElementById('kintaiMonthlyWageAmount').value, 10);
+      if (!Number.isInteger(monthlyWage) || monthlyWage < 0) { msg.textContent = '月給を正しく入力してください'; return; }
+    }
+
     const btn = document.getElementById('kintaiStaffEditSaveBtn');
     btn.disabled = true;
     btn.textContent = '保存中...';
 
     const { error } = await supabaseClient
       .from('kintai_staff')
-      .update({ name, category: category || null, status: status || null, active })
+      .update({ name, category: category || null, status: status || null, active, monthly_wage: monthlyWage })
       .eq('id', kintaiStaffEditingId);
 
     btn.disabled = false;
@@ -1290,7 +1304,12 @@
 
   function updateKintaiWageSectionVisibility() {
     const status = document.getElementById('kintaiStaffEditStatus').value.trim();
-    document.getElementById('kintaiWageSection').style.display = status === '社員' ? 'none' : 'block';
+    const isSalaried = status === '社員';
+    document.getElementById('kintaiWageSection').style.display = isSalaried ? 'none' : 'block';
+    document.getElementById('kintaiMonthlyWageSection').style.display = isSalaried ? 'block' : 'none';
+    if (isSalaried && !document.getElementById('kintaiMonthlyWageAmount').value) {
+      document.getElementById('kintaiMonthlyWageAmount').value = KINTAI_DEFAULT_MONTHLY_WAGE;
+    }
   }
 
   async function loadKintaiWagesForStaff(staffId) {
@@ -1513,7 +1532,7 @@
 
     const { data, error } = await supabaseClient
       .from('attendance_records')
-      .select('date, clock_in, clock_out, break_minutes, staff_id, kintai_staff(name, status)')
+      .select('date, clock_in, clock_out, break_minutes, staff_id, kintai_staff(name, status, monthly_wage)')
       .gte('date', from)
       .lte('date', to);
 
@@ -1570,7 +1589,7 @@
         }
         dailyRows.push([r.date, name, clockInStr, startTimeStr, clockOutStr, r.break_minutes ?? '', mins, mins !== '' ? formatMinutesHM(mins) : '', wage ?? '', pay]);
 
-        if (!staffTotals[name]) staffTotals[name] = { status, days: 0, totalMins: 0, totalPay: 0, hasPay: false };
+        if (!staffTotals[name]) staffTotals[name] = { status, days: 0, totalMins: 0, totalPay: 0, hasPay: false, monthlyWage: r.kintai_staff?.monthly_wage ?? null };
         if (mins !== '') {
           staffTotals[name].days += 1;
           staffTotals[name].totalMins += mins;
@@ -1579,11 +1598,26 @@
       });
 
     // 技能実習生3号は法定労働時間（1日8時間・週40時間）の制限対象のため、
-    // 属性（在留資格・雇用形態）を集計表にも表示する
-    const summaryRows = [['スタッフ名', '属性', '出勤日数', '合計労働時間(分)', '合計労働時間', '合計賃金(円)']];
+    // 属性（在留資格・雇用形態）を集計表にも表示する。
+    // 「社員」は月給制のため合計賃金には月給をそのまま表示し、月給／時給制いずれも
+    // 合計賃金を合計労働時間で割った「実質時給」を求め、最低賃金（1,112円）を
+    // 下回っていないか判定する（将来的にメールアラートに繋げる想定）。
+    const MIN_WAGE = 1112;
+    const summaryRows = [['スタッフ名', '属性', '出勤日数', '合計労働時間(分)', '合計労働時間', '合計賃金(円)', '実質時給(円)', '最低賃金判定']];
     Object.keys(staffTotals).sort((a, b) => a.localeCompare(b, 'ja')).forEach(name => {
       const t = staffTotals[name];
-      summaryRows.push([name, t.status, t.days, t.totalMins, formatMinutesHM(t.totalMins), t.hasPay ? t.totalPay : '']);
+      const isSalaried = t.status === '社員';
+      const totalPay = isSalaried ? (t.monthlyWage ?? '') : (t.hasPay ? t.totalPay : '');
+      const payForCalc = isSalaried ? t.monthlyWage : (t.hasPay ? t.totalPay : null);
+
+      let effectiveHourly = '';
+      let judgement = '';
+      if (payForCalc != null && t.totalMins > 0) {
+        effectiveHourly = Math.round(payForCalc / t.totalMins * 60);
+        if (effectiveHourly < MIN_WAGE) judgement = `⚠ 最低賃金(${MIN_WAGE}円)未満`;
+      }
+
+      summaryRows.push([name, t.status, t.days, t.totalMins, formatMinutesHM(t.totalMins), totalPay, effectiveHourly, judgement]);
     });
 
     const wb = XLSX.utils.book_new();
@@ -1593,7 +1627,7 @@
     XLSX.utils.book_append_sheet(wb, wsDaily, '日別勤怠記録');
 
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
-    wsSummary['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+    wsSummary['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 20 }];
     XLSX.utils.book_append_sheet(wb, wsSummary, 'スタッフ別集計');
 
     XLSX.writeFile(wb, `村上農園_勤怠記録_${from}_${to}.xlsx`);
