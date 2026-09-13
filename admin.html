@@ -1076,6 +1076,15 @@
     return String(date.getHours()).padStart(2,'0') + ':' + String(date.getMinutes()).padStart(2,'0');
   }
 
+  // 打刻時間を30分単位で切り上げ、始業時間を求める（例: 7:20→7:30、7:45→8:00）
+  function roundUpToHalfHour(date) {
+    const rounded = new Date(date);
+    rounded.setSeconds(0, 0);
+    const remainder = rounded.getMinutes() % 30;
+    if (remainder !== 0) rounded.setMinutes(rounded.getMinutes() + (30 - remainder));
+    return rounded;
+  }
+
   function getNowMin() {
     const n = new Date(); return n.getHours() * 60 + n.getMinutes();
   }
@@ -1504,7 +1513,7 @@
 
     const { data, error } = await supabaseClient
       .from('attendance_records')
-      .select('date, clock_in, clock_out, staff_id, kintai_staff(name, status)')
+      .select('date, clock_in, clock_out, break_minutes, staff_id, kintai_staff(name, status)')
       .gte('date', from)
       .lte('date', to);
 
@@ -1533,7 +1542,7 @@
       return applicable.reduce((latest, w) => (w.start_date > latest.start_date ? w : latest)).wage;
     }
 
-    const dailyRows = [['日付', 'スタッフ名', '出勤時刻', '退勤時刻', '労働時間(分)', '労働時間', '時給(円)', '賃金(円)']];
+    const dailyRows = [['日付', 'スタッフ名', '打刻時間', '始業時間', '退勤時刻', '休憩時間(分)', '労働時間(分)', '労働時間', '時給(円)', '賃金(円)']];
     const staffTotals = {}; // name -> { status, days, totalMins, totalPay }
 
     data
@@ -1545,17 +1554,21 @@
       .forEach(r => {
         const name = r.kintai_staff?.name ?? '—';
         const status = r.kintai_staff?.status ?? '';
-        const clockInStr  = r.clock_in  ? fmtHM(new Date(r.clock_in))  : '';
+        const clockInDate = r.clock_in ? new Date(r.clock_in) : null;
+        const clockInStr  = clockInDate ? fmtHM(clockInDate) : '';
+        const startTime    = clockInDate ? roundUpToHalfHour(clockInDate) : null;
+        const startTimeStr = startTime ? fmtHM(startTime) : '';
         const clockOutStr = r.clock_out ? fmtHM(new Date(r.clock_out)) : '';
+        const breakMinutes = r.break_minutes ?? 0;
         let mins = '';
         let wage = null;
         let pay = '';
-        if (r.clock_in && r.clock_out) {
-          mins = Math.round((new Date(r.clock_out) - new Date(r.clock_in)) / 60000);
+        if (startTime && r.clock_out) {
+          mins = Math.round((new Date(r.clock_out) - startTime) / 60000) - breakMinutes;
           wage = getWageForDate(r.staff_id, r.date);
           if (wage != null) pay = Math.round(wage * mins / 60);
         }
-        dailyRows.push([r.date, name, clockInStr, clockOutStr, mins, mins !== '' ? formatMinutesHM(mins) : '', wage ?? '', pay]);
+        dailyRows.push([r.date, name, clockInStr, startTimeStr, clockOutStr, r.break_minutes ?? '', mins, mins !== '' ? formatMinutesHM(mins) : '', wage ?? '', pay]);
 
         if (!staffTotals[name]) staffTotals[name] = { status, days: 0, totalMins: 0, totalPay: 0, hasPay: false };
         if (mins !== '') {
@@ -1576,7 +1589,7 @@
     const wb = XLSX.utils.book_new();
 
     const wsDaily = XLSX.utils.aoa_to_sheet(dailyRows);
-    wsDaily['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
+    wsDaily['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
     XLSX.utils.book_append_sheet(wb, wsDaily, '日別勤怠記録');
 
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
