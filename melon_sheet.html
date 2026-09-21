@@ -643,8 +643,20 @@
       <tbody id="priceTableBody_box"></tbody>
     </table>
 
+    <div class="price-group-title">💰 消費税率</div>
+    <table class="mini-table">
+      <thead>
+        <tr>
+          <th>開始日</th><th>終了日</th>
+          <th>商品(標準)</th><th>箱代・送料</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="priceTableBody_tax"></tbody>
+    </table>
+
     <button type="button" class="btn-tool" style="margin-top:8px;" onclick="addPricePeriod()">＋ 価格期間を追加</button>
-    <p class="summary-note">※ 価格をタップすると変更できます。開始日以降（終了日を設定していれば終了日まで）に登録した行に、その価格が使われます。過去に登録済みの行の単価は、期間の価格を変更しても遡って変わりません。緑色の行が本日時点で適用中の期間です。4つの表は同じ価格期間を分野別に分けて表示しています（どこで開始日・終了日を変更しても全表に反映されます）。</p>
+    <p class="summary-note">※ 価格をタップすると変更できます。開始日以降（終了日を設定していれば終了日まで）に登録した行に、その価格が使われます。過去に登録済みの行の単価は、期間の価格を変更しても遡って変わりません。緑色の行が本日時点で適用中の期間です。5つの表は同じ価格期間を分野別に分けて表示しています（どこで開始日・終了日を変更しても全表に反映されます）。</p>
   </div>
 </div>
 
@@ -693,6 +705,7 @@
         <th>送料</th>
         <th>商品小計</th>
         <th>総計</th>
+        <th>消費税</th>
         <th>入金</th>
         <th>現金</th>
         <th>PayPay</th>
@@ -1043,6 +1056,7 @@
         <td>${cellBtn(entry.shipping_fee ? formatYen(entry.shipping_fee) : '-', 'shipping_fee', entry.id, { empty: !entry.shipping_fee })}</td>
         <td class="total-cell">${cellBtn(formatYen(entry.subtotal_amount), 'subtotal_amount', entry.id, { readonly: true })}</td>
         <td class="total-cell">${cellBtn(formatYen(entry.total_amount), 'total_amount', entry.id, { readonly: true })}</td>
+        <td class="total-cell">${cellBtn(formatYen(entry.consumption_tax_amount), 'consumption_tax_amount', entry.id, { readonly: true })}</td>
         <td>${checkCell(entry, 'paid')}</td>
         <td>${paymentMethodCell(entry, 'paid_cash')}</td>
         <td>${paymentMethodCell(entry, 'paid_paypay')}</td>
@@ -1165,9 +1179,12 @@
     { key: 'boxSuika1',     dbCol: 'price_box_suika_1',     label: 'スイカ1玉入箱', group: 'box' },
     { key: 'boxSuika2',     dbCol: 'price_box_suika_2',     label: 'スイカ2玉入箱', group: 'box' },
     { key: 'boxSuikaPlain', dbCol: 'price_box_suika_plain', label: 'スイカ無地箱', group: 'box' },
+
+    { key: 'taxStandard',    dbCol: 'rate_standard',     label: '税率(商品・標準)', group: 'tax', isRate: true },
+    { key: 'taxBoxShipping', dbCol: 'rate_box_shipping', label: '税率(箱代・送料)', group: 'tax', isRate: true },
   ];
 
-  const PRICE_TABLE_GROUPS = ['melon', 'suika', 'veggie', 'box'];
+  const PRICE_TABLE_GROUPS = ['melon', 'suika', 'veggie', 'box', 'tax'];
 
   // 単価一覧の各列（key）が、どの品種グループ（表示/非表示の単位）に属するかの対応表
   const PRODUCT_LABEL_BY_KEY = {};
@@ -1208,7 +1225,7 @@
           <td><input type="date" value="${p.start_date || ''}" onchange="updatePricePeriodDate('${p.id}','start_date',this.value)"></td>
           <td><input type="date" value="${p.end_date || ''}" onchange="updatePricePeriodDate('${p.id}','end_date',this.value)"></td>
           ${cols.map(c => `
-            <td ${PRODUCT_LABEL_BY_KEY[c.key] ? `data-product="${PRODUCT_LABEL_BY_KEY[c.key]}"` : ''}><button type="button" class="price-cell-btn" onclick="editPricePeriodAmount('${p.id}','${c.key}')">${formatYen(p[c.dbCol])}</button></td>
+            <td ${PRODUCT_LABEL_BY_KEY[c.key] ? `data-product="${PRODUCT_LABEL_BY_KEY[c.key]}"` : ''}><button type="button" class="price-cell-btn" onclick="editPricePeriodAmount('${p.id}','${c.key}')">${c.isRate ? formatRate(p[c.dbCol]) : formatYen(p[c.dbCol])}</button></td>
           `).join('')}
           <td><button type="button" class="btn-del-row" onclick="deletePricePeriod('${p.id}')">🗑</button></td>
         </tr>`).join('');
@@ -1250,6 +1267,25 @@
   async function editPricePeriodAmount(id, key) {
     const period = pricePeriods.find(p => p.id === id);
     const col = PRICE_TABLE_COLS.find(c => c.key === key);
+
+    if (col.isRate) {
+      const input = prompt(`${col.label} を入力してください（%）`, period[col.dbCol]);
+      if (input === null) return;
+      const newRate = parseFloat(input);
+      if (Number.isNaN(newRate) || newRate < 0 || newRate > 100) { alert('0〜100の数値を入力してください'); return; }
+
+      const { error } = await supabaseClient
+        .from('melon_price_periods')
+        .update({ [col.dbCol]: newRate })
+        .eq('id', id);
+
+      if (error) { alert('税率の更新に失敗しました。'); console.error(error); return; }
+
+      period[col.dbCol] = newRate;
+      renderPriceTable();
+      return;
+    }
+
     const input = prompt(`${col.label} の単価を入力してください（円）`, period[col.dbCol]);
     if (input === null) return;
     const newPrice = Math.max(0, parseInt(input, 10));
@@ -1357,6 +1393,8 @@
       box_unit_price_suika_1: prices.boxSuika1,
       box_unit_price_suika_2: prices.boxSuika2,
       box_unit_price_suika_plain: prices.boxSuikaPlain,
+      tax_rate_standard: prices.taxStandard,
+      tax_rate_box_shipping: prices.taxBoxShipping,
     };
     ALL_ITEM_GROUPS.forEach(g => g.items.forEach(it => { payload[it.priceKey] = prices[it.priceDefaultKey]; }));
     return payload;
@@ -1751,7 +1789,7 @@
       'その他数量', 'その他単価', 'その他内容',
       '玉ねぎ(kg)', '発送',
       'メロン2玉入箱', 'メロン3〜5玉入箱', 'スイカ1玉入箱', 'スイカ2玉入箱', 'スイカ無地箱',
-      '送料', '商品小計(円)', '総計(円)',
+      '送料', '商品小計(円)', '総計(円)', '消費税(円)',
       '入金', '現金', 'PayPay', '領収書', '備考',
     ];
     const rows = getDisplayEntries().map(e => [
@@ -1761,7 +1799,7 @@
       e.onion_kg || 0, e.shipped ? '○' : '',
       e.box_2 || 0, e.box_35 || 0, e.box_suika_1 || 0, e.box_suika_2 || 0, e.box_suika_plain || 0,
       e.shipping_fee || 0,
-      e.subtotal_amount || 0, e.total_amount || 0,
+      e.subtotal_amount || 0, e.total_amount || 0, e.consumption_tax_amount || 0,
       e.paid ? '○' : '', e.paid_cash ? '○' : '', e.paid_paypay ? '○' : '',
       e.receipt_issued ? '○' : '', e.note || '',
     ]);
