@@ -28,6 +28,8 @@ const DEFAULT_PRICES = {
   daikonKiri: 100,
   kabochaKikaku: 35,
   ninjinKikaku: 1080,
+
+  taxStandard: 8, taxBoxShipping: 10,
 };
 
 const WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
@@ -35,6 +37,11 @@ const WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
 function formatYen(n) {
   const v = Number(n) || 0;
   return `${v.toLocaleString('ja-JP')}円`;
+}
+
+function formatRate(n) {
+  const v = Number(n) || 0;
+  return `${v}%`;
 }
 
 // '2026-07-19' -> '19日（日）'
@@ -85,6 +92,8 @@ function getPricesForDateFrom(pricePeriods, dateStr) {
       daikonKiri: period.price_daikon_kiri,
       kabochaKikaku: period.price_kabocha_kikaku,
       ninjinKikaku: period.price_ninjin_kikaku,
+
+      taxStandard: period.rate_standard, taxBoxShipping: period.rate_box_shipping,
     };
   }
   return { ...DEFAULT_PRICES };
