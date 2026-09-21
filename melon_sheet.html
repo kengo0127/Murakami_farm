@@ -428,6 +428,26 @@
 
     .modal-group textarea { min-height: 80px; resize: vertical; }
 
+    .shipping-choice-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .shipping-choice-btn {
+      background: #fff;
+      color: #444;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      padding: 12px 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      flex: 1 1 calc(50% - 8px);
+    }
+
+    .shipping-choice-btn.active {
+      background: #e8f5e9;
+      color: #1a3d17;
+      border-color: #43a047;
+    }
+
     .weekday-preview { font-size: 13px; color: #2e5c28; font-weight: 700; margin-top: 6px; }
 
     .tile-grid {
@@ -1477,15 +1497,21 @@
     document.getElementById('cellModalOverlay').classList.remove('open');
     currentModalOkHandler = null;
     currentGroupedModalRerender = null;
+    shippingModalRerender = null;
   }
 
   async function handleCellModalOk() {
     if (!currentModalOkHandler) return;
     const entryId = document.getElementById('cellModalBody').dataset.entryId;
-    const patch = await currentModalOkHandler();
-    if (!patch) return;
-    await saveCell(entryId, patch);
-    closeCellModal();
+    try {
+      const patch = await currentModalOkHandler();
+      if (patch) await saveCell(entryId, patch);
+    } catch (err) {
+      console.error(err);
+      alert('保存に失敗しました。もう一度お試しください。');
+    } finally {
+      closeCellModal();
+    }
   }
 
   // ── 日付モーダル ────────────────────────────────────────
@@ -1760,14 +1786,45 @@
   }
 
   // ── 送料モーダル ────────────────────────────────────────
+  // 880円/1,000円/1,430円（いずれも内税）のよく使う3種類か、直接入力かを選ぶ
+  const SHIPPING_FEE_PRESETS = [880, 1000, 1430];
+  let shippingModalSelected = null; // 880 / 1000 / 1430 / 'custom' / null（未選択＝0円）
+  let shippingModalRerender = null;
+
   function renderNumberModal(body, entry, def) {
     body.dataset.entryId = entry.id;
-    body.innerHTML = `
-      <div class="modal-group">
-        <label>${def.label}</label>
-        <input type="number" id="mNumber" min="0" step="1" value="${entry.shipping_fee || 0}">
-      </div>`;
-    return async () => ({ shipping_fee: Math.max(0, parseInt(document.getElementById('mNumber').value || '0', 10)) });
+    const current = entry.shipping_fee || 0;
+    shippingModalSelected = SHIPPING_FEE_PRESETS.includes(current) ? current : (current > 0 ? 'custom' : null);
+
+    function render() {
+      const presetButtons = SHIPPING_FEE_PRESETS.map(v => `
+        <button type="button" class="shipping-choice-btn ${shippingModalSelected === v ? 'active' : ''}" onclick="selectShippingChoice(${v})">${formatYen(v)}</button>
+      `).join('');
+      const customButton = `<button type="button" class="shipping-choice-btn ${shippingModalSelected === 'custom' ? 'active' : ''}" onclick="selectShippingChoice('custom')">直接入力(内税)</button>`;
+
+      body.innerHTML = `
+        <div class="modal-group">
+          <label>${def.label}（内税）</label>
+          <div class="shipping-choice-row">${presetButtons}${customButton}</div>
+          <input type="number" id="mNumber" min="0" step="1" value="${current}" style="margin-top:10px;${shippingModalSelected === 'custom' ? '' : 'display:none;'}">
+        </div>`;
+    }
+
+    render();
+    shippingModalRerender = render;
+
+    return async () => {
+      const val = shippingModalSelected === 'custom'
+        ? Math.max(0, parseInt(document.getElementById('mNumber').value || '0', 10))
+        : (shippingModalSelected || 0);
+      return { shipping_fee: val };
+    };
+  }
+
+  function selectShippingChoice(val) {
+    shippingModalSelected = val;
+    if (shippingModalRerender) shippingModalRerender();
+    if (val === 'custom') document.getElementById('mNumber').focus();
   }
 
   // ── 備考モーダル ────────────────────────────────────────
