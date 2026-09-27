@@ -572,6 +572,81 @@
 
     .btn-delete:hover { background: #ffcdd2; }
 
+    /* ── 社員リスト／バイクなど ── */
+    .roster-switch {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .roster-switch-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 11px 14px;
+      border: 2px solid #1a3d17;
+      border-radius: 10px;
+      background: #fff;
+      color: #1a3d17;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .roster-switch-btn.active {
+      background: #1a3d17;
+      color: #fff;
+    }
+
+    .roster-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    /* 列が多いので、狭い画面では横スクロールさせる */
+    .roster-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .roster-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .roster-table th {
+      background: #f1f5f0;
+      color: #555;
+      font-size: 12px;
+      font-weight: 800;
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 2px solid #dde5db;
+      position: sticky;
+      top: 0;
+    }
+
+    .roster-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #eee;
+      color: #333;
+    }
+
+    .roster-table tr.inactive td { opacity: 0.45; }
+
+    .roster-table .num { text-align: right; }
+
+    .roster-empty {
+      text-align: center;
+      padding: 20px;
+      color: #bbb;
+    }
+
     /* ── Progress view ── */
     .progress-header {
       display: flex;
@@ -890,7 +965,8 @@
     <div class="form-card">
       <h2>📥 勤怠管理のエクスポート</h2>
       <p style="font-size:13px;color:#888;margin-bottom:16px;">
-        上記の期間で、日別の出退勤記録とスタッフ別の月次集計（合計労働時間・時給が設定されている場合は合計賃金）をExcel出力します。休憩時間は差し引かず、出退勤の時刻をそのまま集計します。
+        上記の期間で、紙の出勤簿と同じフォーマットのExcelを出力します。従業員ごと・月ごとに1タブ（例：R8.2アリフ）で、1日1マスずつ出社・退社・休憩が埋まります。
+        始業は30分単位で切り上げ、終業は15分単位で切り下げた時刻を記載します。末尾に「日別勤怠記録」（打刻そのままの一覧・時給・賃金）と「スタッフ別集計」のタブも付きます。
       </p>
       <button class="btn-submit" id="kintaiExportBtn" onclick="exportKintaiExcel()">Excelダウンロード</button>
       <div id="kintaiExportMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
@@ -899,25 +975,34 @@
     <!-- ── 勤怠メンバー管理 ── -->
     <div class="form-card">
       <h2>👥 勤怠メンバー管理</h2>
-      <div id="kintaiStaffList"></div>
-      <div class="form-row" style="margin-top:14px;">
-        <div class="form-group">
-          <label>名前</label>
-          <input type="text" id="kintaiStaffName" placeholder="例：ヴィチェカー">
-        </div>
-        <div class="form-group">
-          <label>分類（任意）</label>
-          <input type="text" id="kintaiStaffCategory" placeholder="例：カンボジア">
-        </div>
+      <div class="roster-switch">
+        <button type="button" class="roster-switch-btn" id="rosterBtnStaff" onclick="showRosterPanel('staff')">📋 社員リスト</button>
+        <button type="button" class="roster-switch-btn" id="rosterBtnVehicle" onclick="showRosterPanel('vehicle')">🛵 バイクなど</button>
       </div>
-      <div class="form-group">
-        <label>資格・雇用形態（任意）</label>
-        <input type="text" id="kintaiStaffStatus" placeholder="例：技能実習生3号／社員／パート">
+
+      <!-- 社員リスト -->
+      <div id="rosterPanelStaff" style="display:none;">
+        <div class="roster-toolbar">
+          <button type="button" class="btn-edit" onclick="openKintaiStaffEditModal(null)">＋ メンバーを追加</button>
+          <button type="button" class="btn-edit" id="staffExportBtn" onclick="exportStaffListExcel()">📥 Excel出力</button>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#777;font-weight:600;">
+            <input type="checkbox" id="kintaiStaffShowInactive" onchange="loadKintaiStaffList()"> 退職済みも表示
+          </label>
+        </div>
+        <div class="roster-scroll"><div id="kintaiStaffList"></div></div>
       </div>
-      <button type="button" class="btn-submit" id="kintaiStaffAddBtn" onclick="addKintaiStaff()">＋ メンバーを追加</button>
-      <label style="display:flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;color:#777;font-weight:600;">
-        <input type="checkbox" id="kintaiStaffShowInactive" onchange="loadKintaiStaffList()"> 退職済みメンバーも表示する
-      </label>
+
+      <!-- バイクなど（会社の車両登録簿） -->
+      <div id="rosterPanelVehicle" style="display:none;">
+        <div class="roster-toolbar">
+          <button type="button" class="btn-edit" onclick="openVehicleEditModal(null)">＋ 車両を追加</button>
+          <button type="button" class="btn-edit" id="vehicleExportBtn" onclick="exportVehicleListExcel()">📥 Excel出力</button>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#777;font-weight:600;">
+            <input type="checkbox" id="vehicleShowInactive" onchange="loadVehicleList()"> 廃車も表示
+          </label>
+        </div>
+        <div class="roster-scroll"><div id="vehicleList"></div></div>
+      </div>
     </div>
 
   </div>
@@ -945,22 +1030,45 @@
 
 <div class="modal-overlay" id="kintaiStaffEditModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title">メンバー情報の編集</div>
+    <div class="modal-title" id="kintaiStaffEditTitle">メンバー情報の編集</div>
     <div class="form-group">
-      <label>名前</label>
-      <input type="text" id="kintaiStaffEditName">
+      <label>氏名</label>
+      <input type="text" id="kintaiStaffEditName" placeholder="例：ヴィチェカー">
     </div>
-    <div class="form-group">
-      <label>分類（任意）</label>
-      <input type="text" id="kintaiStaffEditCategory">
+    <div class="form-row">
+      <div class="form-group">
+        <label>性別（任意）</label>
+        <select id="kintaiStaffEditGender">
+          <option value="">—</option>
+          <option value="男">男</option>
+          <option value="女">女</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>生年月日（任意）</label>
+        <input type="date" id="kintaiStaffEditBirthDate">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>採用年月日（任意）</label>
+        <input type="date" id="kintaiStaffEditHireDate">
+      </div>
+      <div class="form-group">
+        <label>国籍（任意）</label>
+        <input type="text" id="kintaiStaffEditCategory" placeholder="例：カンボジア">
+      </div>
     </div>
     <div class="form-group">
       <label>資格・雇用形態（任意）</label>
-      <input type="text" id="kintaiStaffEditStatus" oninput="updateKintaiWageSectionVisibility()">
+      <input type="text" id="kintaiStaffEditStatus" oninput="updateKintaiWageSectionVisibility()" placeholder="例：技能実習生3号／社員／パート">
     </div>
     <label style="display:flex;align-items:center;gap:6px;margin-bottom:14px;font-size:13px;font-weight:700;color:#555;">
       <input type="checkbox" id="kintaiStaffEditActive"> 在籍中（打刻対象にする）
     </label>
+    <div id="kintaiStaffNewHint" style="display:none;font-size:13px;color:#888;margin-bottom:12px;">
+      時給・月給は、保存してメンバーを作ったあと、もう一度「編集」から設定してください。
+    </div>
 
     <div class="form-group" id="kintaiWageSection" style="display:none;background:#f6faf5;border-radius:10px;padding:12px;">
       <label>時給</label>
@@ -989,7 +1097,64 @@
       <button type="button" class="btn-modal-cancel" onclick="closeKintaiStaffEditModal()">キャンセル</button>
       <button type="button" class="btn-modal-submit" id="kintaiStaffEditSaveBtn" onclick="saveKintaiStaffEdit()">保存する</button>
     </div>
-    <button type="button" class="btn-delete" style="width:100%;margin-top:10px;padding:10px;font-size:13px;" onclick="deleteKintaiStaff()">このメンバーを完全に削除する</button>
+    <button type="button" class="btn-delete" id="kintaiStaffDeleteBtn" style="width:100%;margin-top:10px;padding:10px;font-size:13px;" onclick="deleteKintaiStaff()">このメンバーを完全に削除する</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="vehicleEditModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title" id="vehicleEditTitle">車両情報の編集</div>
+    <div class="form-group">
+      <label>区分</label>
+      <input type="text" id="vehicleEditCategory" list="vehicleCategoryOptions" placeholder="例：原付1種・50cc以下バイク">
+      <datalist id="vehicleCategoryOptions">
+        <option value="原付1種・50cc以下バイク"></option>
+        <option value="小型特殊自動車"></option>
+        <option value="農耕作業車"></option>
+      </datalist>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>使用者・車両名（任意）</label>
+        <input type="text" id="vehicleEditUserName" placeholder="例：アリフ／トラクター">
+      </div>
+      <div class="form-group">
+        <label>車名（任意）</label>
+        <input type="text" id="vehicleEditMaker" placeholder="例：HONDA／ヤマハ">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>登録番号</label>
+      <input type="text" id="vehicleEditPlate" placeholder="例：坂井市　あ　1898">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>共済期間（開始・任意）</label>
+        <input type="date" id="vehicleEditAidStart">
+      </div>
+      <div class="form-group">
+        <label>共済期間（終了・任意）</label>
+        <input type="date" id="vehicleEditAidEnd">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>年額（円・5/31納・任意）</label>
+      <input type="number" id="vehicleEditFee" min="0" step="1" placeholder="例：2000">
+    </div>
+    <div class="form-group">
+      <label>備考（任意）</label>
+      <input type="text" id="vehicleEditNote" placeholder="例：R8/7/2 廃車・登録抹消">
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;margin-bottom:14px;font-size:13px;font-weight:700;color:#555;">
+      <input type="checkbox" id="vehicleEditActive"> 使用中（廃車・登録抹消していない）
+    </label>
+
+    <div id="vehicleEditMsg" style="font-size:13px;color:#c0392b;margin-bottom:10px;"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" onclick="closeVehicleEditModal()">キャンセル</button>
+      <button type="button" class="btn-modal-submit" id="vehicleEditSaveBtn" onclick="saveVehicleEdit()">保存する</button>
+    </div>
+    <button type="button" class="btn-delete" id="vehicleDeleteBtn" style="width:100%;margin-top:10px;padding:10px;font-size:13px;" onclick="deleteVehicle()">この車両を完全に削除する</button>
   </div>
 </div>
 
@@ -1034,7 +1199,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- 出勤簿フォーマット（罫線・セル結合・書式）を再現するため、SheetJSではなくExcelJSを使う -->
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="js/supabase.js"></script>
 <script>
 
@@ -1087,6 +1253,14 @@
     rounded.setSeconds(0, 0);
     const remainder = rounded.getMinutes() % 30;
     if (remainder !== 0) rounded.setMinutes(rounded.getMinutes() + (30 - remainder));
+    return rounded;
+  }
+
+  // 退勤打刻を15分単位で切り下げ、終業時間を求める（例: 17:14→17:00、17:29→17:15）
+  function roundDownToQuarterHour(date) {
+    const rounded = new Date(date);
+    rounded.setSeconds(0, 0);
+    rounded.setMinutes(rounded.getMinutes() - (rounded.getMinutes() % 15));
     return rounded;
   }
 
@@ -1168,9 +1342,33 @@
 
   const KINTAI_DEFAULT_MONTHLY_WAGE = 990000;
 
+  // 「社員リスト」「バイクなど」の表示切り替え。同じボタンをもう一度押すと閉じる
+  let currentRosterPanel = null;
+
+  function showRosterPanel(panel) {
+    currentRosterPanel = currentRosterPanel === panel ? null : panel;
+    [['staff', 'rosterPanelStaff', 'rosterBtnStaff'], ['vehicle', 'rosterPanelVehicle', 'rosterBtnVehicle']]
+      .forEach(([key, panelId, btnId]) => {
+        document.getElementById(panelId).style.display = currentRosterPanel === key ? 'block' : 'none';
+        document.getElementById(btnId).classList.toggle('active', currentRosterPanel === key);
+      });
+    if (currentRosterPanel === 'staff')   loadKintaiStaffList();
+    if (currentRosterPanel === 'vehicle') loadVehicleList();
+  }
+
+  function escHtml(value) {
+    if (value == null || value === '') return '—';
+    return String(value).replace(/[&<>"']/g, ch =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
+  function fmtDateSlash(dateStr) { return dateStr ? dateStr.replace(/-/g, '/') : '—'; }
+
+  const KINTAI_STAFF_COLUMNS = 'id, name, gender, birth_date, hire_date, category, status, active, sort_order, monthly_wage';
+
   async function loadKintaiStaffList() {
     const showInactive = document.getElementById('kintaiStaffShowInactive').checked;
-    let query = supabaseClient.from('kintai_staff').select('id, name, category, status, active, sort_order, monthly_wage').order('sort_order');
+    let query = supabaseClient.from('kintai_staff').select(KINTAI_STAFF_COLUMNS).order('sort_order');
     if (!showInactive) query = query.eq('active', true);
 
     const { data, error } = await query;
@@ -1179,72 +1377,74 @@
     renderKintaiStaffList();
   }
 
+  // 労働者名簿（氏名・性別・生年月日・採用年月日）＋国籍・資格をそのまま一覧にする
+  const STAFF_LIST_HEADERS = ['氏名', '性別', '生年月日', '採用年月日', '国籍', '資格・雇用形態', ''];
+
   function renderKintaiStaffList() {
     const el = document.getElementById('kintaiStaffList');
     if (!kintaiStaffCache.length) {
-      el.innerHTML = `<div class="empty-state" style="text-align:center;padding:20px;color:#bbb;">メンバーが登録されていません</div>`;
+      el.innerHTML = `<div class="roster-empty">メンバーが登録されていません</div>`;
       return;
     }
 
-    el.innerHTML = kintaiStaffCache.map(s => {
-      const meta = [s.category, s.status].filter(Boolean).join('　');
-      return `
-        <div class="task-item" style="${s.active ? '' : 'opacity:0.5;'}">
-          <div class="task-item-left">
-            <div class="task-item-header">
-              <span class="task-item-name">${s.name}${s.active ? '' : '（退職済み）'}</span>
-            </div>
-            <div class="task-item-meta">${meta || '—'}</div>
-          </div>
-          <div class="task-item-actions">
-            <button class="btn-edit" onclick="openKintaiStaffEditModal('${s.id}')">編集</button>
-          </div>
-        </div>`;
-    }).join('');
+    const rows = kintaiStaffCache.map(s => `
+      <tr class="${s.active ? '' : 'inactive'}">
+        <td>${escHtml(s.name)}${s.active ? '' : '（退職済み）'}</td>
+        <td>${escHtml(s.gender)}</td>
+        <td>${fmtDateSlash(s.birth_date)}</td>
+        <td>${fmtDateSlash(s.hire_date)}</td>
+        <td>${escHtml(s.category)}</td>
+        <td>${escHtml(s.status)}</td>
+        <td><button class="btn-edit" onclick="openKintaiStaffEditModal('${s.id}')">編集</button></td>
+      </tr>`).join('');
+
+    el.innerHTML = `<table class="roster-table">
+        <thead><tr>${STAFF_LIST_HEADERS.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
   }
 
-  async function addKintaiStaff() {
-    const nameEl = document.getElementById('kintaiStaffName');
-    const name = nameEl.value.trim();
-    if (!name) { alert('名前を入力してください'); return; }
-    const category = document.getElementById('kintaiStaffCategory').value.trim();
-    const status   = document.getElementById('kintaiStaffStatus').value.trim();
-
-    const btn = document.getElementById('kintaiStaffAddBtn');
+  async function exportStaffListExcel() {
+    if (!kintaiStaffCache.length) { alert('出力するメンバーがいません'); return; }
+    const btn = document.getElementById('staffExportBtn');
     btn.disabled = true;
-    btn.textContent = '追加中...';
 
-    const maxSortOrder = kintaiStaffCache.reduce((m, s) => Math.max(m, s.sort_order ?? 0), 0);
-    const { error } = await supabaseClient
-      .from('kintai_staff')
-      .insert({ name, category: category || null, status: status || null, sort_order: maxSortOrder + 1 });
+    const rows = [['氏名', '性別', '生年月日', '採用年月日', '国籍', '資格・雇用形態', '在籍']];
+    kintaiStaffCache.forEach(s => {
+      rows.push([s.name, s.gender ?? '', s.birth_date ?? '', s.hire_date ?? '',
+                 s.category ?? '', s.status ?? '', s.active ? '在籍中' : '退職済み']);
+    });
+
+    const wb = new ExcelJS.Workbook();
+    appendPlainSheet(wb, '社員リスト', rows, [18, 8, 14, 14, 14, 18, 10]);
+    await downloadWorkbook(wb, `村上農園_社員リスト_${getToday()}.xlsx`);
 
     btn.disabled = false;
-    btn.textContent = '＋ メンバーを追加';
-
-    if (error) { alert('追加に失敗しました'); console.error(error); return; }
-
-    nameEl.value = '';
-    document.getElementById('kintaiStaffCategory').value = '';
-    document.getElementById('kintaiStaffStatus').value = '';
-    await loadKintaiStaffList();
   }
 
+  // id を渡さないと「メンバーを追加」モードで開く
   async function openKintaiStaffEditModal(id) {
-    const s = kintaiStaffCache.find(x => x.id === id);
-    if (!s) return;
+    const s = id ? kintaiStaffCache.find(x => x.id === id) : null;
+    if (id && !s) return;
 
-    kintaiStaffEditingId = id;
-    document.getElementById('kintaiStaffEditName').value = s.name;
-    document.getElementById('kintaiStaffEditCategory').value = s.category ?? '';
-    document.getElementById('kintaiStaffEditStatus').value = s.status ?? '';
-    document.getElementById('kintaiStaffEditActive').checked = s.active;
+    kintaiStaffEditingId = s ? id : null;
+    document.getElementById('kintaiStaffEditTitle').textContent = s ? 'メンバー情報の編集' : 'メンバーを追加';
+    document.getElementById('kintaiStaffEditName').value = s?.name ?? '';
+    document.getElementById('kintaiStaffEditGender').value = s?.gender ?? '';
+    document.getElementById('kintaiStaffEditBirthDate').value = s?.birth_date ?? '';
+    document.getElementById('kintaiStaffEditHireDate').value = s?.hire_date ?? '';
+    document.getElementById('kintaiStaffEditCategory').value = s?.category ?? '';
+    document.getElementById('kintaiStaffEditStatus').value = s?.status ?? '';
+    document.getElementById('kintaiStaffEditActive').checked = s ? s.active : true;
     document.getElementById('kintaiStaffEditMsg').textContent = '';
     document.getElementById('kintaiWageAmount').value = '';
     document.getElementById('kintaiWageStartDate').value = getToday();
-    document.getElementById('kintaiMonthlyWageAmount').value = s.monthly_wage ?? KINTAI_DEFAULT_MONTHLY_WAGE;
+    document.getElementById('kintaiMonthlyWageAmount').value = s?.monthly_wage ?? KINTAI_DEFAULT_MONTHLY_WAGE;
+    // 時給・月給の設定と削除は、登録済みのメンバーだけに出す
+    document.getElementById('kintaiStaffNewHint').style.display = s ? 'none' : 'block';
+    document.getElementById('kintaiStaffDeleteBtn').style.display = s ? 'block' : 'none';
     updateKintaiWageSectionVisibility();
-    await loadKintaiWagesForStaff(id);
+    if (s) await loadKintaiWagesForStaff(id);
     document.getElementById('kintaiStaffEditModalOverlay').classList.add('open');
   }
 
@@ -1259,24 +1459,43 @@
     msg.textContent = '';
     if (!name) { msg.textContent = '名前を入力してください'; return; }
 
+    const isNew    = !kintaiStaffEditingId;
+    const gender    = document.getElementById('kintaiStaffEditGender').value;
+    const birthDate = document.getElementById('kintaiStaffEditBirthDate').value;
+    const hireDate  = document.getElementById('kintaiStaffEditHireDate').value;
     const category = document.getElementById('kintaiStaffEditCategory').value.trim();
     const status   = document.getElementById('kintaiStaffEditStatus').value.trim();
     const active   = document.getElementById('kintaiStaffEditActive').checked;
 
-    let monthlyWage = null;
-    if (status === '社員') {
-      monthlyWage = parseInt(document.getElementById('kintaiMonthlyWageAmount').value, 10);
-      if (!Number.isInteger(monthlyWage) || monthlyWage < 0) { msg.textContent = '月給を正しく入力してください'; return; }
+    const payload = {
+      name,
+      gender: gender || null,
+      birth_date: birthDate || null,
+      hire_date: hireDate || null,
+      category: category || null,
+      status: status || null,
+      active,
+    };
+
+    if (!isNew) {
+      // 月給は「社員」のときだけ保持し、それ以外に変わったら消す
+      let monthlyWage = null;
+      if (status === '社員') {
+        monthlyWage = parseInt(document.getElementById('kintaiMonthlyWageAmount').value, 10);
+        if (!Number.isInteger(monthlyWage) || monthlyWage < 0) { msg.textContent = '月給を正しく入力してください'; return; }
+      }
+      payload.monthly_wage = monthlyWage;
+    } else {
+      payload.sort_order = kintaiStaffCache.reduce((m, s) => Math.max(m, s.sort_order ?? 0), 0) + 1;
     }
 
     const btn = document.getElementById('kintaiStaffEditSaveBtn');
     btn.disabled = true;
     btn.textContent = '保存中...';
 
-    const { error } = await supabaseClient
-      .from('kintai_staff')
-      .update({ name, category: category || null, status: status || null, active, monthly_wage: monthlyWage })
-      .eq('id', kintaiStaffEditingId);
+    const { error } = isNew
+      ? await supabaseClient.from('kintai_staff').insert(payload)
+      : await supabaseClient.from('kintai_staff').update(payload).eq('id', kintaiStaffEditingId);
 
     btn.disabled = false;
     btn.textContent = '保存する';
@@ -1299,14 +1518,169 @@
     await loadKintaiStaffList();
   }
 
+  // ── バイクなど（会社の車両登録簿） ─────────────────────────
+  let vehicleCache = [];
+  let vehicleEditingId = null;
+
+  const VEHICLE_COLUMNS = 'id, category, user_name, plate_number, maker, aid_start, aid_end, annual_fee, note, active, sort_order';
+  const VEHICLE_LIST_HEADERS = ['区分', '使用者・車両名', '登録番号', '車名', '共済期間', '年額', '備考', ''];
+
+  async function loadVehicleList() {
+    const showInactive = document.getElementById('vehicleShowInactive').checked;
+    let query = supabaseClient.from('company_vehicles').select(VEHICLE_COLUMNS).order('sort_order');
+    if (!showInactive) query = query.eq('active', true);
+
+    const { data, error } = await query;
+    if (error) { console.error(error); return; }
+    vehicleCache = data ?? [];
+    renderVehicleList();
+  }
+
+  function fmtAidPeriod(v) {
+    if (!v.aid_start && !v.aid_end) return '—';
+    return `${fmtDateSlash(v.aid_start)} 〜 ${fmtDateSlash(v.aid_end)}`;
+  }
+
+  function renderVehicleList() {
+    const el = document.getElementById('vehicleList');
+    if (!vehicleCache.length) {
+      el.innerHTML = `<div class="roster-empty">車両が登録されていません</div>`;
+      return;
+    }
+
+    const rows = vehicleCache.map(v => `
+      <tr class="${v.active ? '' : 'inactive'}">
+        <td>${escHtml(v.category)}</td>
+        <td>${escHtml(v.user_name)}</td>
+        <td>${escHtml(v.plate_number)}</td>
+        <td>${escHtml(v.maker)}</td>
+        <td>${fmtAidPeriod(v)}</td>
+        <td class="num">${v.annual_fee != null ? '¥' + v.annual_fee.toLocaleString() : '—'}</td>
+        <td>${escHtml(v.note)}</td>
+        <td><button class="btn-edit" onclick="openVehicleEditModal('${v.id}')">編集</button></td>
+      </tr>`).join('');
+
+    el.innerHTML = `<table class="roster-table">
+        <thead><tr>${VEHICLE_LIST_HEADERS.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // id を渡さないと「車両を追加」モードで開く
+  function openVehicleEditModal(id) {
+    const v = id ? vehicleCache.find(x => x.id === id) : null;
+    if (id && !v) return;
+
+    vehicleEditingId = v ? id : null;
+    document.getElementById('vehicleEditTitle').textContent = v ? '車両情報の編集' : '車両を追加';
+    document.getElementById('vehicleEditCategory').value = v?.category ?? '';
+    document.getElementById('vehicleEditUserName').value = v?.user_name ?? '';
+    document.getElementById('vehicleEditPlate').value    = v?.plate_number ?? '';
+    document.getElementById('vehicleEditMaker').value    = v?.maker ?? '';
+    document.getElementById('vehicleEditAidStart').value = v?.aid_start ?? '';
+    document.getElementById('vehicleEditAidEnd').value   = v?.aid_end ?? '';
+    document.getElementById('vehicleEditFee').value      = v?.annual_fee ?? '';
+    document.getElementById('vehicleEditNote').value     = v?.note ?? '';
+    document.getElementById('vehicleEditActive').checked = v ? v.active : true;
+    document.getElementById('vehicleEditMsg').textContent = '';
+    document.getElementById('vehicleDeleteBtn').style.display = v ? 'block' : 'none';
+    document.getElementById('vehicleEditModalOverlay').classList.add('open');
+  }
+
+  function closeVehicleEditModal() {
+    document.getElementById('vehicleEditModalOverlay').classList.remove('open');
+    vehicleEditingId = null;
+  }
+
+  async function saveVehicleEdit() {
+    const msg = document.getElementById('vehicleEditMsg');
+    msg.textContent = '';
+
+    const category = document.getElementById('vehicleEditCategory').value.trim();
+    const plate    = document.getElementById('vehicleEditPlate').value.trim();
+    if (!category) { msg.textContent = '区分を入力してください'; return; }
+    if (!plate)    { msg.textContent = '登録番号を入力してください'; return; }
+
+    const feeInput = document.getElementById('vehicleEditFee').value;
+    let annualFee = null;
+    if (feeInput !== '') {
+      annualFee = parseInt(feeInput, 10);
+      if (!Number.isInteger(annualFee) || annualFee < 0) { msg.textContent = '年額を正しく入力してください'; return; }
+    }
+
+    const payload = {
+      category,
+      user_name:    document.getElementById('vehicleEditUserName').value.trim() || null,
+      plate_number: plate,
+      maker:        document.getElementById('vehicleEditMaker').value.trim() || null,
+      aid_start:    document.getElementById('vehicleEditAidStart').value || null,
+      aid_end:      document.getElementById('vehicleEditAidEnd').value || null,
+      annual_fee:   annualFee,
+      note:         document.getElementById('vehicleEditNote').value.trim() || null,
+      active:       document.getElementById('vehicleEditActive').checked,
+    };
+    if (!vehicleEditingId) {
+      payload.sort_order = vehicleCache.reduce((m, v) => Math.max(m, v.sort_order ?? 0), 0) + 1;
+    }
+
+    const btn = document.getElementById('vehicleEditSaveBtn');
+    btn.disabled = true;
+    btn.textContent = '保存中...';
+
+    const { error } = vehicleEditingId
+      ? await supabaseClient.from('company_vehicles').update(payload).eq('id', vehicleEditingId)
+      : await supabaseClient.from('company_vehicles').insert(payload);
+
+    btn.disabled = false;
+    btn.textContent = '保存する';
+
+    if (error) { msg.textContent = '保存に失敗しました'; console.error(error); return; }
+
+    closeVehicleEditModal();
+    await loadVehicleList();
+  }
+
+  async function deleteVehicle() {
+    const v = vehicleCache.find(x => x.id === vehicleEditingId);
+    if (!v) return;
+    if (!confirm(`${v.plate_number} を完全に削除しますか？この操作は取り消せません。\n\n廃車として記録だけ残したい場合は、代わりに「使用中」のチェックを外して保存してください。`)) return;
+
+    const { error } = await supabaseClient.from('company_vehicles').delete().eq('id', v.id);
+    if (error) { alert('削除に失敗しました'); console.error(error); return; }
+
+    closeVehicleEditModal();
+    await loadVehicleList();
+  }
+
+  async function exportVehicleListExcel() {
+    if (!vehicleCache.length) { alert('出力する車両がありません'); return; }
+    const btn = document.getElementById('vehicleExportBtn');
+    btn.disabled = true;
+
+    const rows = [['区分', '使用者・車両名', '登録番号', '車名', '共済期間（開始）', '共済期間（終了）', '年額(円)', '備考', '状態']];
+    vehicleCache.forEach(v => {
+      rows.push([v.category, v.user_name ?? '', v.plate_number, v.maker ?? '',
+                 v.aid_start ?? '', v.aid_end ?? '', v.annual_fee ?? '', v.note ?? '',
+                 v.active ? '使用中' : '廃車・登録抹消']);
+    });
+
+    const wb = new ExcelJS.Workbook();
+    appendPlainSheet(wb, '車両登録', rows, [22, 16, 18, 10, 16, 16, 10, 28, 14]);
+    await downloadWorkbook(wb, `村上農園_車両登録_${getToday()}.xlsx`);
+
+    btn.disabled = false;
+  }
+
   // ── 時給管理（「社員」以外のメンバーのみ、開始日ごとの履歴で管理） ──
   let kintaiWagesCache = [];
 
   function updateKintaiWageSectionVisibility() {
+    // 新規追加のときは、保存してメンバーが作られてから時給・月給を設定してもらう
+    const isNew = !kintaiStaffEditingId;
     const status = document.getElementById('kintaiStaffEditStatus').value.trim();
     const isSalaried = status === '社員';
-    document.getElementById('kintaiWageSection').style.display = isSalaried ? 'none' : 'block';
-    document.getElementById('kintaiMonthlyWageSection').style.display = isSalaried ? 'block' : 'none';
+    document.getElementById('kintaiWageSection').style.display = (!isNew && !isSalaried) ? 'block' : 'none';
+    document.getElementById('kintaiMonthlyWageSection').style.display = (!isNew && isSalaried) ? 'block' : 'none';
     if (isSalaried && !document.getElementById('kintaiMonthlyWageAmount').value) {
       document.getElementById('kintaiMonthlyWageAmount').value = KINTAI_DEFAULT_MONTHLY_WAGE;
     }
@@ -1532,9 +1906,11 @@
 
     const { data, error } = await supabaseClient
       .from('attendance_records')
-      .select('date, clock_in, clock_out, break_minutes, staff_id, kintai_staff(name, status, monthly_wage)')
+      .select('date, clock_in, clock_out, break_minutes, staff_id, kintai_staff(name, status, monthly_wage, sort_order)')
       .gte('date', from)
-      .lte('date', to);
+      .lte('date', to)
+      .order('date')
+      .limit(20000);
 
     const { data: wagesData, error: wagesError } = await supabaseClient
       .from('kintai_hourly_wages')
@@ -1561,8 +1937,10 @@
       return applicable.reduce((latest, w) => (w.start_date > latest.start_date ? w : latest)).wage;
     }
 
-    const dailyRows = [['日付', 'スタッフ名', '打刻時間', '始業時間', '退勤時刻', '休憩時間(分)', '労働時間(分)', '労働時間', '時給(円)', '賃金(円)']];
+    const dailyRows = [['日付', 'スタッフ名', '出勤打刻', '始業時間(30分切上)', '退勤打刻', '終業時間(15分切下)', '休憩時間(分)', '労働時間(分)', '労働時間', '時給(円)', '賃金(円)']];
     const staffTotals = {}; // name -> { status, days, totalMins, totalPay }
+    // 出勤簿シート用。key: スタッフ名 + 年月 → { name, sortOrder, year, month, days }
+    const timesheets = new Map();
 
     data
       .slice()
@@ -1577,17 +1955,21 @@
         const clockInStr  = clockInDate ? fmtHM(clockInDate) : '';
         const startTime    = clockInDate ? roundUpToHalfHour(clockInDate) : null;
         const startTimeStr = startTime ? fmtHM(startTime) : '';
-        const clockOutStr = r.clock_out ? fmtHM(new Date(r.clock_out)) : '';
+        const clockOutDate = r.clock_out ? new Date(r.clock_out) : null;
+        const clockOutStr  = clockOutDate ? fmtHM(clockOutDate) : '';
+        const endTime    = clockOutDate ? roundDownToQuarterHour(clockOutDate) : null;
+        const endTimeStr = endTime ? fmtHM(endTime) : '';
         const breakMinutes = r.break_minutes ?? 0;
         let mins = '';
         let wage = null;
         let pay = '';
-        if (startTime && r.clock_out) {
-          mins = Math.round((new Date(r.clock_out) - startTime) / 60000) - breakMinutes;
+        if (startTime && endTime) {
+          // 打刻ミスで終業が始業より前になっても、マイナスの労働時間・賃金は出さない
+          mins = Math.max(0, Math.round((endTime - startTime) / 60000) - breakMinutes);
           wage = getWageForDate(r.staff_id, r.date);
           if (wage != null) pay = Math.round(wage * mins / 60);
         }
-        dailyRows.push([r.date, name, clockInStr, startTimeStr, clockOutStr, r.break_minutes ?? '', mins, mins !== '' ? formatMinutesHM(mins) : '', wage ?? '', pay]);
+        dailyRows.push([r.date, name, clockInStr, startTimeStr, clockOutStr, endTimeStr, r.break_minutes ?? '', mins, mins !== '' ? formatMinutesHM(mins) : '', wage ?? '', pay]);
 
         if (!staffTotals[name]) staffTotals[name] = { status, days: 0, totalMins: 0, totalPay: 0, hasPay: false, monthlyWage: r.kintai_staff?.monthly_wage ?? null };
         if (mins !== '') {
@@ -1595,6 +1977,15 @@
           staffTotals[name].totalMins += mins;
           if (pay !== '') { staffTotals[name].totalPay += pay; staffTotals[name].hasPay = true; }
         }
+
+        const year  = Number(r.date.substring(0, 4));
+        const month = Number(r.date.substring(5, 7));
+        const day   = Number(r.date.substring(8, 10));
+        const key = `${name}\u0000${year}-${month}`;
+        if (!timesheets.has(key)) {
+          timesheets.set(key, { name, sortOrder: r.kintai_staff?.sort_order ?? 9999, year, month, days: {} });
+        }
+        timesheets.get(key).days[day] = { start: startTime, end: endTime, breakMinutes };
       });
 
     // 技能実習生3号は法定労働時間（1日8時間・週40時間）の制限対象のため、
@@ -1620,19 +2011,291 @@
       summaryRows.push([name, t.status, t.days, t.totalMins, formatMinutesHM(t.totalMins), totalPay, effectiveHourly, judgement]);
     });
 
-    const wb = XLSX.utils.book_new();
+    btn.textContent = 'Excel作成中...';
+    const wb = new ExcelJS.Workbook();
 
-    const wsDaily = XLSX.utils.aoa_to_sheet(dailyRows);
-    wsDaily['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
-    XLSX.utils.book_append_sheet(wb, wsDaily, '日別勤怠記録');
+    // 従業員ごと・月ごとに出勤簿のタブを作る（並びは勤怠メンバーの表示順 → 年月順）
+    const usedSheetNames = new Set();
+    Array.from(timesheets.values())
+      .sort((a, b) => (a.sortOrder - b.sortOrder) || a.name.localeCompare(b.name, 'ja')
+                      || (a.year - b.year) || (a.month - b.month))
+      .forEach(ts => {
+        buildTimesheetSheet(wb, uniqueSheetName(usedSheetNames, timesheetSheetName(ts)), ts);
+      });
 
-    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
-    wsSummary['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 20 }];
-    XLSX.utils.book_append_sheet(wb, wsSummary, 'スタッフ別集計');
+    appendPlainSheet(wb, '日別勤怠記録', dailyRows, [12, 14, 10, 18, 10, 18, 12, 12, 12, 10, 12]);
+    appendPlainSheet(wb, 'スタッフ別集計', summaryRows, [14, 14, 10, 14, 14, 14, 12, 20]);
 
-    XLSX.writeFile(wb, `村上農園_勤怠記録_${from}_${to}.xlsx`);
+    await downloadWorkbook(wb, `村上農園_出勤簿_${from}_${to}.xlsx`);
 
-    msg.textContent = `${dailyRows.length - 1}件のデータをダウンロードしました`;
+    btn.textContent = 'Excelダウンロード';
+    msg.textContent = `${dailyRows.length - 1}件のデータを出勤簿${timesheets.size}タブでダウンロードしました`;
+  }
+
+  // ── 出勤簿フォーマットのExcel生成 ─────────────────────────
+  // 紙の出勤簿（従業員1人・1か月で1シート、1日＝出社／退社の2行）をそのまま再現する。
+  // 左ブロックが1〜16日、右ブロックが17日以降で、1マスずつ日々の打刻が埋まる形。
+  const TIMESHEET_COMPANY = '村上農園';
+  const TIMESHEET_FONT = 'MS Mincho';
+  const TIMESHEET_SLOTS_PER_BLOCK = 16;
+  const WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
+
+  const BD_THIN   = { style: 'thin' };
+  const BD_MEDIUM = { style: 'medium' };
+  const BD_DOTTED = { style: 'dotted' };
+  const BD_HAIR   = { style: 'hair' };
+  const INPUT_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+
+  // 出社／退社の時刻セル。ここだけ1日の中で上下に分かれるため、罫線の扱いを分ける
+  const TIME_COLS = ['D', 'E', 'F', 'M', 'N', 'O'];
+
+  // [列, 左罫線, 右罫線]。紙の出勤簿の縦罫線をそのまま写したもの
+  const GRID_BORDER_COLS = [
+    ['B', BD_MEDIUM, BD_DOTTED], ['C', BD_DOTTED, BD_THIN],
+    ['D', BD_THIN, BD_HAIR], ['E', null, null], ['F', BD_HAIR, BD_THIN],
+    ['G', BD_THIN, BD_THIN], ['H', BD_THIN, BD_THIN], ['I', BD_THIN, BD_MEDIUM],
+    ['J', BD_MEDIUM, null], ['K', null, BD_DOTTED], ['L', BD_DOTTED, BD_THIN],
+    ['M', BD_THIN, BD_HAIR], ['N', null, null], ['O', BD_HAIR, BD_THIN],
+    ['P', BD_THIN, BD_THIN], ['Q', BD_THIN, null], ['R', null, BD_THIN],
+    ['S', BD_THIN, null], ['T', null, BD_MEDIUM],
+  ];
+
+  const FOOTER_BORDER_COLS = [
+    ['B', BD_THIN, null], ['C', null, BD_THIN], ['D', BD_THIN, null], ['E', null, null],
+    ['F', null, null], ['G', null, BD_THIN], ['H', BD_THIN, null], ['I', null, null],
+    ['J', null, null], ['K', null, BD_THIN], ['L', BD_THIN, null], ['M', null, null],
+    ['N', null, null], ['O', null, BD_THIN], ['P', null, null], ['Q', null, null],
+    ['R', null, null], ['S', null, null], ['T', null, BD_THIN],
+  ];
+
+  // 西暦→令和（2019年＝令和1年）
+  function toReiwaYear(year) { return year - 2018; }
+
+  function timesheetSheetName(ts) {
+    // 参考フォーマットと同じ「R8.2アリフ」形式。Excelのシート名禁則文字を除き31文字以内に収める
+    const base = `R${toReiwaYear(ts.year)}.${ts.month}${ts.name}`.replace(/[:\\\/?*\[\]]/g, '');
+    return base.substring(0, 31);
+  }
+
+  function uniqueSheetName(used, name) {
+    let candidate = name;
+    let n = 2;
+    while (used.has(candidate)) {
+      const suffix = `(${n++})`;
+      candidate = name.substring(0, 31 - suffix.length) + suffix;
+    }
+    used.add(candidate);
+    return candidate;
+  }
+
+  function tsCell(ws, addr, opts = {}) {
+    const cell = ws.getCell(addr);
+    cell.font = { name: TIMESHEET_FONT, size: opts.size ?? 11 };
+    cell.alignment = { horizontal: opts.h ?? 'center', vertical: 'middle', wrapText: !!opts.wrap };
+    if (opts.numFmt) cell.numFmt = opts.numFmt;
+    if (opts.fill) cell.fill = INPUT_FILL;
+    return cell;
+  }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function buildTimesheetSheet(wb, sheetName, ts) {
+    const ws = wb.addWorksheet(sheetName, {
+      views: [{ showGridLines: false }],
+      pageSetup: {
+        paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 1,
+        margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 },
+      },
+    });
+
+    const widths = { A: 0.9, B: 8.9, C: 4.6, D: 4.1, E: 2.4, F: 4.1, G: 4.9, H: 6, I: 4.6,
+                     J: 6.1, K: 3.3, L: 4.6, M: 4.1, N: 2.4, O: 4.1, P: 4.9, Q: 1.9, R: 4.4, S: 3.9, T: 2.4 };
+    Object.entries(widths).forEach(([col, w]) => { ws.getColumn(col).width = w; });
+
+    const heights = { 1: 15, 2: 27.75, 3: 27, 4: 30, 5: 30, 6: 7.5, 7: 12, 8: 12, 9: 9,
+                      42: 7.5, 43: 25.5, 44: 25.5, 45: 25.5, 46: 25.5 };
+    for (let r = 10; r <= 41; r++) heights[r] = 18;
+    Object.entries(heights).forEach(([r, h]) => { ws.getRow(Number(r)).height = h; });
+
+    // ── 表題・年月・経営体名・氏名 ──
+    ws.mergeCells('B2:T2');
+    tsCell(ws, 'B2', { size: 16 }).value = '出    勤    簿';
+
+    ws.mergeCells('M3:O3');
+    ws.mergeCells('Q3:R3');
+    tsCell(ws, 'M3', { size: 14, fill: true }).value = ts.year;
+    tsCell(ws, 'P3', { size: 14, h: 'left' }).value = '年';
+    tsCell(ws, 'Q3', { size: 14, fill: true }).value = ts.month;
+    tsCell(ws, 'S3', { size: 14, h: 'left' }).value = '月分';
+    ['M3', 'N3', 'O3', 'Q3', 'R3'].forEach(addr => {
+      ws.getCell(addr).border = { left: BD_HAIR, right: BD_HAIR, top: BD_HAIR, bottom: BD_MEDIUM };
+    });
+
+    ws.mergeCells('I4:K4'); ws.mergeCells('L4:T4');
+    ws.mergeCells('I5:K5'); ws.mergeCells('L5:R5'); ws.mergeCells('S5:T5');
+    tsCell(ws, 'I4', { size: 10, wrap: true }).value = '経営体名';
+    tsCell(ws, 'L4', { size: 12, h: 'left', fill: true }).value = TIMESHEET_COMPANY;
+    tsCell(ws, 'I5', { size: 10, wrap: true }).value = '氏名';
+    tsCell(ws, 'L5', { size: 12, h: 'left', fill: true }).value = ts.name;
+    tsCell(ws, 'S5', { size: 12 }).value = '㊞';
+    'IJKLMNOPQRST'.split('').forEach(col => {
+      [4, 5].forEach(r => {
+        const b = { top: BD_MEDIUM, bottom: BD_MEDIUM };
+        if (col === 'I' || col === 'L') b.left = BD_MEDIUM;
+        if (col === 'K' || col === 'T') b.right = BD_MEDIUM;
+        const cell = ws.getCell(`${col}${r}`);
+        cell.border = Object.assign({}, cell.border, b);
+      });
+    });
+
+    // ── 見出し（7〜9行目） ──
+    ['B7:B9', 'C7:C9', 'D7:F7', 'D8:F8', 'G7:G9', 'H7:H9', 'I8:I9',
+     'J7:K9', 'L7:L9', 'M7:O7', 'M8:O8', 'P7:P9', 'Q7:R9', 'S7:T7', 'S8:T9'].forEach(range => ws.mergeCells(range));
+    const headers = [
+      ['B7', '月日', 11], ['C7', '曜日', 8], ['D7', '出社', 8], ['D8', '退社', 8],
+      ['D9', '時', 8], ['E9', '：', 8], ['F9', '分', 8], ['G7', '休憩（分）', 8],
+      ['H7', '労働\n時間', 11], ['I7', '確認', 8], ['I8', '印', 8],
+      ['J7', '月日', 11], ['L7', '曜日', 8], ['M7', '出社', 8], ['M8', '退社', 8],
+      ['M9', '時', 8], ['N9', '：', 8], ['O9', '分', 8], ['P7', '休憩（分）', 8],
+      ['Q7', '労働\n時間', 11], ['S7', '確認', 8], ['S8', '印', 8],
+    ];
+    headers.forEach(([addr, text, size]) => { tsCell(ws, addr, { size, wrap: true }).value = text; });
+
+    // ── 日々のマス（10〜41行目） ──
+    const daysInMonth = new Date(ts.year, ts.month, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const idx = day - 1;
+      const isLeft = idx < TIMESHEET_SLOTS_PER_BLOCK;
+      const top = 10 + 2 * (isLeft ? idx : idx - TIMESHEET_SLOTS_PER_BLOCK);
+      const bottom = top + 1;
+      const c = isLeft
+        ? { date: 'B', dateEnd: 'B', wd: 'C', wdEnd: 'C', hour: 'D', colon: 'E', min: 'F',
+            brk: 'G', brkEnd: 'G', work: 'H', workEnd: 'H', seal: 'I', sealEnd: 'I' }
+        : { date: 'J', dateEnd: 'K', wd: 'L', wdEnd: 'L', hour: 'M', colon: 'N', min: 'O',
+            brk: 'P', brkEnd: 'P', work: 'Q', workEnd: 'R', seal: 'S', sealEnd: 'T' };
+
+      ws.mergeCells(`${c.date}${top}:${c.dateEnd}${bottom}`);
+      ws.mergeCells(`${c.wd}${top}:${c.wdEnd}${bottom}`);
+      ws.mergeCells(`${c.brk}${top}:${c.brkEnd}${bottom}`);
+      ws.mergeCells(`${c.work}${top}:${c.workEnd}${bottom}`);
+      ws.mergeCells(`${c.seal}${top}:${c.sealEnd}${bottom}`);
+
+      // ExcelJSは Date を UTC のまま数値化するため、UTCの0時で作らないと日本時間では1日ずれる
+      const dateObj = new Date(Date.UTC(ts.year, ts.month - 1, day));
+      tsCell(ws, `${c.date}${top}`, { size: 12, numFmt: 'm/d', fill: true }).value = dateObj;
+      tsCell(ws, `${c.wd}${top}`, { size: 12 }).value = WEEKDAYS_JA[dateObj.getUTCDay()];
+
+      const inHour  = tsCell(ws, `${c.hour}${top}`,    { numFmt: '0_ ', fill: true });
+      const inMin   = tsCell(ws, `${c.min}${top}`,     { numFmt: '@', fill: true });
+      const outHour = tsCell(ws, `${c.hour}${bottom}`, { numFmt: '0_ ', fill: true });
+      const outMin  = tsCell(ws, `${c.min}${bottom}`,  { numFmt: '@', fill: true });
+      const brkCell = tsCell(ws, `${c.brk}${top}`,     { numFmt: '@', fill: true });
+      const workCell = tsCell(ws, `${c.work}${top}`,   { numFmt: 'h:mm' });
+      tsCell(ws, `${c.colon}${top}`,    { numFmt: '@' }).value = '：';
+      tsCell(ws, `${c.colon}${bottom}`, { numFmt: '@' }).value = '：';
+      tsCell(ws, `${c.seal}${top}`, { size: 8, h: 'left' });
+
+      const rec = ts.days[day];
+      if (rec?.start) { inHour.value  = rec.start.getHours(); inMin.value  = pad2(rec.start.getMinutes()); }
+      if (rec?.end)   { outHour.value = rec.end.getHours();   outMin.value = pad2(rec.end.getMinutes()); }
+      if (rec)        { brkCell.value = String(rec.breakMinutes ?? 0); }
+
+      // 労働時間＝（退社−出社）−休憩。MODで日付をまたぐ勤務にも対応する
+      const hb = `${c.hour}${bottom}`, ht = `${c.hour}${top}`;
+      const mb = `IF(${c.min}${bottom}="",0,${c.min}${bottom})`, mt = `IF(${c.min}${top}="",0,${c.min}${top})`;
+      const brk = `IF(${c.brk}${top}="",0,${c.brk}${top})`;
+      workCell.value = { formula: `IF(${hb}="","",MOD(TIME(${hb},${mb},0)-TIME(${ht},${mt},0),1)-TIME(0,${brk},0))` };
+    }
+
+    // ── 表の罫線（見出し＋32行分のマス） ──
+    // 結合セルはExcelJS上でスタイルを共有するため、上書きせず足し込む（でないと表の上端が消える）
+    GRID_BORDER_COLS.forEach(([col, left, right]) => {
+      const isTimeCol = TIME_COLS.includes(col);
+      for (let r = 7; r <= 41; r++) {
+        const b = {};
+        if (left) b.left = left;
+        if (right) b.right = right;
+        if (r === 7) b.top = BD_MEDIUM;
+        if (r === 41) b.bottom = BD_MEDIUM;                 // 表の下端
+        else if (r === 9) b.bottom = BD_THIN;               // 見出しの下端
+        else if (r >= 11 && r % 2 === 1) b.bottom = BD_THIN; // 1日分の区切り
+        else if (isTimeCol) b.bottom = BD_DOTTED;            // 出社と退社の間
+        const cell = ws.getCell(`${col}${r}`);
+        cell.border = Object.assign({}, cell.border, b);
+      }
+    });
+
+    // ── 集計欄（43〜46行目） ──
+    const footerRows = [
+      { row: 43, left: '出勤日数', mid: '年休', right: '時間外' },
+      { row: 44, left: '欠勤',     mid: '特別', right: '深夜' },
+      { row: 45, left: '遅刻',     mid: '代休', right: '休日' },
+      { row: 46, left: '早退',     mid: '振替', right: '労働時間合計' },
+    ];
+    footerRows.forEach(f => {
+      ws.mergeCells(`B${f.row}:C${f.row}`);
+      ws.mergeCells(`D${f.row}:F${f.row}`);
+      ws.mergeCells(`H${f.row}:I${f.row}`);
+      ws.mergeCells(`L${f.row}:O${f.row}`);
+      ws.mergeCells(f.row === 46 ? 'P46:T46' : `P${f.row}:Q${f.row}`);
+
+      tsCell(ws, `B${f.row}`, { wrap: true }).value = f.left;
+      tsCell(ws, `D${f.row}`, { size: 12, fill: f.row !== 43 });
+      tsCell(ws, `G${f.row}`, { size: 12, h: 'left' }).value = '日';
+      tsCell(ws, `H${f.row}`, { wrap: true }).value = f.mid;
+      tsCell(ws, `J${f.row}`, { size: 12, fill: true });
+      tsCell(ws, `K${f.row}`, { size: 12, h: 'left' }).value = '日';
+      tsCell(ws, `L${f.row}`, { wrap: true }).value = f.right;
+      if (f.row !== 46) {
+        tsCell(ws, `P${f.row}`, { size: 12, fill: true });
+        tsCell(ws, `R${f.row}`, { size: 12, h: 'left' }).value = '時間';
+        tsCell(ws, `T${f.row}`, { size: 12, h: 'left' }).value = '分';
+      }
+    });
+
+    // 出勤日数と労働時間合計は自動計算（手入力欄は黄色のまま空欄で残す）
+    ws.getCell('D43').value = {
+      formula: 'IF(COUNTIF(H10:H41,">0")+COUNTIF(Q10:Q41,">0")=0,"",COUNTIF(H10:H41,">0")+COUNTIF(Q10:Q41,">0"))',
+    };
+    tsCell(ws, 'P46', { size: 12, h: 'right', numFmt: '[h]"時間"mm"分"' }).value = {
+      formula: 'IF(SUM(H10:H41)+SUM(Q10:Q41)=0,"",SUM(H10:H41)+SUM(Q10:Q41))',
+    };
+
+    FOOTER_BORDER_COLS.forEach(([col, left, right]) => {
+      for (let r = 43; r <= 46; r++) {
+        const b = { top: BD_THIN, bottom: BD_THIN };
+        if (left) b.left = left;
+        if (right) b.right = right;
+        const cell = ws.getCell(`${col}${r}`);
+        cell.border = Object.assign({}, cell.border, b);
+      }
+    });
+
+    return ws;
+  }
+
+  // 日別勤怠記録・スタッフ別集計のような、見出し1行＋データのシート
+  function appendPlainSheet(wb, sheetName, rows, widths) {
+    const ws = wb.addWorksheet(sheetName);
+    widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+    rows.forEach(row => ws.addRow(row));
+    ws.getRow(1).font = { bold: true };
+    ws.getRow(1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    ws.views = [{ state: 'frozen', ySplit: 1 }];
+    return ws;
+  }
+
+  async function downloadWorkbook(wb, filename) {
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   }
 
   // ── CSVエクスポート ──────────────────────────────────────
