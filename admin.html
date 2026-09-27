@@ -529,6 +529,29 @@
       gap: 8px;
     }
 
+    /* 勤怠記録の名前バッジ（押すと編集モーダルが開く） */
+    .staff-badge {
+      display: inline-block;
+      background: #e8f5e9;
+      color: #1a3d17;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    .staff-badge:hover { background: #c8e6c9; }
+
+    /* 出勤済みだが退勤がまだの人 */
+    .staff-badge.working {
+      background: #1a3d17;
+      color: #fff;
+    }
+
+    .staff-badge.working:hover { background: #2c5f26; }
+
     .task-item-name {
       font-size: 15px;
       font-weight: 700;
@@ -954,20 +977,19 @@
     <div class="section-title" id="kintaiListTitle">勤怠記録</div>
     <div id="kintaiList"></div>
 
-    <div class="date-bar">
-      <label>開始日</label>
-      <input type="date" id="kintaiFrom" onchange="loadKintaiRecords()">
-      <label>終了日</label>
-      <input type="date" id="kintaiTo" onchange="loadKintaiRecords()">
-    </div>
-
     <!-- ── 勤怠管理のエクスポート ── -->
     <div class="form-card">
       <h2>📥 勤怠管理のエクスポート</h2>
       <p style="font-size:13px;color:#888;margin-bottom:16px;">
-        上記の期間で、紙の出勤簿と同じフォーマットのExcelを出力します。従業員ごと・月ごとに1タブ（例：R8.2アリフ）で、1日1マスずつ出社・退社・休憩が埋まります。
+        指定した期間で、紙の出勤簿と同じフォーマットのExcelを出力します。従業員ごと・月ごとに1タブ（例：R8.2アリフ）で、1日1マスずつ出社・退社・休憩が埋まります。
         始業は30分単位で切り上げ、終業は15分単位で切り下げた時刻を記載します。末尾に「日別勤怠記録」（打刻そのままの一覧・時給・賃金）と「スタッフ別集計」のタブも付きます。
       </p>
+      <div class="date-bar" style="margin-bottom:16px;">
+        <label>開始日</label>
+        <input type="date" id="kintaiFrom">
+        <label>終了日</label>
+        <input type="date" id="kintaiTo">
+      </div>
       <button class="btn-submit" id="kintaiExportBtn" onclick="exportKintaiExcel()">Excelダウンロード</button>
       <div id="kintaiExportMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
     </div>
@@ -1032,7 +1054,11 @@
   <div class="modal-sheet">
     <div class="modal-title" id="kintaiStaffEditTitle">メンバー情報の編集</div>
     <div class="form-group">
-      <label>氏名</label>
+      <label>氏名（労働者名簿のフルネーム）</label>
+      <input type="text" id="kintaiStaffEditFullName" placeholder="例：NOEUN VICHEKA／村井　瞳子">
+    </div>
+    <div class="form-group">
+      <label>打刻名（打刻画面のボタンと出勤簿のタブ名に使う短い呼び名）</label>
       <input type="text" id="kintaiStaffEditName" placeholder="例：ヴィチェカー">
     </div>
     <div class="form-row">
@@ -1364,7 +1390,7 @@
 
   function fmtDateSlash(dateStr) { return dateStr ? dateStr.replace(/-/g, '/') : '—'; }
 
-  const KINTAI_STAFF_COLUMNS = 'id, name, gender, birth_date, hire_date, category, status, active, sort_order, monthly_wage';
+  const KINTAI_STAFF_COLUMNS = 'id, name, full_name, gender, birth_date, hire_date, category, status, active, sort_order, monthly_wage';
 
   async function loadKintaiStaffList() {
     const showInactive = document.getElementById('kintaiStaffShowInactive').checked;
@@ -1377,8 +1403,9 @@
     renderKintaiStaffList();
   }
 
-  // 労働者名簿（氏名・性別・生年月日・採用年月日）＋国籍・資格をそのまま一覧にする
-  const STAFF_LIST_HEADERS = ['氏名', '性別', '生年月日', '採用年月日', '国籍', '資格・雇用形態', ''];
+  // 労働者名簿（氏名・性別・生年月日・採用年月日）＋国籍・資格をそのまま一覧にする。
+  // 「打刻名」は打刻画面のボタンと出勤簿のタブ名に使う短い呼び名
+  const STAFF_LIST_HEADERS = ['氏名', '打刻名', '性別', '生年月日', '採用年月日', '国籍', '資格・雇用形態', ''];
 
   function renderKintaiStaffList() {
     const el = document.getElementById('kintaiStaffList');
@@ -1389,7 +1416,8 @@
 
     const rows = kintaiStaffCache.map(s => `
       <tr class="${s.active ? '' : 'inactive'}">
-        <td>${escHtml(s.name)}${s.active ? '' : '（退職済み）'}</td>
+        <td>${escHtml(s.full_name || s.name)}${s.active ? '' : '（退職済み）'}</td>
+        <td>${escHtml(s.name)}</td>
         <td>${escHtml(s.gender)}</td>
         <td>${fmtDateSlash(s.birth_date)}</td>
         <td>${fmtDateSlash(s.hire_date)}</td>
@@ -1409,14 +1437,14 @@
     const btn = document.getElementById('staffExportBtn');
     btn.disabled = true;
 
-    const rows = [['氏名', '性別', '生年月日', '採用年月日', '国籍', '資格・雇用形態', '在籍']];
+    const rows = [['氏名', '打刻名', '性別', '生年月日', '採用年月日', '国籍', '資格・雇用形態', '在籍']];
     kintaiStaffCache.forEach(s => {
-      rows.push([s.name, s.gender ?? '', s.birth_date ?? '', s.hire_date ?? '',
+      rows.push([s.full_name || s.name, s.name, s.gender ?? '', s.birth_date ?? '', s.hire_date ?? '',
                  s.category ?? '', s.status ?? '', s.active ? '在籍中' : '退職済み']);
     });
 
     const wb = new ExcelJS.Workbook();
-    appendPlainSheet(wb, '社員リスト', rows, [18, 8, 14, 14, 14, 18, 10]);
+    appendPlainSheet(wb, '社員リスト', rows, [26, 14, 8, 14, 14, 14, 18, 10]);
     await downloadWorkbook(wb, `村上農園_社員リスト_${getToday()}.xlsx`);
 
     btn.disabled = false;
@@ -1429,6 +1457,7 @@
 
     kintaiStaffEditingId = s ? id : null;
     document.getElementById('kintaiStaffEditTitle').textContent = s ? 'メンバー情報の編集' : 'メンバーを追加';
+    document.getElementById('kintaiStaffEditFullName').value = s?.full_name ?? '';
     document.getElementById('kintaiStaffEditName').value = s?.name ?? '';
     document.getElementById('kintaiStaffEditGender').value = s?.gender ?? '';
     document.getElementById('kintaiStaffEditBirthDate').value = s?.birth_date ?? '';
@@ -1457,9 +1486,10 @@
     const name = document.getElementById('kintaiStaffEditName').value.trim();
     const msg = document.getElementById('kintaiStaffEditMsg');
     msg.textContent = '';
-    if (!name) { msg.textContent = '名前を入力してください'; return; }
+    if (!name) { msg.textContent = '打刻名を入力してください'; return; }
 
     const isNew    = !kintaiStaffEditingId;
+    const fullName  = document.getElementById('kintaiStaffEditFullName').value.trim();
     const gender    = document.getElementById('kintaiStaffEditGender').value;
     const birthDate = document.getElementById('kintaiStaffEditBirthDate').value;
     const hireDate  = document.getElementById('kintaiStaffEditHireDate').value;
@@ -1469,6 +1499,7 @@
 
     const payload = {
       name,
+      full_name: fullName || null,
       gender: gender || null,
       birth_date: birthDate || null,
       hire_date: hireDate || null,
@@ -1773,25 +1804,27 @@
     return `${h}時間${m}分`;
   }
 
+  // 一覧は当日分のみ（過去分の確認・修正はExcel出力で行う運用）
   async function loadKintaiRecords() {
-    const from = document.getElementById('kintaiFrom').value;
-    const to   = document.getElementById('kintaiTo').value;
-    if (!from || !to) return;
+    const today = getToday();
+    document.getElementById('kintaiListTitle').textContent = `勤怠記録（${formatDateJaShort(today)}）`;
 
     const { data, error } = await supabaseClient
       .from('attendance_records')
       .select('id, staff_id, date, clock_in, clock_out, kintai_staff(name)')
-      .gte('date', from)
-      .lte('date', to);
+      .eq('date', today);
 
     if (error) { console.error(error); return; }
 
-    const records = (data ?? []).slice().sort((a, b) => {
-      if (a.date !== b.date) return a.date < b.date ? 1 : -1; // 日付降順
-      return (a.kintai_staff?.name ?? '').localeCompare(b.kintai_staff?.name ?? '', 'ja');
-    });
+    const records = (data ?? []).slice().sort(
+      (a, b) => (a.kintai_staff?.name ?? '').localeCompare(b.kintai_staff?.name ?? '', 'ja'));
 
     renderKintaiList(records);
+  }
+
+  function formatDateJaShort(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return `${d.getMonth() + 1}月${d.getDate()}日（${WEEKDAYS_JA[d.getDay()]}）`;
   }
 
   function renderKintaiList(records) {
@@ -1799,34 +1832,25 @@
     const el = document.getElementById('kintaiList');
 
     if (!records.length) {
-      el.innerHTML = `<div class="empty-state" style="text-align:center;padding:40px;color:#bbb;">この期間の勤怠記録はありません</div>`;
+      el.innerHTML = `<div class="empty-state" style="text-align:center;padding:40px;color:#bbb;">本日の勤怠記録はまだありません</div>`;
       return;
     }
 
-    el.innerHTML = records.map(r => {
-      const name = r.kintai_staff?.name ?? '—';
-      const clockInStr  = r.clock_in  ? fmtHM(new Date(r.clock_in))  : '—';
-      const clockOutStr = r.clock_out ? fmtHM(new Date(r.clock_out)) : '—';
-      let durationStr = '—';
-      if (r.clock_in && r.clock_out) {
-        const mins = Math.round((new Date(r.clock_out) - new Date(r.clock_in)) / 60000);
-        durationStr = formatMinutesHM(mins);
-      }
-
-      return `
-        <div class="task-item">
-          <div class="task-item-left">
-            <div class="task-item-header">
-              <span class="crop-badge">${r.date}</span>
-              <span class="task-item-name">${name}</span>
-            </div>
-            <div class="task-item-meta">出勤 ${clockInStr}　退勤 ${clockOutStr}　労働時間 ${durationStr}</div>
-          </div>
-          <div class="task-item-actions">
-            <button class="btn-edit" onclick="openKintaiEditModal('${r.id}')">編集</button>
-          </div>
-        </div>`;
-    }).join('');
+    // 「本日まだ出勤していないメンバー」と同じ、名前だけのバッジ表示。
+    // 押すと編集モーダルが開く。時刻はマウスを乗せると出る（title属性）
+    el.innerHTML = `
+      <div class="missing-badge-wrap">
+        ${records.map(r => {
+          const name = r.kintai_staff?.name ?? '—';
+          const clockInStr  = r.clock_in  ? fmtHM(new Date(r.clock_in))  : '—';
+          const clockOutStr = r.clock_out ? fmtHM(new Date(r.clock_out)) : '—';
+          // 退勤がまだの人は色を分けて、出勤中だと一目で分かるようにする
+          const working = r.clock_in && !r.clock_out;
+          return `<button type="button" class="staff-badge${working ? ' working' : ''}"
+            title="出勤 ${clockInStr}　退勤 ${clockOutStr}"
+            onclick="openKintaiEditModal('${r.id}')">${escHtml(name)}</button>`;
+        }).join('')}
+      </div>`;
   }
 
   function openKintaiEditModal(recordId) {
