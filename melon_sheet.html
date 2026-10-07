@@ -2494,19 +2494,14 @@
       posStartQty({ field: 'onion_kg', name: '玉ねぎ', unit: 'kg', price: pos.prices.onion, isKg: true }, true);
       return;
     }
+    // 単価一覧の表示/非表示設定に関係なく、全品種を常に出す（店頭では季節外の品種も売ることがあるため）
     posPushStep(isFirst => {
-      const tiles = cat.groups
-        .map((g, gi) => ({ g, gi }))
-        .filter(({ g }) => isProductVisible(g.label))
-        .map(({ g, gi }, n) => `
-          <div class="pos-tile tone-${n % 4}" onclick="posSelectGroup('${catKey}', ${gi})">
-            <span class="pos-tile-icon">${POS_GROUP_ICONS[g.label] || cat.icon}</span>
-            <span class="pos-tile-label">${escHtml(g.label)}</span>
-          </div>`).join('');
-      posShowStep(`${cat.icon} ${cat.label}：種類を選ぶ`,
-        tiles ? `<div class="pos-tile-grid">${tiles}</div>`
-              : '<p class="pos-step-note">表示中の品種がありません（単価一覧の「👁」で表示に切り替えられます）</p>',
-        isFirst);
+      const tiles = cat.groups.map((g, gi) => `
+        <div class="pos-tile tone-${gi % 4}" onclick="posSelectGroup('${catKey}', ${gi})">
+          <span class="pos-tile-icon">${POS_GROUP_ICONS[g.label] || cat.icon}</span>
+          <span class="pos-tile-label">${escHtml(g.label)}</span>
+        </div>`).join('');
+      posShowStep(`${cat.icon} ${cat.label}：種類を選ぶ`, `<div class="pos-tile-grid">${tiles}</div>`, isFirst);
     });
   }
 
