@@ -725,6 +725,19 @@
       font-size: 18px;
       text-align: right;
     }
+    .pos-confirm-btn {
+      flex-shrink: 0;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      align-self: stretch;
+    }
     .pos-note { font-size: 12px; color: #a84600; font-weight: 700; }
 
     .pos-footer {
@@ -2330,6 +2343,13 @@
 
   // ── 入力画面 ──
   function renderPosOrder() {
+    // 送料も「選んだ品物」に1行出し、選んだ・確定した金額が目で分かるようにする
+    // （直接記入は入力中には出さず、「確定」を押して描き直したときに出る）
+    const feeLine = posShippingFee() ? `
+          <div class="pos-cart-line">
+            <div class="pos-cart-name">🚚 送料（税込み）</div>
+            <div class="pos-cart-amount">${formatYen(posShippingFee())}</div>
+          </div>` : '';
     const cartHtml = pos.cart.length
       ? pos.cart.map((l, i) => `
           <div class="pos-cart-line">
@@ -2340,18 +2360,19 @@
               <button type="button" onclick="posChangeQty(${i}, 1)">＋</button>
             </div>
             <div class="pos-cart-amount">${formatYen(posLineAmount(l))}</div>
-          </div>`).join('')
-      : '<div class="pos-cart-empty">上のアイコンから品物を選んでください</div>';
+          </div>`).join('') + feeLine
+      : '<div class="pos-cart-empty">上のアイコンから品物を選んでください</div>' + feeLine;
 
     const feeHtml = pos.shipMode === 'ship' ? `
       <div class="pos-fee-row">
         ${SHIPPING_FEE_PRESETS.map(v => `<button type="button" class="pos-fee-btn ${pos.feeChoice === v ? 'active' : ''}" onclick="posSelectFee(${v})">${formatYen(v)}</button>`).join('')}
-        <button type="button" class="pos-fee-btn ${pos.feeChoice === 'custom' ? 'active' : ''}" onclick="posSelectFee('custom')">直接記入</button>
+        <button type="button" class="pos-fee-btn ${pos.feeChoice === 'custom' ? 'active' : ''}" onclick="posSelectFee('custom')">${pos.feeChoice === 'custom' && posShippingFee() ? `直接記入：${formatYen(posShippingFee())}` : '直接記入'}</button>
       </div>
       ${pos.feeChoice === 'custom' ? `
         <div class="pos-fee-custom">
-          <input type="number" id="posCustomFee" inputmode="numeric" min="0" step="1" placeholder="送料" value="${escHtml(pos.customFee)}" oninput="posSetCustomFee(this.value)">
+          <input type="number" id="posCustomFee" inputmode="numeric" min="0" step="1" placeholder="送料" value="${escHtml(pos.customFee)}" oninput="posSetCustomFee(this.value)" onkeydown="if (event.key === 'Enter') posConfirmCustomFee()">
           <span>円</span>
+          <button type="button" class="pos-confirm-btn" onclick="posConfirmCustomFee()">確定</button>
         </div>` : ''}
       <div class="pos-note" style="margin-top:6px;">※ 送料は（税込み）の金額です</div>` : '';
 
@@ -2415,6 +2436,14 @@
     pos.feeChoice = val;
     renderPos();
     if (val === 'custom') document.getElementById('posCustomFee')?.focus();
+  }
+
+  // スマホの数字キーボードには「完了」キーがないことがあるため、確定ボタンでキーボードを閉じて金額を反映する
+  function posConfirmCustomFee() {
+    pos.customFee = document.getElementById('posCustomFee').value;
+    if (!posShippingFee()) { alert('送料を入力してください'); return; }
+    document.getElementById('posCustomFee').blur();
+    renderPos();
   }
 
   // 直接記入は入力のたびに全体を描き直すと入力欄のフォーカスが外れるため、合計表示だけ更新する
@@ -2652,7 +2681,10 @@
 
       <div class="pos-section">
         <div class="pos-section-label">お預かり（円）</div>
-        <input type="number" class="pos-tender-input" id="posTendered" inputmode="numeric" min="0" step="1" placeholder="0" value="${escHtml(pos.tendered)}" oninput="posSetTendered(this.value)">
+        <div class="pos-fee-custom" style="margin-top:0;">
+          <input type="number" class="pos-tender-input" id="posTendered" inputmode="numeric" min="0" step="1" placeholder="0" value="${escHtml(pos.tendered)}" oninput="posSetTendered(this.value)" onkeydown="if (event.key === 'Enter') this.blur()">
+          <button type="button" class="pos-confirm-btn" onclick="document.getElementById('posTendered').blur()">確定</button>
+        </div>
         <div class="pos-quick-row">
           <button type="button" onclick="posQuickTender(${total})">ちょうど</button>
           <button type="button" onclick="posQuickTender(1000)">1,000</button>
