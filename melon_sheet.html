@@ -581,6 +581,340 @@
     }
 
     .btn-modal-submit:disabled { background: #bbb; cursor: not-allowed; }
+
+    /* ── 店頭会計（セルフレジ風の入力画面） ── */
+    .btn-tool.pos-launch { background: #ef6c00; color: #fff; border-color: #ef6c00; font-size: 14px; }
+    .btn-tool.pos-launch:active { background: #c75a00; }
+
+    .pos-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 400;
+      background: #f6faf5;
+      flex-direction: column;
+    }
+    .pos-overlay.open { display: flex; }
+
+    .pos-header {
+      background: #ef6c00;
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .pos-header-title { font-size: 18px; font-weight: 800; }
+    .pos-header-date { font-size: 13px; opacity: 0.9; margin-left: 8px; font-weight: 600; }
+    .pos-close-btn {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .pos-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .pos-inner { max-width: 720px; margin: 0 auto; }
+
+    .pos-section { margin-bottom: 18px; }
+    .pos-section-label { font-size: 13px; font-weight: 800; color: #555; margin-bottom: 8px; }
+
+    .pos-choice-row { display: flex; gap: 10px; }
+    .pos-choice-btn {
+      flex: 1;
+      background: #fff;
+      color: #444;
+      border: 2px solid #ddd;
+      border-radius: 14px;
+      padding: 14px 8px;
+      font-size: 17px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .pos-choice-btn.active { background: #fff3e0; border-color: #ef6c00; color: #a84600; }
+    .pos-choice-sub { display: block; font-size: 12px; font-weight: 600; color: #888; margin-top: 2px; }
+    .pos-choice-btn.active .pos-choice-sub { color: #a84600; }
+
+    .pos-cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .pos-cat-btn {
+      background: #fff;
+      border: 2px solid #e0e8de;
+      border-radius: 16px;
+      padding: 14px 4px 10px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .pos-cat-btn:active { background: #f1f8ef; border-color: #43a047; }
+    .pos-cat-icon { font-size: 44px; line-height: 1.1; display: block; }
+    .pos-cat-label { font-size: 15px; font-weight: 800; color: #1a3d17; display: block; margin-top: 4px; }
+
+    .pos-wide-btn {
+      width: 100%;
+      background: #fff;
+      border: 2px solid #e0e8de;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 17px;
+      font-weight: 800;
+      color: #1a3d17;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .pos-wide-btn:active { background: #f1f8ef; }
+
+    .pos-cart { background: #fff; border-radius: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    .pos-cart-empty { padding: 16px; text-align: center; color: #bbb; font-size: 14px; }
+    .pos-cart-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #f0f4ef;
+      font-size: 15px;
+    }
+    .pos-cart-line:last-child { border-bottom: none; }
+    .pos-cart-name { flex: 1; font-weight: 700; color: #222; }
+    .pos-cart-amount { font-weight: 800; color: #1a3d17; min-width: 76px; text-align: right; }
+    .pos-qty-ctrl { display: flex; align-items: center; gap: 4px; }
+    .pos-qty-ctrl button {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: 1.5px solid #ddd;
+      background: #fafafa;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .pos-qty-ctrl span { min-width: 54px; text-align: center; font-weight: 700; }
+
+    .pos-fee-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .pos-fee-btn {
+      flex: 1 1 calc(25% - 8px);
+      min-width: 90px;
+      background: #fff;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      padding: 12px 6px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      color: #444;
+    }
+    .pos-fee-btn.active { background: #fff3e0; border-color: #ef6c00; color: #a84600; }
+    .pos-fee-custom { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .pos-fee-custom input {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #ef6c00;
+      border-radius: 12px;
+      font-size: 18px;
+      text-align: right;
+    }
+    .pos-note { font-size: 12px; color: #a84600; font-weight: 700; }
+
+    .pos-footer {
+      flex-shrink: 0;
+      background: #fff;
+      border-top: 1px solid #e5ece4;
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+    }
+    .pos-footer-inner { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+    .pos-footer-total { flex: 1; font-size: 15px; font-weight: 700; color: #555; }
+    .pos-footer-total b { font-size: 24px; color: #1a3d17; }
+    .pos-primary-btn {
+      flex: 1.3;
+      background: #ef6c00;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 19px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .pos-primary-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .pos-secondary-btn {
+      flex: 0.8;
+      background: #fff;
+      color: #666;
+      border: 2px solid #ddd;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* お会計画面 */
+    .pos-checkout-total {
+      text-align: center;
+      font-size: 40px;
+      font-weight: 900;
+      color: #1a3d17;
+      padding: 18px 0 14px;
+    }
+    .pos-receipt { background: #fff; border-radius: 14px; padding: 6px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    .pos-receipt-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px dashed #e3e9e2;
+      font-size: 16px;
+    }
+    .pos-receipt-line:last-child { border-bottom: none; }
+    .pos-receipt-line .r-name { flex: 1; font-weight: 700; }
+    .pos-receipt-line .r-qty { min-width: 70px; text-align: right; color: #555; }
+    .pos-receipt-line .r-amount { min-width: 90px; text-align: right; font-weight: 800; }
+    .pos-tender-input {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #ef6c00;
+      border-radius: 14px;
+      font-size: 28px;
+      font-weight: 800;
+      text-align: right;
+      font-family: inherit;
+    }
+    .pos-quick-row { display: flex; gap: 8px; margin-top: 8px; }
+    .pos-quick-row button {
+      flex: 1;
+      background: #fff;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      padding: 10px 4px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      color: #444;
+    }
+    .pos-change {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 900;
+      color: #1565c0;
+      padding: 14px 0 4px;
+    }
+    .pos-change.short { color: #c62828; font-size: 24px; }
+
+    /* 品種・サイズ・個数を選ぶ小窓 */
+    .pos-step-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 450;
+      background: rgba(0,0,0,0.45);
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .pos-step-overlay.open { display: flex; }
+    .pos-step-sheet {
+      background: #fff;
+      width: 100%;
+      max-width: 640px;
+      border-radius: 20px 20px 0 0;
+      padding: 16px 16px calc(18px + env(safe-area-inset-bottom));
+      max-height: 88vh;
+      overflow-y: auto;
+    }
+    .pos-step-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .pos-step-back, .pos-step-close {
+      background: #f2f2f2;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #555;
+      font-family: inherit;
+    }
+    .pos-step-title { flex: 1; font-size: 18px; font-weight: 800; color: #1a3d17; }
+    .pos-tile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .pos-tile-grid.cols-5 { grid-template-columns: repeat(5, 1fr); }
+    .pos-tile {
+      border: 2px solid #e0e8de;
+      border-radius: 16px;
+      padding: 14px 6px;
+      text-align: center;
+      cursor: pointer;
+      background: #fff;
+      font-family: inherit;
+      user-select: none;
+    }
+    .pos-tile:active { border-color: #ef6c00; background: #fff3e0; }
+    .pos-tile.tone-0 { background: #f3f9f1; }
+    .pos-tile.tone-1 { background: #eef5fb; }
+    .pos-tile.tone-2 { background: #fdf6e9; }
+    .pos-tile.tone-3 { background: #f6eefb; }
+    .pos-tile-icon { font-size: 36px; line-height: 1.1; display: block; }
+    .pos-tile-big { font-size: 28px; font-weight: 900; color: #1a3d17; display: block; }
+    .pos-tile-label { font-size: 14px; font-weight: 800; color: #1a3d17; display: block; margin-top: 4px; }
+    .pos-tile-sub { font-size: 12px; color: #888; display: block; margin-top: 2px; }
+    .pos-step-note { font-size: 13px; color: #888; margin: 10px 0 0; }
+    .pos-direct-row { display: flex; gap: 8px; margin-top: 14px; }
+    .pos-direct-row input {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #dde8dd;
+      border-radius: 12px;
+      font-size: 18px;
+      text-align: right;
+    }
+    .pos-direct-row button {
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 0 18px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .pos-thanks {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: #2e7d32;
+      color: #fff;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      font-weight: 900;
+      text-align: center;
+      padding: 20px;
+    }
+    .pos-thanks.open { display: flex; }
+
+    @media (max-width: 420px) {
+      .pos-cat-icon { font-size: 36px; }
+      .pos-cat-label { font-size: 13px; }
+      .pos-tile-grid { grid-template-columns: repeat(2, 1fr); }
+      .pos-tile-grid.cols-5 { grid-template-columns: repeat(5, 1fr); }
+      .pos-checkout-total { font-size: 32px; }
+    }
   </style>
 </head>
 <body>
@@ -696,6 +1030,7 @@
 </div>
 
 <div class="toolbar">
+  <button class="btn-tool pos-launch" onclick="openPos()">🛒 店頭会計</button>
   <button class="btn-tool primary" onclick="addRow()">＋ 行を追加</button>
   <button class="btn-tool" id="sortDateBtn" onclick="toggleAutoSort()">⏸ 自動並べ替え停止</button>
   <button class="btn-tool" onclick="exportEntriesCSV()">⬇ CSVダウンロード</button>
@@ -750,6 +1085,30 @@
     </div>
   </div>
 </div>
+
+<!-- 店頭会計（セルフレジ風） -->
+<div class="pos-overlay" id="posOverlay">
+  <div class="pos-header">
+    <div><span class="pos-header-title">🛒 店頭会計</span><span class="pos-header-date" id="posDate"></span></div>
+    <button type="button" class="pos-close-btn" onclick="closePos()">✕ 閉じる</button>
+  </div>
+  <div class="pos-body"><div class="pos-inner" id="posBody"></div></div>
+  <div class="pos-footer"><div class="pos-footer-inner" id="posFooter"></div></div>
+</div>
+
+<!-- 店頭会計：品種・サイズ・個数などを1段ずつ選ぶ小窓 -->
+<div class="pos-step-overlay" id="posStepOverlay">
+  <div class="pos-step-sheet">
+    <div class="pos-step-head">
+      <button type="button" class="pos-step-back" id="posStepBackBtn" onclick="posStepBack()">← 戻る</button>
+      <div class="pos-step-title" id="posStepTitle"></div>
+      <button type="button" class="pos-step-close" onclick="posCloseStep()">✕</button>
+    </div>
+    <div id="posStepBody"></div>
+  </div>
+</div>
+
+<div class="pos-thanks" id="posThanks">ありがとうございました！</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
@@ -1876,6 +2235,520 @@
     URL.revokeObjectURL(url);
   }
 
+  // ── 店頭会計（セルフレジ風の入力画面） ──────────────────
+  // 「品物を選ぶ → 箱 → 発送 → お会計 → お預かり・おつり → 完了」の流れで、
+  // 1画面に出す選択肢を少なくして順に選ばせる。完了ボタンを押した時点で
+  // 当日日付・入金済みの行を1行登録する（それまではDBに何も書かない）。
+  const POS_CATEGORIES = [
+    { key: 'melon',  label: 'メロン', icon: '🍈', groups: MELON_GROUPS },
+    { key: 'suika',  label: 'スイカ', icon: '🍉', groups: SUIKA_GROUPS },
+    { key: 'veggie', label: '野菜',   icon: '🥬', groups: VEGGIE_GROUPS },
+    { key: 'onion',  label: '玉ねぎ', icon: '🧅', groups: null },
+  ];
+
+  const POS_GROUP_ICONS = {
+    'こかぶ': '⚪', '大根': '🥬', 'かぼちゃ': '🎃', 'にんじん': '🥕',
+  };
+
+  const POS_BOXES = [
+    { field: 'box_2',           priceKey: 'box2',          label: 'メロン 2玉入',   icon: '🍈' },
+    { field: 'box_35',          priceKey: 'box35',         label: 'メロン 3〜5玉入', icon: '🍈' },
+    { field: 'box_suika_1',     priceKey: 'boxSuika1',     label: 'スイカ 1玉入',   icon: '🍉' },
+    { field: 'box_suika_2',     priceKey: 'boxSuika2',     label: 'スイカ 2玉入',   icon: '🍉' },
+    { field: 'box_suika_plain', priceKey: 'boxSuikaPlain', label: 'スイカ 無地箱',   icon: '🍉' },
+  ];
+
+  const POS_QTY_CHOICES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const POS_KG_CHOICES  = [1, 2, 3, 4, 5, 6, 8, 10, 15, 20];
+  const POS_THANKS_MS = 500;
+
+  let pos = null;            // 店頭会計中の状態（openPos で初期化）
+  let posStepStack = [];     // 小窓の「戻る」用：描画関数の履歴
+  let posPendingItem = null; // 個数を選んでいる途中の品物
+  let posSaving = false;
+
+  function posNewState() {
+    return {
+      date: shiftedDateStr(0),
+      prices: getPricesForDate(shiftedDateStr(0)),
+      customerMode: 'anon',  // 'anon'（匿名） / 'named'（名前を探して選択済み）
+      customerName: '匿名',
+      cart: [],              // { field, name, unit, price, qty, isKg }
+      shipMode: 'face',      // 'face'（対面） / 'ship'（発送）
+      feeChoice: null,       // 880 / 1000 / 1430 / 'custom' / null
+      customFee: '',
+      view: 'order',         // 'order'（入力） / 'checkout'（お会計）
+      tendered: '',
+    };
+  }
+
+  function openPos() {
+    const today = shiftedDateStr(0);
+    const ty = Number(today.substring(0, 4)), tm = Number(today.substring(5, 7));
+    // 行は表示中の月のシートに追加されるため、今月以外の表を開いているときは今月の表へ移動する
+    if (ty !== YEAR || tm !== MONTH) {
+      if (confirm(`店頭会計は今日の日付で記録するため、${monthLabel(ty, tm)}の表に移動します。よろしいですか？`)) {
+        window.location.href = `melon_sheet.html?y=${ty}&m=${tm}&pos=1`;
+      }
+      return;
+    }
+    pos = posNewState();
+    document.getElementById('posDate').textContent = `${tm}月${formatDateJa(today)}`;
+    document.getElementById('posOverlay').classList.add('open');
+    renderPos();
+  }
+
+  function closePos() {
+    if (pos && (pos.cart.length || pos.view === 'checkout') && !confirm('入力中の内容は破棄されます。店頭会計を閉じますか？')) return;
+    posCloseStep();
+    document.getElementById('posOverlay').classList.remove('open');
+    pos = null;
+  }
+
+  function posLineAmount(line) {
+    return line.isKg ? Math.round(line.qty * line.price) : line.qty * line.price;
+  }
+
+  function posShippingFee() {
+    if (pos.shipMode !== 'ship') return 0;
+    if (pos.feeChoice === 'custom') return Math.max(0, parseInt(pos.customFee || '0', 10) || 0);
+    return pos.feeChoice || 0;
+  }
+
+  function posTotal() {
+    return pos.cart.reduce((s, l) => s + posLineAmount(l), 0) + posShippingFee();
+  }
+
+  function posQtyLabel(line) {
+    return `${line.qty}${line.unit}`;
+  }
+
+  function renderPos() {
+    if (pos.view === 'checkout') renderPosCheckout();
+    else renderPosOrder();
+  }
+
+  // ── 入力画面 ──
+  function renderPosOrder() {
+    const cartHtml = pos.cart.length
+      ? pos.cart.map((l, i) => `
+          <div class="pos-cart-line">
+            <div class="pos-cart-name">${escHtml(l.name)}</div>
+            <div class="pos-qty-ctrl">
+              <button type="button" onclick="posChangeQty(${i}, -1)">−</button>
+              <span>${posQtyLabel(l)}</span>
+              <button type="button" onclick="posChangeQty(${i}, 1)">＋</button>
+            </div>
+            <div class="pos-cart-amount">${formatYen(posLineAmount(l))}</div>
+          </div>`).join('')
+      : '<div class="pos-cart-empty">上のアイコンから品物を選んでください</div>';
+
+    const feeHtml = pos.shipMode === 'ship' ? `
+      <div class="pos-fee-row">
+        ${SHIPPING_FEE_PRESETS.map(v => `<button type="button" class="pos-fee-btn ${pos.feeChoice === v ? 'active' : ''}" onclick="posSelectFee(${v})">${formatYen(v)}</button>`).join('')}
+        <button type="button" class="pos-fee-btn ${pos.feeChoice === 'custom' ? 'active' : ''}" onclick="posSelectFee('custom')">直接記入</button>
+      </div>
+      ${pos.feeChoice === 'custom' ? `
+        <div class="pos-fee-custom">
+          <input type="number" id="posCustomFee" inputmode="numeric" min="0" step="1" placeholder="送料" value="${escHtml(pos.customFee)}" oninput="posSetCustomFee(this.value)">
+          <span>円</span>
+        </div>` : ''}
+      <div class="pos-note" style="margin-top:6px;">※ 送料は（税込み）の金額です</div>` : '';
+
+    document.getElementById('posBody').innerHTML = `
+      <div class="pos-section">
+        <div class="pos-section-label">お客様</div>
+        <div class="pos-choice-row">
+          <button type="button" class="pos-choice-btn ${pos.customerMode === 'anon' ? 'active' : ''}" onclick="posSetAnonymous()">👤 匿名</button>
+          <button type="button" class="pos-choice-btn ${pos.customerMode === 'named' ? 'active' : ''}" onclick="posOpenNameSearch()">🔍 名前を探す
+            ${pos.customerMode === 'named' ? `<span class="pos-choice-sub">${escHtml(pos.customerName)} 様</span>` : ''}
+          </button>
+        </div>
+      </div>
+
+      <div class="pos-section">
+        <div class="pos-section-label">品物</div>
+        <div class="pos-cat-grid">
+          ${POS_CATEGORIES.map(c => `
+            <button type="button" class="pos-cat-btn" onclick="posOpenCategory('${c.key}')">
+              <span class="pos-cat-icon">${c.icon}</span>
+              <span class="pos-cat-label">${c.label}</span>
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <div class="pos-section">
+        <button type="button" class="pos-wide-btn" onclick="posOpenBox()">📦 箱</button>
+      </div>
+
+      <div class="pos-section">
+        <div class="pos-section-label">発送</div>
+        <div class="pos-choice-row">
+          <button type="button" class="pos-choice-btn ${pos.shipMode === 'face' ? 'active' : ''}" onclick="posSetShipMode('face')">🤝 対面</button>
+          <button type="button" class="pos-choice-btn ${pos.shipMode === 'ship' ? 'active' : ''}" onclick="posSetShipMode('ship')">🚚 発送</button>
+        </div>
+        ${feeHtml}
+      </div>
+
+      <div class="pos-section">
+        <div class="pos-section-label">選んだ品物</div>
+        <div class="pos-cart">${cartHtml}</div>
+      </div>`;
+
+    document.getElementById('posFooter').innerHTML = `
+      <div class="pos-footer-total">合計 <b id="posOrderTotal">${formatYen(posTotal())}</b></div>
+      <button type="button" class="pos-primary-btn" onclick="posGoCheckout()" ${pos.cart.length ? '' : 'disabled'}>お会計</button>`;
+  }
+
+  function posSetAnonymous() {
+    pos.customerMode = 'anon';
+    pos.customerName = '匿名';
+    renderPos();
+  }
+
+  function posSetShipMode(mode) {
+    pos.shipMode = mode;
+    renderPos();
+  }
+
+  function posSelectFee(val) {
+    pos.feeChoice = val;
+    renderPos();
+    if (val === 'custom') document.getElementById('posCustomFee')?.focus();
+  }
+
+  // 直接記入は入力のたびに全体を描き直すと入力欄のフォーカスが外れるため、合計表示だけ更新する
+  function posSetCustomFee(val) {
+    pos.customFee = val;
+    const el = document.getElementById('posOrderTotal');
+    if (el) el.textContent = formatYen(posTotal());
+  }
+
+  function posChangeQty(index, delta) {
+    const line = pos.cart[index];
+    line.qty = Math.round((line.qty + delta) * 10) / 10;
+    if (line.qty <= 0) pos.cart.splice(index, 1);
+    renderPos();
+  }
+
+  function posAddToCart(item, qty) {
+    const existing = pos.cart.find(l => l.field === item.field);
+    if (existing) existing.qty = Math.round((existing.qty + qty) * 10) / 10;
+    else pos.cart.push({ ...item, qty });
+    posCloseStep();
+    renderPos();
+  }
+
+  function posGoCheckout() {
+    if (!pos.cart.length) return;
+    if (pos.shipMode === 'ship' && !posShippingFee()) {
+      alert('送料を選ぶか、直接記入してください');
+      return;
+    }
+    pos.view = 'checkout';
+    pos.tendered = '';
+    renderPos();
+  }
+
+  // ── 小窓（品種 → サイズ → 個数 を1段ずつ選ぶ） ──
+  function posShowStep(title, html, isFirst) {
+    document.getElementById('posStepTitle').textContent = title;
+    document.getElementById('posStepBody').innerHTML = html;
+    document.getElementById('posStepBackBtn').style.visibility = isFirst ? 'hidden' : 'visible';
+    document.getElementById('posStepOverlay').classList.add('open');
+  }
+
+  function posPushStep(renderFn) {
+    posStepStack.push(renderFn);
+    renderFn(posStepStack.length === 1);
+  }
+
+  function posStepBack() {
+    posStepStack.pop();
+    const prev = posStepStack[posStepStack.length - 1];
+    if (prev) prev(posStepStack.length === 1);
+    else posCloseStep();
+  }
+
+  function posCloseStep() {
+    posStepStack = [];
+    posPendingItem = null;
+    document.getElementById('posStepOverlay').classList.remove('open');
+  }
+
+  // スイカは「正規品」「訳あり」だけだと何の品物か分かりにくいため、品名の頭に「スイカ」を付ける
+  function posItemFromSku(catKey, group, item) {
+    return {
+      field: item.qtyKey,
+      name: `${catKey === 'suika' ? 'スイカ ' : ''}${group.label}${item.label ? ' ' + item.label : ''}`,
+      unit: item.unit || '玉',
+      price: pos.prices[item.priceDefaultKey],
+      isKg: false,
+    };
+  }
+
+  function posOpenCategory(catKey) {
+    posCloseStep();
+    const cat = POS_CATEGORIES.find(c => c.key === catKey);
+    if (catKey === 'onion') {
+      posStartQty({ field: 'onion_kg', name: '玉ねぎ', unit: 'kg', price: pos.prices.onion, isKg: true }, true);
+      return;
+    }
+    posPushStep(isFirst => {
+      const tiles = cat.groups
+        .map((g, gi) => ({ g, gi }))
+        .filter(({ g }) => isProductVisible(g.label))
+        .map(({ g, gi }, n) => `
+          <div class="pos-tile tone-${n % 4}" onclick="posSelectGroup('${catKey}', ${gi})">
+            <span class="pos-tile-icon">${POS_GROUP_ICONS[g.label] || cat.icon}</span>
+            <span class="pos-tile-label">${escHtml(g.label)}</span>
+          </div>`).join('');
+      posShowStep(`${cat.icon} ${cat.label}：種類を選ぶ`,
+        tiles ? `<div class="pos-tile-grid">${tiles}</div>`
+              : '<p class="pos-step-note">表示中の品種がありません（単価一覧の「👁」で表示に切り替えられます）</p>',
+        isFirst);
+    });
+  }
+
+  function posSelectGroup(catKey, gi) {
+    const cat = POS_CATEGORIES.find(c => c.key === catKey);
+    const g = cat.groups[gi];
+    // サイズが1種類しかない品種（日焼け・かぼちゃ等）はサイズ選択を飛ばす
+    if (g.items.length === 1) {
+      posStartQty(posItemFromSku(catKey, g, g.items[0]));
+      return;
+    }
+    posPushStep(isFirst => {
+      const tiles = g.items.map((it, ii) => `
+        <div class="pos-tile tone-${ii % 4}" onclick="posSelectSku('${catKey}', ${gi}, ${ii})">
+          <span class="pos-tile-big">${escHtml(it.label)}</span>
+          <span class="pos-tile-sub">${formatYen(pos.prices[it.priceDefaultKey])}</span>
+        </div>`).join('');
+      posShowStep(`${g.label}：サイズを選ぶ`, `<div class="pos-tile-grid">${tiles}</div>`, isFirst);
+    });
+  }
+
+  function posSelectSku(catKey, gi, ii) {
+    const g = POS_CATEGORIES.find(c => c.key === catKey).groups[gi];
+    posStartQty(posItemFromSku(catKey, g, g.items[ii]));
+  }
+
+  function posOpenBox() {
+    posCloseStep();
+    posPushStep(isFirst => {
+      const tiles = POS_BOXES.map((b, bi) => `
+        <div class="pos-tile tone-${b.field.startsWith('box_suika') ? 1 : 0}" onclick="posSelectBox(${bi})">
+          <span class="pos-tile-icon">📦</span>
+          <span class="pos-tile-label">${b.icon} ${escHtml(b.label)}</span>
+          <span class="pos-tile-sub">${formatYen(pos.prices[b.priceKey])}</span>
+        </div>`).join('');
+      posShowStep('📦 箱：種類を選ぶ', `<div class="pos-tile-grid">${tiles}</div>`, isFirst);
+    });
+  }
+
+  function posSelectBox(bi) {
+    const b = POS_BOXES[bi];
+    posStartQty({ field: b.field, name: `箱（${b.label}）`, unit: '箱', price: pos.prices[b.priceKey], isKg: false });
+  }
+
+  function posStartQty(item, fresh) {
+    if (fresh) posCloseStep();
+    posPendingItem = item;
+    posPushStep(isFirst => {
+      const choices = item.isKg ? POS_KG_CHOICES : POS_QTY_CHOICES;
+      const tiles = choices.map(n => `
+        <div class="pos-tile" onclick="posAddPending(${n})">
+          <span class="pos-tile-big">${n}</span>
+          <span class="pos-tile-sub">${item.unit}</span>
+        </div>`).join('');
+      posShowStep(`${item.name}：${item.isKg ? '重さ' : '個数'}を選ぶ`, `
+        <p class="pos-step-note" style="margin:0 0 10px;">単価 ${formatYen(item.price)}${item.isKg ? '/kg' : ''}</p>
+        <div class="pos-tile-grid cols-5">${tiles}</div>
+        <div class="pos-direct-row">
+          <input type="number" id="posDirectQty" inputmode="decimal" min="0" step="${item.isKg ? '0.1' : '1'}" placeholder="それ以外は直接入力">
+          <button type="button" onclick="posAddPendingDirect()">追加</button>
+        </div>`, isFirst);
+    });
+  }
+
+  function posAddPending(n) {
+    if (posPendingItem) posAddToCart(posPendingItem, n);
+  }
+
+  function posAddPendingDirect() {
+    const raw = document.getElementById('posDirectQty').value;
+    const n = posPendingItem.isKg ? Math.round(parseFloat(raw) * 10) / 10 : parseInt(raw, 10);
+    if (!(n > 0)) { alert('数量を入力してください'); return; }
+    posAddToCart(posPendingItem, n);
+  }
+
+  // ── お名前を探す（予約管理表の「お名前」と同じ、行 → 名前の2段階） ──
+  function posOpenNameSearch() {
+    posCloseStep();
+    posPushStep(isFirst => {
+      posShowStep('🔍 お名前を探す', `
+        <div class="tile-grid">
+          ${KANA_ROWS.map(r => `<div class="tile-option" onclick="posSelectKanaRow('${r}')">${r}行</div>`).join('')}
+        </div>
+        <div class="modal-group" style="margin-top:16px;">
+          <label>リストにない場合はこちらに直接入力</label>
+          <div class="pos-direct-row" style="margin-top:0;">
+            <input type="text" id="posNameFree" placeholder="お名前" style="text-align:left;">
+            <button type="button" onclick="posUseFreeName()">決定</button>
+          </div>
+        </div>`, isFirst);
+    });
+  }
+
+  function posSelectKanaRow(row) {
+    posPushStep(isFirst => {
+      const names = customersByRow[row] || [];
+      const chips = names.length
+        ? names.map((n, i) => `<div class="name-chip group-${n.group % NAME_CHIP_GROUP_COLORS}" onclick="posSelectName('${row}', ${i})">${escHtml(n.name)}</div>`).join('')
+        : '<span style="color:#bbb;font-size:13px;">この行にはまだ登録がありません</span>';
+      posShowStep(`${row}行のお名前`, `<div class="name-list" style="max-height:none;">${chips}</div>`, isFirst);
+    });
+  }
+
+  function posSetCustomer(name) {
+    pos.customerMode = 'named';
+    pos.customerName = name;
+    posCloseStep();
+    renderPos();
+  }
+
+  function posSelectName(row, index) {
+    posSetCustomer(customersByRow[row][index].name);
+  }
+
+  async function posUseFreeName() {
+    const name = document.getElementById('posNameFree').value.trim();
+    if (!name) { alert('お名前を入力してください'); return; }
+    // 予約管理表の「お名前」と同様、顧客マスタになければ追加しておく
+    const row = guessKanaRow(name);
+    if (row) await ensureCustomer(row, name);
+    posSetCustomer(name);
+  }
+
+  // ── お会計画面 ──
+  function renderPosCheckout() {
+    const total = posTotal();
+    const lines = pos.cart.map(l => `
+      <div class="pos-receipt-line">
+        <span class="r-name">${escHtml(l.name)}</span>
+        <span class="r-qty">${posQtyLabel(l)}</span>
+        <span class="r-amount">${formatYen(posLineAmount(l))}</span>
+      </div>`);
+    if (posShippingFee()) {
+      lines.push(`
+      <div class="pos-receipt-line">
+        <span class="r-name">送料（税込み）</span>
+        <span class="r-qty"></span>
+        <span class="r-amount">${formatYen(posShippingFee())}</span>
+      </div>`);
+    }
+
+    document.getElementById('posBody').innerHTML = `
+      <div class="pos-checkout-total">お会計：${formatYen(total)}</div>
+      <div class="pos-section" style="text-align:center;color:#666;font-size:14px;font-weight:700;">
+        ${escHtml(pos.customerName)}${pos.customerMode === 'named' ? ' 様' : ''} ／ ${pos.shipMode === 'ship' ? '🚚 発送' : '🤝 対面'}
+      </div>
+      <div class="pos-section"><div class="pos-receipt">${lines.join('')}</div></div>
+
+      <div class="pos-section">
+        <div class="pos-section-label">お預かり（円）</div>
+        <input type="number" class="pos-tender-input" id="posTendered" inputmode="numeric" min="0" step="1" placeholder="0" value="${escHtml(pos.tendered)}" oninput="posSetTendered(this.value)">
+        <div class="pos-quick-row">
+          <button type="button" onclick="posQuickTender(${total})">ちょうど</button>
+          <button type="button" onclick="posQuickTender(1000)">1,000</button>
+          <button type="button" onclick="posQuickTender(5000)">5,000</button>
+          <button type="button" onclick="posQuickTender(10000)">10,000</button>
+        </div>
+        <div id="posChange"></div>
+      </div>`;
+
+    document.getElementById('posFooter').innerHTML = `
+      <button type="button" class="pos-secondary-btn" onclick="posBackToOrder()">← 修正する</button>
+      <button type="button" class="pos-primary-btn" id="posCompleteBtn" onclick="posComplete()">お会計を完了する</button>`;
+
+    renderPosChange();
+  }
+
+  function renderPosChange() {
+    const el = document.getElementById('posChange');
+    if (!el) return;
+    const tendered = parseInt(pos.tendered, 10);
+    if (Number.isNaN(tendered)) { el.innerHTML = ''; return; }
+    const diff = tendered - posTotal();
+    el.innerHTML = diff >= 0
+      ? `<div class="pos-change">おつり：${formatYen(diff)}</div>`
+      : `<div class="pos-change short">あと ${formatYen(-diff)} 足りません</div>`;
+  }
+
+  function posSetTendered(val) {
+    pos.tendered = val;
+    renderPosChange();
+  }
+
+  function posQuickTender(amount) {
+    pos.tendered = String(amount);
+    document.getElementById('posTendered').value = pos.tendered;
+    renderPosChange();
+  }
+
+  function posBackToOrder() {
+    pos.view = 'order';
+    renderPos();
+  }
+
+  async function posComplete() {
+    if (posSaving) return;
+    posSaving = true;
+    const btn = document.getElementById('posCompleteBtn');
+    btn.disabled = true;
+    btn.textContent = '記録中...';
+
+    const payload = {
+      sheet_id: sheetId,
+      sort_order: entries.reduce((m, e) => Math.max(m, e.sort_order), 0) + 1,
+      created_by: currentProfile.id,
+      entry_date: pos.date,
+      customer_name: pos.customerName,
+      ...buildUnitPricePayload(pos.prices),
+      shipped: pos.shipMode === 'ship',
+      shipping_fee: posShippingFee(),
+      paid: true,
+    };
+    pos.cart.forEach(l => { payload[l.field] = l.qty; });
+
+    const { data, error } = await supabaseClient
+      .from('melon_entries')
+      .insert(payload)
+      .select()
+      .single();
+
+    posSaving = false;
+    if (error) {
+      console.error(error);
+      alert('記録に失敗しました。通信状態を確認して、もう一度「お会計を完了する」を押してください。');
+      btn.disabled = false;
+      btn.textContent = 'お会計を完了する';
+      return;
+    }
+
+    entries.push(data);
+    renderTable();
+
+    const thanks = document.getElementById('posThanks');
+    thanks.classList.add('open');
+    setTimeout(() => {
+      thanks.classList.remove('open');
+      pos = posNewState();
+      renderPos();
+      document.querySelector('#posOverlay .pos-body').scrollTop = 0;
+    }, POS_THANKS_MS);
+  }
+
   // ── 初期化 ──────────────────────────────────────────────
   (async () => {
     currentProfile = await requireAuth('admin');
@@ -1905,6 +2778,9 @@
     renderProductToggles();
     await loadPricePeriods();
     await loadEntries();
+
+    // 別の月の表から「店頭会計」を押して今月の表に移動してきた場合は、そのまま会計画面を開く
+    if (params.get('pos') === '1') openPos();
   })();
 
 </script>
