@@ -265,6 +265,13 @@
       margin-bottom: 20px;
     }
 
+    .break-custom-label { display: none; font-size: 13px; font-weight: 700; color: #555; margin: -8px 0 6px; }
+    .break-custom-label.open { display: block; }
+    .break-custom-row { display: none; align-items: center; gap: 10px; }
+    .break-custom-row.open { display: flex; }
+    .break-custom-row .modal-time-select { flex: 1; }
+    .break-custom-row span { font-size: 16px; font-weight: 700; color: #444; margin-bottom: 20px; white-space: nowrap; }
+
     .modal-actions {
       display: flex;
       gap: 10px;
@@ -348,13 +355,19 @@
 <div class="modal-overlay" id="breakSelectModalOverlay">
   <div class="modal-sheet">
     <div class="modal-title">休憩時間をえらぶ（きゅうけいじかんをえらぶ）</div>
-    <select class="modal-time-select" id="breakSelectInput">
+    <select class="modal-time-select" id="breakSelectInput" onchange="toggleBreakCustomInput()">
       <option value="15">15分</option>
       <option value="60">60分</option>
       <option value="75">75分</option>
       <option value="90">90分</option>
       <option value="120">120分</option>
+      <option value="custom">✏️ 直接入力</option>
     </select>
+    <div class="break-custom-label" id="breakCustomLabel">分数を入力（ふんすうをにゅうりょく）</div>
+    <div class="break-custom-row" id="breakCustomRow">
+      <input type="number" class="modal-time-select" id="breakCustomInput" inputmode="numeric" min="1" max="600" step="1" placeholder="例：45">
+      <span>分（ふん）</span>
+    </div>
     <div class="modal-actions">
       <button type="button" class="btn-modal-cancel" onclick="closeBreakSelectModal()">キャンセル</button>
       <button type="button" class="btn-modal-submit" id="breakSelectSubmitBtn" onclick="submitBreakSelect()">記録する</button>
@@ -607,10 +620,25 @@
   }
 
   // ── 休憩時間選択 ────────────────────────────────────────
+  // 選択肢（15/60/75/90/120分）に加え、「直接入力」で任意の分数も記録できる
+  const BREAK_MAX_MINUTES = 600;
+
   function openBreakSelectModal() {
     clearActionIdleTimer(); // モーダル操作中に名前一覧へ戻されないようにする
-    document.getElementById('breakSelectInput').value = String(currentRecord?.break_minutes ?? 15);
+    const current = currentRecord?.break_minutes ?? 15;
+    const select = document.getElementById('breakSelectInput');
+    const isPreset = [...select.options].some(o => o.value === String(current));
+    select.value = isPreset ? String(current) : 'custom';
+    document.getElementById('breakCustomInput').value = isPreset ? '' : String(current);
+    toggleBreakCustomInput();
     document.getElementById('breakSelectModalOverlay').classList.add('open');
+  }
+
+  function toggleBreakCustomInput() {
+    const isCustom = document.getElementById('breakSelectInput').value === 'custom';
+    document.getElementById('breakCustomRow').classList.toggle('open', isCustom);
+    document.getElementById('breakCustomLabel').classList.toggle('open', isCustom);
+    if (isCustom) document.getElementById('breakCustomInput').focus();
   }
 
   function closeBreakSelectModal() {
@@ -619,7 +647,14 @@
   }
 
   async function submitBreakSelect() {
-    const breakMinutes = Number(document.getElementById('breakSelectInput').value);
+    const selected = document.getElementById('breakSelectInput').value;
+    const breakMinutes = selected === 'custom'
+      ? Number(document.getElementById('breakCustomInput').value)
+      : Number(selected);
+    if (!Number.isInteger(breakMinutes) || breakMinutes < 1 || breakMinutes > BREAK_MAX_MINUTES) {
+      alert(`休憩時間は1〜${BREAK_MAX_MINUTES}分の整数で入力してください（きゅうけいじかんは1〜${BREAK_MAX_MINUTES}ふんでにゅうりょくしてください）`);
+      return;
+    }
 
     const btn = document.getElementById('breakSelectSubmitBtn');
     btn.disabled = true;
