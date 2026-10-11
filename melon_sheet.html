@@ -921,6 +921,149 @@
     }
     .pos-thanks.open { display: flex; }
 
+    .pos-quick-row button.active { background: #fff3e0; border-color: #ef6c00; color: #a84600; }
+    .pos-quick-row.wrap { flex-wrap: wrap; }
+    .pos-quick-row.wrap button { flex: 1 1 calc(20% - 8px); min-width: 64px; }
+    .pos-paypay-note {
+      background: #fff;
+      border: 2px solid #e53935;
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 800;
+      color: #c62828;
+    }
+    .pos-reserve-card {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: #fff;
+      border: 2px solid #e0e8de;
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .pos-reserve-card:active { border-color: #ef6c00; background: #fff3e0; }
+    .pos-reserve-name { font-size: 18px; font-weight: 800; color: #1a3d17; }
+    .pos-reserve-items { font-size: 13px; color: #666; margin-top: 4px; line-height: 1.5; white-space: normal; }
+    .pos-reserve-total { font-size: 15px; font-weight: 800; color: #a84600; margin-top: 4px; }
+    .pos-cart-sub { display: block; font-size: 11px; color: #a84600; font-weight: 600; }
+
+    /* ── 商品・価格の設定（対話形式） ── */
+    .btn-tool.set-launch { background: #fff; color: #2e5c28; border-color: #2e5c28; }
+    .set-overlay .pos-header { background: #2e5c28; }
+    .set-overlay .pos-step-head { margin-bottom: 16px; }
+    .set-menu { display: flex; flex-direction: column; gap: 12px; }
+    .set-menu-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+      background: #fff;
+      border: 2px solid #e0e8de;
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .set-menu-btn:active { border-color: #43a047; background: #f1f8ef; }
+    .set-menu-icon { font-size: 36px; flex-shrink: 0; }
+    .set-menu-btn b { display: block; font-size: 18px; color: #1a3d17; }
+    .set-menu-btn small { display: block; font-size: 13px; color: #777; margin-top: 3px; }
+    .set-field { margin-bottom: 18px; }
+    .set-field > label { display: block; font-size: 14px; font-weight: 800; color: #444; margin-bottom: 8px; }
+    .set-input-row { display: flex; align-items: center; gap: 8px; }
+    .set-input-row input[type="number"], .set-input-row input[type="text"], .set-field input[type="date"] {
+      flex: 1;
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #c8e0c4;
+      border-radius: 12px;
+      font-size: 20px;
+      font-family: inherit;
+    }
+    .set-input-row input[type="number"] { text-align: right; }
+    .set-input-row span { font-size: 15px; font-weight: 700; color: #555; white-space: nowrap; }
+    .set-current {
+      background: #f1f8ef;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 15px;
+      color: #444;
+      margin-bottom: 18px;
+    }
+    .set-current b { font-size: 20px; color: #1a3d17; }
+    .set-bundle-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+    .set-bundle-row input {
+      width: 80px;
+      padding: 10px;
+      border: 2px solid #c8e0c4;
+      border-radius: 10px;
+      font-size: 17px;
+      text-align: right;
+    }
+    .set-bundle-row .set-bundle-price { width: 110px; }
+    .set-bundle-row span { font-size: 14px; font-weight: 700; color: #555; }
+    .set-small-btn {
+      background: #fff;
+      border: 2px solid #c8e0c4;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #2e5c28;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .set-small-btn.danger { color: #c62828; border-color: #f0c4c4; }
+    .set-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .set-next-btn {
+      width: 100%;
+      background: #2e5c28;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 6px;
+    }
+    .set-next-btn:disabled { background: #bbb; cursor: not-allowed; }
+    .set-next-btn.secondary { background: #fff; color: #2e5c28; border: 2px solid #2e5c28; }
+    .set-confirm {
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      margin-bottom: 14px;
+    }
+    .set-confirm-name { font-size: 20px; font-weight: 800; color: #1a3d17; }
+    .set-confirm-price { font-size: 26px; font-weight: 900; color: #1a3d17; margin-top: 8px; }
+    .set-confirm-price s { color: #999; font-weight: 700; font-size: 18px; }
+    .set-confirm-sub { font-size: 15px; color: #555; margin-top: 8px; line-height: 1.6; }
+    .set-done { text-align: center; font-size: 26px; font-weight: 900; color: #2e7d32; padding: 24px 0 10px; }
+    .set-manage-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .set-manage-row.inactive { opacity: 0.55; }
+    .set-manage-name { flex: 1; font-size: 15px; font-weight: 700; color: #222; }
+    .set-manage-name small { display: block; font-size: 12px; color: #888; font-weight: 600; }
+    .custom-tag { font-size: 10px; font-weight: 700; color: #2e5c28; background: #e8f5e9; border-radius: 8px; padding: 1px 6px; margin-left: 4px; }
+
     @media (max-width: 420px) {
       .pos-cat-icon { font-size: 36px; }
       .pos-cat-label { font-size: 13px; }
@@ -1022,8 +1165,16 @@
       <tbody id="priceTableBody_tax"></tbody>
     </table>
 
+    <div class="price-group-title">➕ 画面から追加した商品</div>
+    <table class="mini-table">
+      <thead>
+        <tr><th>商品</th><th>単位</th><th>本日の価格</th><th>まとめ買い</th><th>状態</th></tr>
+      </thead>
+      <tbody id="customItemTableBody"></tbody>
+    </table>
+
     <button type="button" class="btn-tool" style="margin-top:8px;" onclick="addPricePeriod()">＋ 価格期間を追加</button>
-    <p class="summary-note">※ 価格をタップすると変更できます。開始日以降（終了日を設定していれば終了日まで）に登録した行に、その価格が使われます。過去に登録済みの行の単価は、期間の価格を変更しても遡って変わりません。緑色の行が本日時点で適用中の期間です。5つの表は同じ価格期間を分野別に分けて表示しています（どこで開始日・終了日を変更しても全表に反映されます）。</p>
+    <p class="summary-note">※ 価格の変更・商品の追加は、上の「🏷 商品・価格の設定」ボタンから順番に選んで行うのが簡単です。この表でも価格をタップすると変更できます。開始日以降（終了日を設定していれば終了日まで）に登録した行に、その価格が使われます。過去に登録済みの行の単価は、期間の価格を変更しても遡って変わりません。緑色の行が本日時点で適用中の期間です。5つの表は同じ価格期間を分野別に分けて表示しています（どこで開始日・終了日を変更しても全表に反映されます）。</p>
   </div>
 </div>
 
@@ -1044,9 +1195,11 @@
 
 <div class="toolbar">
   <button class="btn-tool pos-launch" onclick="openPos()">🛒 店頭会計</button>
+  <button class="btn-tool set-launch" onclick="openSettings()">🏷 商品・価格の設定</button>
   <button class="btn-tool primary" onclick="addRow()">＋ 行を追加</button>
   <button class="btn-tool" id="sortDateBtn" onclick="toggleAutoSort()">⏸ 自動並べ替え停止</button>
   <button class="btn-tool" onclick="exportEntriesCSV()">⬇ CSVダウンロード</button>
+  <button class="btn-tool" onclick="openSalesExport()">📊 売上Excel出力</button>
 </div>
 
 <div class="column-toggle-bar">
@@ -1069,14 +1222,14 @@
         <th class="col-veggie">野菜</th>
         <th>その他</th>
         <th>発送</th>
+        <th>届け先</th>
         <th>箱代</th>
         <th>送料</th>
         <th>商品小計</th>
         <th>総計</th>
         <th>消費税</th>
         <th>入金</th>
-        <th>現金</th>
-        <th>PayPay</th>
+        <th>支払い方法</th>
         <th>領収書</th>
         <th>備考</th>
         <th></th>
@@ -1085,6 +1238,17 @@
     <tbody id="entryTbody"></tbody>
   </table>
   <div class="loading-state" id="loadingState">読み込み中...</div>
+</div>
+
+<!-- 売上Excel出力（5パターン） -->
+<div class="modal-overlay" id="salesModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title" id="salesModalTitle">📊 売上Excel出力</div>
+    <div id="salesModalBody"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" onclick="closeSalesExport()">閉じる</button>
+    </div>
+  </div>
 </div>
 
 <!-- セル編集モーダル -->
@@ -1123,7 +1287,26 @@
 
 <div class="pos-thanks" id="posThanks">ありがとうございました！</div>
 
+<!-- 商品・価格の設定（対話形式） -->
+<div class="pos-overlay set-overlay" id="setOverlay">
+  <div class="pos-header">
+    <div><span class="pos-header-title">🏷 商品・価格の設定</span></div>
+    <button type="button" class="pos-close-btn" onclick="closeSettings()">✕ 閉じる</button>
+  </div>
+  <div class="pos-body">
+    <div class="pos-inner">
+      <div class="pos-step-head">
+        <button type="button" class="pos-step-back" id="setBackBtn" onclick="setBack()">← 戻る</button>
+        <div class="pos-step-title" id="setStepTitle"></div>
+      </div>
+      <div id="setBody"></div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- 売上Excel（罫線・書式つき）の出力用。admin.html の出勤簿と同じ ExcelJS を使う -->
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/melon-common.js"></script>
 <script>
@@ -1228,6 +1411,119 @@
   // 単価の初期セット（addRow）・CSV出力で使う、全SKUのフラットな一覧
   const ALL_ITEM_GROUPS = [...MELON_GROUPS, ...SUIKA_GROUPS, ...VEGGIE_GROUPS];
 
+  // ── 画面から追加した商品（ec_items / ec_item_prices） ──────────
+  // 上の品種は商品ごとのDB列で管理しているが、それとは別に「🏷 商品・価格の設定」から
+  // 自由に追加できる商品を ec_items（商品・サイズ・単位）と ec_item_prices（適用日ごとの
+  // 価格・まとめ買い価格）で管理する。行（melon_entries）には extra_items（jsonb）に
+  // 明細のスナップショットを、extra_items_amount に合計金額を保存し、商品小計・総計・消費税に含める。
+  const CUSTOM_CATEGORIES = [
+    { key: 'melon',  label: 'メロン', icon: '🍈' },
+    { key: 'suika',  label: 'スイカ', icon: '🍉' },
+    { key: 'veggie', label: '野菜',   icon: '🥬' },
+  ];
+
+  let customItems = []; // ec_items に prices（適用日の昇順）を付けたもの
+
+  async function loadCustomItems() {
+    const { data, error } = await supabaseClient
+      .from('ec_items')
+      .select('*, ec_item_prices(*)')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true });
+    if (error) { console.error(error); customItems = []; return; }
+    customItems = (data || []).map(it => ({
+      ...it,
+      prices: (it.ec_item_prices || []).sort((a, b) => a.start_date < b.start_date ? -1 : 1),
+    }));
+  }
+
+  function findCustomItem(id) {
+    return customItems.find(it => it.id === id);
+  }
+
+  function customItemName(it) {
+    return `${it.group_label}${it.size_label ? ' ' + it.size_label : ''}`;
+  }
+
+  // kg は小数（量り売り）、それ以外は整数個で数える
+  function isKgUnit(unit) {
+    return unit === 'kg';
+  }
+
+  // 指定日時点の価格（適用日が指定日以前で最も新しいもの）。まだ販売開始前なら null
+  function customPriceAt(it, dateStr) {
+    const pool = it.prices.filter(p => p.start_date <= dateStr);
+    return pool.length ? pool[pool.length - 1] : null;
+  }
+
+  // まとめ買い価格（例：1玉300円・2玉500円）を組み合わせて、qty個の一番安い合計金額を返す
+  function customAmount(unitPrice, bundles, qty, unit) {
+    if (isKgUnit(unit)) return Math.round(qty * unitPrice);
+    const n = Math.round(qty);
+    const tiers = [{ qty: 1, price: unitPrice }, ...(bundles || []).filter(b => b.qty >= 2)];
+    const best = [0];
+    for (let q = 1; q <= n; q++) {
+      best[q] = Infinity;
+      tiers.forEach(t => { if (t.qty <= q) best[q] = Math.min(best[q], best[q - t.qty] + t.price); });
+    }
+    return best[n];
+  }
+
+  function bundleLabel(bundles, unit) {
+    return (bundles || []).map(b => `${b.qty}${unit} ${formatYen(b.price)}`).join('・');
+  }
+
+  function customPriceLabel(price, bundles, unit) {
+    const b = bundleLabel(bundles, unit);
+    return `${formatYen(price)}/${unit}${b ? `（${b}）` : ''}`;
+  }
+
+  function entryExtraItems(entry) {
+    return Array.isArray(entry.extra_items) ? entry.extra_items : [];
+  }
+
+  function extraItemsAmount(lines) {
+    return lines.reduce((s, x) => s + (x.amount || 0), 0);
+  }
+
+  // 店頭会計・商品設定で使う「種類」の一覧：従来の品種に、同じ品名の追加商品をまとめて並べる
+  function mergedGroups(catKey, dateStr, opts = {}) {
+    const builtin = { melon: MELON_GROUPS, suika: SUIKA_GROUPS, veggie: VEGGIE_GROUPS }[catKey] || [];
+    const customs = customItems.filter(it => it.category === catKey
+      && (opts.includeInactive || it.active)
+      && (opts.includeUnpriced || customPriceAt(it, dateStr)));
+    const groups = builtin.map(g => ({ label: g.label, builtinItems: g.items }));
+    customs.forEach(c => {
+      if (!groups.some(g => g.label === c.group_label)) groups.push({ label: c.group_label, builtinItems: [] });
+    });
+    return groups.map(g => ({
+      label: g.label,
+      skus: [
+        ...g.builtinItems.map(it => ({ type: 'builtin', it })),
+        ...customs.filter(c => c.group_label === g.label).map(ci => ({ type: 'custom', ci })),
+      ],
+    }));
+  }
+
+  function renderCustomItemTable() {
+    const tbody = document.getElementById('customItemTableBody');
+    if (!tbody) return;
+    const today = shiftedDateStr(0);
+    tbody.innerHTML = customItems.length ? customItems.map(it => {
+      const p = customPriceAt(it, today);
+      const next = it.prices.find(x => x.start_date > today);
+      const nextNote = next ? `<div class="cell-sub">${formatDateJa(next.start_date)}から ${formatYen(next.unit_price)}</div>` : '';
+      return `
+        <tr>
+          <td>${escHtml(customItemName(it))}</td>
+          <td>${escHtml(it.unit)}</td>
+          <td class="amount-cell">${p ? formatYen(p.unit_price) : '販売前'}${nextNote}</td>
+          <td>${p ? escHtml(bundleLabel(p.bundles, it.unit)) || '-' : '-'}</td>
+          <td>${it.active ? '販売中' : '販売停止'}</td>
+        </tr>`;
+    }).join('') : '<tr><td colspan="5" style="color:#bbb;">まだありません（「🏷 商品・価格の設定」→「商品・サイズを追加する」から追加できます）</td></tr>';
+  }
+
   // ── 商品（品種）ごとの表示/非表示 ─────────────────────────
   // 今シーズン扱っていない品種を、単価一覧・セル編集モーダルから非表示にできる。
   // 設定は melon_product_visibility テーブルで全期間・全員共通に保存する。
@@ -1298,6 +1594,8 @@
     onion_kg:       { label: '玉ねぎ(kg)', type: 'onion' },
     box:            { label: '箱代',     type: 'box' },
     shipping_fee:   { label: '送料',     type: 'number' },
+    ship_to:        { label: '届け先',   type: 'shipto' },
+    payment:        { label: '支払い方法', type: 'payment' },
     note:           { label: '備考',     type: 'text' },
   };
 
@@ -1386,11 +1684,45 @@
     return `<div class="check-cell ${checked ? 'checked' : 'unchecked'}" onclick="toggleCheckCell(findEntry('${entry.id}'), '${colKey}')">${checked ? '✅' : '—'}</div>`;
   }
 
-  // 支払い方法（現金／PayPay）用のチェックセル：2つは排他的（一方をONにすると他方は自動でOFF）
-  function paymentMethodCell(entry, colKey) {
-    const checked = !!entry[colKey];
-    return `<div class="check-cell ${checked ? 'checked' : 'unchecked'}" onclick="togglePaymentMethodCell(findEntry('${entry.id}'), '${colKey}')">${checked ? '✅' : '—'}</div>`;
+  // 支払い方法は「現金／PayPay／振込」の3つから1つ（DBは paid_cash / paid_paypay / paid_transfer の3列で、どれか1つだけ true）
+  const PAYMENT_METHODS = [
+    { key: 'cash',     field: 'paid_cash',     label: '現金',   icon: '💴' },
+    { key: 'paypay',   field: 'paid_paypay',   label: 'PayPay', icon: '📱' },
+    { key: 'transfer', field: 'paid_transfer', label: '振込',   icon: '🏦' },
+  ];
+
+  function paymentMethodOf(entry) {
+    const m = PAYMENT_METHODS.find(p => entry[p.field]);
+    return m ? m.key : null;
   }
+
+  function paymentMethodLabel(entry) {
+    const m = PAYMENT_METHODS.find(p => entry[p.field]);
+    return m ? `${m.icon} ${m.label}` : '';
+  }
+
+  // 支払い方法を保存するときの3列分の値（振込の列は migration 前でも動くよう、振込を選んだときか、
+  // 既存の行にその列があるときだけ送る。新しい行は送らなくてもDBの初期値 false になる）
+  function paymentMethodPatch(key, entry) {
+    const patch = { paid_cash: key === 'cash', paid_paypay: key === 'paypay' };
+    if (key === 'transfer' || (entry && 'paid_transfer' in entry)) patch.paid_transfer = key === 'transfer';
+    return patch;
+  }
+
+  // 届け先：配送料の確認用に都道府県を選ぶ（宅配便の運賃の地域区分の順に並べる）
+  const PREF_REGIONS = [
+    { label: '北陸',   prefs: ['福井県', '石川県', '富山県'] },
+    { label: '関西',   prefs: ['滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県'] },
+    { label: '中部',   prefs: ['岐阜県', '静岡県', '愛知県', '三重県'] },
+    { label: '信越',   prefs: ['新潟県', '長野県'] },
+    { label: '関東',   prefs: ['茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県', '山梨県'] },
+    { label: '東北',   prefs: ['青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県'] },
+    { label: '北海道', prefs: ['北海道'] },
+    { label: '中国',   prefs: ['鳥取県', '島根県', '岡山県', '広島県', '山口県'] },
+    { label: '四国',   prefs: ['徳島県', '香川県', '愛媛県', '高知県'] },
+    { label: '九州',   prefs: ['福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県'] },
+    { label: '沖縄',   prefs: ['沖縄県'] },
+  ];
 
   // メロン／スイカ／野菜列（複数SKUをまとめた1列）：注文があるSKUだけを、クリック不要で常に縦に並べて表示する
   function groupedCellContent(entry, rowPrices, groups, colKey) {
@@ -1405,6 +1737,9 @@
         const itemLabel = it.label ? ` ${it.label}` : '';
         lines.push(`<div class="melon-size-line">${g.label}${itemLabel} ${qty}${it.unit || '玉'}${priceNote}</div>`);
       });
+    });
+    entryExtraItems(entry).filter(x => x.category === colKey && x.qty > 0).forEach(x => {
+      lines.push(`<div class="melon-size-line">${escHtml(x.name)} ${x.qty}${escHtml(x.unit)} <span class="cell-sub-inline">${formatYen(x.amount)}</span></div>`);
     });
     if (!lines.length) return cellBtn('-', colKey, entry.id, { empty: true });
     return cellBtn(lines.join(''), colKey, entry.id, {});
@@ -1444,14 +1779,14 @@
         <td class="col-veggie">${veggieCellContent(entry, rowPrices)}</td>
         <td>${cellBtn(entry.qty_other ? `${entry.qty_other}` : '-', 'qty_other', entry.id, { empty: !entry.qty_other, sub: entry.other_label ? escHtml(entry.other_label) : '' })}</td>
         <td>${checkCell(entry, 'shipped')}</td>
+        <td>${cellBtn(entry.ship_to ? escHtml(entry.ship_to) : '-', 'ship_to', entry.id, { empty: !entry.ship_to })}</td>
         <td>${cellBtn(boxCellLabel(entry), 'box', entry.id, { empty: !hasAnyBox(entry) })}</td>
         <td>${cellBtn(entry.shipping_fee ? formatYen(entry.shipping_fee) : '-', 'shipping_fee', entry.id, { empty: !entry.shipping_fee })}</td>
         <td class="total-cell">${cellBtn(formatYen(entry.subtotal_amount), 'subtotal_amount', entry.id, { readonly: true })}</td>
         <td class="total-cell">${cellBtn(formatYen(entry.total_amount), 'total_amount', entry.id, { readonly: true })}</td>
         <td class="total-cell">${cellBtn(formatYen(entry.consumption_tax_amount), 'consumption_tax_amount', entry.id, { readonly: true })}</td>
         <td>${checkCell(entry, 'paid')}</td>
-        <td>${paymentMethodCell(entry, 'paid_cash')}</td>
-        <td>${paymentMethodCell(entry, 'paid_paypay')}</td>
+        <td>${cellBtn(paymentMethodLabel(entry) || '-', 'payment', entry.id, { empty: !paymentMethodLabel(entry) })}</td>
         <td>${checkCell(entry, 'receipt_issued')}</td>
         <td>${cellBtn(entry.note ? escHtml(entry.note) : '-', 'note', entry.id, { empty: !entry.note })}</td>
         <td><button class="btn-del-row" onclick="deleteRow('${entry.id}')">🗑</button></td>
@@ -1483,6 +1818,7 @@
       document.getElementById('loadingState').textContent = 'まだ行がありません。「＋行を追加」から始めましょう。';
     }
     renderPriceTable();
+    renderCustomItemTable();
     renderDailySummary();
   }
 
@@ -1592,18 +1928,93 @@
     if (error) { console.error(error); return; }
     pricePeriods = data || [];
 
-    // このシートにまだ価格期間がなければ、月初日付・基本価格で1件だけ作成しておく
+    // このシートにまだ価格期間がなければ、月初日付で1件だけ作成しておく
     if (!pricePeriods.length) {
       const monthStart = `${YEAR}-${String(MONTH).padStart(2, '0')}-01`;
-      const payload = { sheet_id: sheetId, start_date: monthStart };
-      PRICE_TABLE_COLS.forEach(c => { payload[c.dbCol] = DEFAULT_PRICES[c.key]; });
       const { data: created, error: insErr } = await supabaseClient
         .from('melon_price_periods')
-        .insert(payload)
+        .insert(await initialPricePayload(sheetId, monthStart))
         .select()
         .single();
       if (!insErr && created) pricePeriods = [created];
     }
+  }
+
+  // 新しい月の表の最初の価格期間：前の月までに設定した最新の価格を引き継ぐ
+  // （以前は毎月 DEFAULT_PRICES に戻っていたため、価格変更が翌月に引き継がれなかった）
+  async function initialPricePayload(targetSheetId, monthStart) {
+    const { data: prev } = await supabaseClient
+      .from('melon_price_periods')
+      .select('*')
+      .lt('start_date', monthStart)
+      .order('start_date', { ascending: false })
+      .limit(1);
+    const base = prev && prev[0];
+    const payload = { sheet_id: targetSheetId, start_date: monthStart };
+    PRICE_TABLE_COLS.forEach(c => { payload[c.dbCol] = base ? base[c.dbCol] : DEFAULT_PRICES[c.key]; });
+    return payload;
+  }
+
+  async function ensureSheetIdFor(y, m) {
+    const { data: existing } = await supabaseClient
+      .from('melon_sheets').select('id').eq('year', y).eq('month', m).maybeSingle();
+    if (existing) return existing.id;
+    const { data: created, error } = await supabaseClient
+      .from('melon_sheets').insert({ year: y, month: m, created_by: currentProfile.id }).select('id').single();
+    if (error) throw error;
+    return created.id;
+  }
+
+  // 従来の商品（単価一覧の列）の価格を、指定日以降だけ変更する。
+  // 価格期間は月ごとの表に属するため、適用日の月の表で「適用日から始まる期間」を作り（既にあれば更新）、
+  // 適用日より後に始まる期間（翌月以降の表も含む）にも同じ価格を反映する。
+  async function applyBuiltinPrice(col, value, dateStr) {
+    const y = Number(dateStr.slice(0, 4)), m = Number(dateStr.slice(5, 7));
+    const monthStart = `${dateStr.slice(0, 7)}-01`;
+    const sid = (y === YEAR && m === MONTH) ? sheetId : await ensureSheetIdFor(y, m);
+
+    let { data: periods, error } = await supabaseClient.from('melon_price_periods').select('*').eq('sheet_id', sid);
+    if (error) throw error;
+    if (!periods.length) {
+      const { data: created, error: e2 } = await supabaseClient
+        .from('melon_price_periods').insert(await initialPricePayload(sid, monthStart)).select().single();
+      if (e2) throw e2;
+      periods = [created];
+    }
+
+    const same = periods.find(p => p.start_date === dateStr);
+    if (same) {
+      const { error: e3 } = await supabaseClient.from('melon_price_periods').update({ [col.dbCol]: value }).eq('id', same.id);
+      if (e3) throw e3;
+    } else {
+      const base = getActivePricePeriodFrom(periods, dateStr) || await initialPricePayload(sid, monthStart);
+      const payload = {
+        sheet_id: sid,
+        start_date: dateStr,
+        end_date: base.end_date && base.end_date >= dateStr ? base.end_date : null,
+      };
+      PRICE_TABLE_COLS.forEach(c => { payload[c.dbCol] = base[c.dbCol]; });
+      payload[col.dbCol] = value;
+      const { error: e4 } = await supabaseClient.from('melon_price_periods').insert(payload);
+      if (e4) throw e4;
+    }
+
+    const { error: e5 } = await supabaseClient
+      .from('melon_price_periods').update({ [col.dbCol]: value }).gt('start_date', dateStr);
+    if (e5) throw e5;
+
+    await loadPricePeriods();
+  }
+
+  // 追加商品の価格を、指定日以降だけ変更する（適用日以降に予定していた価格は置き換える）
+  async function applyCustomPrice(item, dateStr, unitPrice, bundles) {
+    const { error } = await supabaseClient.from('ec_item_prices').delete().eq('item_id', item.id).gte('start_date', dateStr);
+    if (error) throw error;
+    const { error: e2 } = await supabaseClient.from('ec_item_prices').insert({
+      item_id: item.id, start_date: dateStr, unit_price: unitPrice, bundles, created_by: currentProfile.id,
+    });
+    if (e2) throw e2;
+    await loadCustomItems();
   }
 
   function renderPriceTable() {
@@ -1766,15 +2177,6 @@
     await saveCell(entry.id, { [colKey]: !entry[colKey] });
   }
 
-  // 現金／PayPayは排他：ONにする方を立てると、もう一方は自動でOFFにする
-  async function togglePaymentMethodCell(entry, colKey) {
-    const otherKey = colKey === 'paid_cash' ? 'paid_paypay' : 'paid_cash';
-    const newVal = !entry[colKey];
-    const patch = { [colKey]: newVal };
-    if (newVal) patch[otherKey] = false;
-    await saveCell(entry.id, patch);
-  }
-
   // 新規行に設定する単価一式（メロン／スイカ／野菜の全SKU＋玉ねぎ・箱代）を、
   // その時点の価格期間から組み立てる
   function buildUnitPricePayload(prices) {
@@ -1858,6 +2260,8 @@
       onion: renderOnionModal,
       box: renderBoxModal,
       number: renderNumberModal,
+      shipto: renderShipToModal,
+      payment: renderPaymentModal,
       text: renderTextModal,
     };
 
@@ -2000,18 +2404,46 @@
   // モーダルが開いている間、商品表示トグルを押したときに再描画するための参照
   let currentGroupedModalRerender = null;
 
-  function groupedModal(body, entry, groups) {
+  function groupedModal(body, entry, groups, catKey) {
     body.dataset.entryId = entry.id;
     const prices = getPricesForDate(entry.entry_date);
+    const priceDate = entry.entry_date || shiftedDateStr(0);
+    const entryLines = entryExtraItems(entry);
+    let renderedCustoms = []; // 今回の描画で数量欄を出した追加商品 { ci, line(既存の明細 or null), price }
+
+    // 追加商品の数量欄。単価は行に保存済みの明細があればそれを、なければ行の日付時点の価格を使う
+    // （販売停止中・販売開始前の商品は、この行に既に入っている場合だけ出す）
+    function customRowsFor(label) {
+      return customItems.filter(ci => ci.category === catKey && ci.group_label === label).map(ci => {
+        const line = entryLines.find(x => x.item_id === ci.id) || null;
+        const p = line ? { unit_price: line.unit_price, bundles: line.bundles || [] } : customPriceAt(ci, priceDate);
+        if (!line && (!ci.active || !p)) return '';
+        renderedCustoms.push({ ci, line, price: p });
+        const kg = isKgUnit(ci.unit);
+        return `
+          <div class="modal-group">
+            <label>${escHtml(ci.size_label || ci.group_label)}<span class="custom-tag">追加商品</span> 数量（${escHtml(customPriceLabel(p.unit_price, p.bundles, ci.unit))}）</label>
+            <input type="number" id="mCustomQty_${ci.id}" min="0" step="${kg ? '0.1' : '1'}" value="${line ? line.qty : 0}">
+          </div>`;
+      }).join('');
+    }
 
     function render() {
+      renderedCustoms = [];
       // 品種名と表示/非表示ボタンは常に表示し続け、非表示にした品種は個数入力欄などの本体部分だけを隠す
       // （見出しごと消してしまうと、再度表示に戻すボタンが押せなくなるため）
       // ただし、既にデータが入っている場合はデータ消失を防ぐため本体部分も強制的に表示する
-      body.innerHTML = groups.map((g, gi) => {
+      // 追加商品は品種の表示/非表示とは別に、商品ごとの「販売中」設定で出し分ける
+      const builtinLabels = groups.map(g => g.label);
+      const extraLabels = [...new Set(customItems
+        .filter(ci => ci.category === catKey && !builtinLabels.includes(ci.group_label))
+        .map(ci => ci.group_label))];
+
+      const builtinBands = groups.map((g, gi) => {
         const visible = isProductVisible(g.label);
         const hasData = g.items.some(it => entry[it.qtyKey] > 0);
         const showBody = visible || hasData;
+        const customRows = customRowsFor(g.label);
 
         const heading = `
           <div class="modal-group-heading">
@@ -2020,7 +2452,7 @@
           </div>`;
 
         if (!showBody) {
-          return `<div class="modal-group-band ${gi % 2 === 0 ? 'band-a' : 'band-b'}">${heading}</div>`;
+          return `<div class="modal-group-band ${gi % 2 === 0 ? 'band-a' : 'band-b'}">${heading}${customRows}</div>`;
         }
 
         const rows = g.items.map(it => {
@@ -2039,8 +2471,21 @@
             </div>
           </div>`;
         }).join('');
-        return `<div class="modal-group-band ${gi % 2 === 0 ? 'band-a' : 'band-b'}">${heading}${rows}</div>`;
-      }).join('');
+        return `<div class="modal-group-band ${gi % 2 === 0 ? 'band-a' : 'band-b'}">${heading}${rows}${customRows}</div>`;
+      });
+
+      const extraBands = extraLabels.map((label, i) => {
+        const customRows = customRowsFor(label);
+        if (!customRows) return '';
+        const gi = groups.length + i;
+        return `
+          <div class="modal-group-band ${gi % 2 === 0 ? 'band-a' : 'band-b'}">
+            <div class="modal-group-heading"><span>${escHtml(label)}</span></div>
+            ${customRows}
+          </div>`;
+      });
+
+      body.innerHTML = [...builtinBands, ...extraBands].join('');
     }
 
     render();
@@ -2057,6 +2502,30 @@
           patch[it.priceKey] = Math.max(0, parseInt(document.getElementById(`mPrice_${it.qtyKey}`).value || '0', 10));
         }
       }));
+
+      // 追加商品：数量欄を出したものだけ入れ直し、それ以外（他の列の追加商品など）はそのまま残す
+      if (renderedCustoms.length) {
+        const renderedIds = renderedCustoms.map(r => r.ci.id);
+        const kept = entryLines.filter(x => !renderedIds.includes(x.item_id));
+        const updated = renderedCustoms.map(({ ci, line, price }) => {
+          const raw = parseFloat(document.getElementById(`mCustomQty_${ci.id}`).value || '0');
+          const qty = isKgUnit(ci.unit) ? Math.max(0, Math.round(raw * 10) / 10) : Math.max(0, Math.round(raw));
+          if (!qty) return null;
+          return {
+            item_id: ci.id,
+            category: ci.category,
+            name: line ? line.name : customItemName(ci),
+            unit: ci.unit,
+            qty,
+            unit_price: price.unit_price,
+            bundles: price.bundles || [],
+            amount: customAmount(price.unit_price, price.bundles, qty, ci.unit),
+          };
+        }).filter(Boolean);
+        const lines = [...kept, ...updated];
+        patch.extra_items = lines;
+        patch.extra_items_amount = extraItemsAmount(lines);
+      }
       return patch;
     };
   }
@@ -2073,9 +2542,9 @@
     if (currentGroupedModalRerender) currentGroupedModalRerender();
   }
 
-  function renderMelonModal(body, entry)  { return groupedModal(body, entry, MELON_GROUPS); }
-  function renderSuikaModal(body, entry)  { return groupedModal(body, entry, SUIKA_GROUPS); }
-  function renderVeggieModal(body, entry) { return groupedModal(body, entry, VEGGIE_GROUPS); }
+  function renderMelonModal(body, entry)  { return groupedModal(body, entry, MELON_GROUPS,  'melon'); }
+  function renderSuikaModal(body, entry)  { return groupedModal(body, entry, SUIKA_GROUPS,  'suika'); }
+  function renderVeggieModal(body, entry) { return groupedModal(body, entry, VEGGIE_GROUPS, 'veggie'); }
 
   // ── その他モーダル ──────────────────────────────────────
   function renderQtyOtherModal(body, entry) {
@@ -2199,6 +2668,65 @@
     if (val === 'custom') document.getElementById('mNumber').focus();
   }
 
+  // ── 支払い方法モーダル（現金／PayPay／振込から1つ） ──────────
+  let paymentModalSelected = null;
+
+  function renderPaymentModal(body, entry) {
+    body.dataset.entryId = entry.id;
+    paymentModalSelected = paymentMethodOf(entry);
+    body.innerHTML = `
+      <div class="modal-group">
+        <label>支払い方法を1つ選んでください</label>
+        <div class="shipping-choice-row" id="paymentChoiceRow"></div>
+      </div>`;
+    renderPaymentChoices();
+    return async () => paymentMethodPatch(paymentModalSelected, entry);
+  }
+
+  function renderPaymentChoices() {
+    document.getElementById('paymentChoiceRow').innerHTML = PAYMENT_METHODS.map(m => `
+      <button type="button" class="shipping-choice-btn ${paymentModalSelected === m.key ? 'active' : ''}" onclick="selectPaymentChoice('${m.key}')">${m.icon} ${m.label}</button>
+    `).join('') + `<button type="button" class="shipping-choice-btn ${paymentModalSelected === null ? 'active' : ''}" onclick="selectPaymentChoice(null)">未選択</button>`;
+  }
+
+  function selectPaymentChoice(key) {
+    paymentModalSelected = key;
+    renderPaymentChoices();
+  }
+
+  // ── 届け先モーダル（地域 → 都道府県。複数・その他は直接入力） ──
+  function renderShipToModal(body, entry) {
+    body.dataset.entryId = entry.id;
+    body.innerHTML = `
+      <div class="modal-group">
+        <label>地域を選択</label>
+        <div class="tile-grid" id="shipRegionGrid">
+          ${PREF_REGIONS.map((g, gi) => `<div class="tile-option" style="font-size:13px;" data-gi="${gi}" onclick="selectShipRegionInModal(${gi})">${g.label}</div>`).join('')}
+        </div>
+      </div>
+      <div class="modal-group" id="shipPrefGroup" style="display:none">
+        <label>都道府県を選択</label>
+        <div class="name-list" id="shipPrefList"></div>
+      </div>
+      <div class="modal-group">
+        <label>届け先（複数のときは「大阪府・兵庫県」のように直接入力もできます）</label>
+        <input type="text" id="mShipTo" placeholder="例：大阪府" value="${escHtml(entry.ship_to || '')}">
+      </div>`;
+    return async () => ({ ship_to: document.getElementById('mShipTo').value.trim() || null });
+  }
+
+  function selectShipRegionInModal(gi) {
+    document.querySelectorAll('#shipRegionGrid .tile-option').forEach(el => el.classList.toggle('selected', Number(el.dataset.gi) === gi));
+    document.getElementById('shipPrefList').innerHTML = PREF_REGIONS[gi].prefs.map(p => `<div class="name-chip" onclick="selectShipPrefInModal(this, '${p}')">${p}</div>`).join('');
+    document.getElementById('shipPrefGroup').style.display = 'block';
+  }
+
+  function selectShipPrefInModal(el, pref) {
+    document.querySelectorAll('#shipPrefList .name-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('mShipTo').value = pref;
+  }
+
   // ── 備考モーダル ────────────────────────────────────────
   function renderTextModal(body, entry, def) {
     body.dataset.entryId = entry.id;
@@ -2216,20 +2744,22 @@
       '日付', 'お名前',
       ...ALL_ITEM_GROUPS.flatMap(g => g.items.map(it => `${g.label}${it.label ? ' ' + it.label : ''}`)),
       'その他数量', 'その他単価', 'その他内容',
-      '玉ねぎ(kg)', '発送',
+      '追加商品(内容)', '追加商品(金額)',
+      '玉ねぎ(kg)', '発送', '届け先',
       'メロン2玉入箱', 'メロン3〜5玉入箱', 'スイカ1玉入箱', 'スイカ2玉入箱', 'スイカ無地箱',
       '送料', '商品小計(円)', '総計(円)', '消費税(円)',
-      '入金', '現金', 'PayPay', '領収書', '備考',
+      '入金', '支払い方法', '領収書', '備考',
     ];
     const rows = getDisplayEntries().map(e => [
       e.entry_date || '', e.customer_name || '',
       ...ALL_ITEM_GROUPS.flatMap(g => g.items.map(it => e[it.qtyKey] || 0)),
       e.qty_other || 0, e.unit_price_other || 0, e.other_label || '',
-      e.onion_kg || 0, e.shipped ? '○' : '',
+      entryExtraItems(e).map(x => `${x.name} ${x.qty}${x.unit}`).join(' / '), e.extra_items_amount || 0,
+      e.onion_kg || 0, e.shipped ? '○' : '', e.ship_to || '',
       e.box_2 || 0, e.box_35 || 0, e.box_suika_1 || 0, e.box_suika_2 || 0, e.box_suika_plain || 0,
       e.shipping_fee || 0,
       e.subtotal_amount || 0, e.total_amount || 0, e.consumption_tax_amount || 0,
-      e.paid ? '○' : '', e.paid_cash ? '○' : '', e.paid_paypay ? '○' : '',
+      e.paid ? '○' : '', (PAYMENT_METHODS.find(p => e[p.field]) || {}).label || '',
       e.receipt_issued ? '○' : '', e.note || '',
     ]);
 
@@ -2248,6 +2778,341 @@
     URL.revokeObjectURL(url);
   }
 
+  // ── 売上Excel出力（5パターン） ──────────────────────────
+  // 手作業で作っていた売上表（EC売上表_インスタ/出力イメージとしての現行書式例）と同じ形で、
+  //   ① 現金・領収書なし ② 現金・領収書あり ③ PayPay・領収書なし ④ PayPay・領収書あり ⑤ 発送
+  // を、表示中の月の分だけ別々の.xlsxに出力する。PayPayは売上に手数料がかかるため、現金とは別に集計する
+  // （書式は①②と同じ）。
+  // 分類：「発送」にチェック → ⑤（入金前の振込待ちも含む）。それ以外は「入金」済みの行を
+  //       支払い方法（現金／PayPay）と「領収書」のチェックで①〜④に分ける。支払い方法が未選択の行は現金として扱う。
+  //       発送以外の振込・未入金の行は、どれにも含めない。
+  // 合計・消費税はExcel上で数字を直しても再計算されるよう、数式で入れる（計算結果も一緒に入れておく）
+  const SALES_PATTERNS = [
+    { key: 'cash',           label: '① 現金・領収書なし',   file: '1_現金売上_領収書なし',
+      build: (wb, list, title) => buildSalesCashSheet(wb, list, title, '現金') },
+    { key: 'receipt',        label: '② 現金・領収書あり',   file: '2_現金売上_領収書あり',
+      build: (wb, list, title) => buildSalesReceiptSheet(wb, list, title, '現金') },
+    { key: 'paypay',         label: '③ PayPay・領収書なし', file: '3_PayPay売上_領収書なし',
+      build: (wb, list, title) => buildSalesCashSheet(wb, list, title, 'PayPay') },
+    { key: 'paypay_receipt', label: '④ PayPay・領収書あり', file: '4_PayPay売上_領収書あり',
+      build: (wb, list, title) => buildSalesReceiptSheet(wb, list, title, 'PayPay') },
+    { key: 'ship',           label: '⑤ 発送',               file: '5_発送分',
+      build: buildSalesShipSheet },
+  ];
+
+  function salesCategoryOf(e) {
+    if (e.shipped) return 'ship';
+    if (!e.paid) return 'unpaid';
+    const method = paymentMethodOf(e);
+    if (method === 'transfer') return 'transfer';
+    if (method === 'paypay') return e.receipt_issued ? 'paypay_receipt' : 'paypay';
+    return e.receipt_issued ? 'receipt' : 'cash';
+  }
+
+  function salesEntries(key) {
+    return sortEntriesByDate(entries.filter(e => salesCategoryOf(e) === key));
+  }
+
+  function openSalesExport() {
+    const count = k => entries.filter(e => salesCategoryOf(e) === k).length;
+    document.getElementById('salesModalTitle').textContent = `📊 売上Excel出力（${monthLabel(YEAR, MONTH)}分）`;
+    document.getElementById('salesModalBody').innerHTML = `
+      ${SALES_PATTERNS.map(p => `
+        <button type="button" class="pos-wide-btn" style="margin-bottom:10px;text-align:left;" onclick="exportSales('${p.key}')">
+          ⬇ ${p.label}<span style="float:right;color:#888;font-size:14px;">${count(p.key)}件</span>
+        </button>`).join('')}
+      <p class="summary-note" style="font-size:12px;line-height:1.7;margin-bottom:12px;">
+        ・①〜④：「発送」にチェックがなく、「入金」済みの行です。支払い方法と「領収書」のチェックで分けます（支払い方法が未選択の行は現金として扱います）。<br>
+        ・⑤：「発送」にチェックがある行すべてです（入金前の振込待ちも含みます）。<br>
+        ${count('transfer') ? `・発送以外の振込 ${count('transfer')}件は、どれにも含まれません。<br>` : ''}
+        ${count('unpaid') ? `・まだ「入金」にチェックがない行 ${count('unpaid')}件（発送以外）は、どれにも含まれません。` : ''}
+      </p>`;
+    document.getElementById('salesModalOverlay').classList.add('open');
+  }
+
+  function closeSalesExport() {
+    document.getElementById('salesModalOverlay').classList.remove('open');
+  }
+
+  async function exportSales(key) {
+    if (typeof ExcelJS === 'undefined') {
+      alert('Excel出力の部品を読み込めませんでした。通信状態を確認して、ページを再読み込みしてください。');
+      return;
+    }
+    const p = SALES_PATTERNS.find(x => x.key === key);
+    const title = `R${YEAR - 2018}.${MONTH}月分`;
+    const wb = new ExcelJS.Workbook();
+    p.build(wb, salesEntries(key), title);
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `村上農園_${title}_${p.file}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // 1行分の金額を、売上表の列（品物の区分・箱・送料・税）に分ける
+  function salesBreakdown(e) {
+    const sumGroups = groups => groups.reduce((s, g) => s + g.items.reduce((t, it) => t + (e[it.qtyKey] || 0) * (e[it.priceKey] || 0), 0), 0);
+    const extraBy = cat => entryExtraItems(e).filter(x => x.category === cat).reduce((s, x) => s + (x.amount || 0), 0);
+    const b = {
+      melon:  sumGroups(MELON_GROUPS) + extraBy('melon'),
+      suika:  sumGroups(SUIKA_GROUPS) + extraBy('suika'),
+      veggie: sumGroups(VEGGIE_GROUPS) + extraBy('veggie'),
+      onion:  Math.round((Number(e.onion_kg) || 0) * (e.onion_unit_price || 0)),
+      other:  (e.qty_other || 0) * (e.unit_price_other || 0),
+      boxMelon2:  (e.box_2 || 0) * (e.box_unit_price_2 || 0),
+      boxMelon35: (e.box_35 || 0) * (e.box_unit_price_35 || 0),
+      boxSuika:   (e.box_suika_1 || 0) * (e.box_unit_price_suika_1 || 0)
+                + (e.box_suika_2 || 0) * (e.box_unit_price_suika_2 || 0)
+                + (e.box_suika_plain || 0) * (e.box_unit_price_suika_plain || 0),
+      ship: e.shipping_fee || 0,
+      r8:  Number(e.tax_rate_standard ?? 8),
+      r10: Number(e.tax_rate_box_shipping ?? 10),
+    };
+    b.product = b.melon + b.suika + b.veggie + b.onion + b.other;
+    b.box = b.boxMelon2 + b.boxMelon35 + b.boxSuika;
+    b.tax8 = salesTax(b.product, b.r8);
+    b.tax10 = salesTax(b.box + b.ship, b.r10);
+    return b;
+  }
+
+  // 内税の税込金額から消費税を逆算（切り捨て。表の「消費税」列・生成列と同じ計算）
+  function salesTax(amount, rate) {
+    return Math.floor(amount * rate / (100 + rate));
+  }
+
+  // 領収書の「品名」：品物の区分を並べて「代」を付ける（例：メロン代、すいか・にんじん代）
+  function salesItemName(e) {
+    const has = groups => groups.some(g => g.items.some(it => e[it.qtyKey] > 0));
+    const extras = entryExtraItems(e).filter(x => x.qty > 0);
+    const parts = [];
+    if (has(MELON_GROUPS) || extras.some(x => x.category === 'melon')) parts.push('メロン');
+    if (has(SUIKA_GROUPS) || extras.some(x => x.category === 'suika')) parts.push('すいか');
+    VEGGIE_GROUPS.forEach(g => { if (g.items.some(it => e[it.qtyKey] > 0)) parts.push(g.label); });
+    extras.filter(x => x.category === 'veggie').forEach(x => {
+      const label = findCustomItem(x.item_id)?.group_label || x.name.split(' ')[0];
+      if (!parts.includes(label)) parts.push(label);
+    });
+    if (Number(e.onion_kg)) parts.push('玉ねぎ');
+    if (e.qty_other) parts.push(e.other_label || 'その他');
+    return parts.length ? `${parts.join('・')}代` : '';
+  }
+
+  function salesCustomerName(e) {
+    const n = (e.customer_name || '').trim();
+    if (!n || n === '匿名') return n;
+    return n.endsWith('様') ? n : `${n}様`;
+  }
+
+  function salesDateLabel(dateStr) {
+    return dateStr ? `${Number(dateStr.slice(5, 7))}月${Number(dateStr.slice(8, 10))}日` : '';
+  }
+
+  const XL_YEN = '"¥"#,##0';
+  const XL_THIN = { style: 'thin', color: { argb: 'FF000000' } };
+  const XL_FILL_TAX = 'FFC6E0B4';   // 消費税の小計（緑）
+  const XL_FILL_TOTAL = 'FFFFF2CC'; // 合計金額の小計（薄い黄）
+  const XL_FILL_GRAND = 'FFFFFF00'; // 合計・総合合計（黄）
+  const XL_RED = 'FFFF0000';
+  const XL_BLUE = 'FF00B0F0';
+
+  function xl(ws, r, c, value, o = {}) {
+    const cell = ws.getCell(r, c);
+    cell.value = value;
+    if (o.border !== false) cell.border = { top: XL_THIN, left: XL_THIN, bottom: XL_THIN, right: XL_THIN };
+    cell.font = { name: '游ゴシック', size: o.size || 10, bold: !!o.bold, color: { argb: o.color || 'FF000000' } };
+    cell.alignment = { horizontal: o.align || (o.yen ? 'right' : 'center'), vertical: 'middle', wrapText: true };
+    if (o.yen) cell.numFmt = XL_YEN;
+    if (o.fill) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: o.fill } };
+    return cell;
+  }
+
+  function xlCol(n) {
+    return String.fromCharCode(64 + n);
+  }
+
+  function xlHeader(ws, r, startCol, labels) {
+    labels.forEach((h, i) => xl(ws, r, startCol + i, h));
+    ws.getRow(r).height = 30;
+  }
+
+  // 合計行のラベル（左の列を結合して書く）
+  function xlTotalLabel(ws, r, toCol, label) {
+    for (let c = 1; c <= toCol; c++) xl(ws, r, c, c === 1 ? label : '');
+    if (toCol > 1) ws.mergeCells(r, 1, r, toCol);
+  }
+
+  function xlPageSetup(ws, orientation) {
+    ws.pageSetup = {
+      paperSize: 9, orientation, fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+      margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 },
+    };
+  }
+
+  // ① 現金・領収書なし：品物の区分ごとの列＋右側に箱代・送料。月を上旬・中旬・下旬の3つの表に分け、
+  //    表ごとの小計、中旬の後に1日からの合計、下旬の後に月の総合合計を出す（現行の手作業の表と同じ構成）
+  function buildSalesCashSheet(wb, list, title, method) {
+    const ws = wb.addWorksheet(`${method}売上`);
+    ws.columns = [10, 14, 11, 11, 11, 11, 11, 11, 12, 2, 11, 11, 11, 10, 10, 12].map(width => ({ width }));
+    xl(ws, 1, 3, `${title}　${method}売り上げ`, { border: false, size: 12, align: 'left' });
+    xl(ws, 1, 11, '箱代・送料', { fill: 'FFE2EFDA' });
+
+    const HEAD_L = ['日付', '氏名様', 'メロン\n（税込）', 'スイカ\n（税込）', '野菜\n（税込）', '玉ねぎ\n（税込）', 'その他\n（税込）', '消費税\n（8％）', '合計金額\n（税込）'];
+    const HEAD_R = ['メロン箱\n2玉入', 'メロン箱\n3〜5入', 'スイカ箱\n（税込）', '送料\n（税込）', '消費税\n（10％）', '合計金額\n（税込）'];
+    const AMOUNT_COLS = [3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16];
+    const BLOCKS = [{ from: 1, to: 10 }, { from: 11, to: 20 }, { from: 21, to: 99 }];
+
+    const dayOf = e => e.entry_date ? Number(e.entry_date.slice(8, 10)) : 99; // 日付なしは下旬の表の最後
+    const subtotalRows = [];
+    const subtotalSums = [];
+    let r = 3;
+
+    BLOCKS.forEach((blk, bi) => {
+      const rows = list.filter(e => dayOf(e) >= blk.from && dayOf(e) <= blk.to);
+      xlHeader(ws, r, 1, HEAD_L);
+      xlHeader(ws, r, 11, HEAD_R);
+      r++;
+      const first = r;
+      const sums = {};
+      AMOUNT_COLS.forEach(c => { sums[c] = 0; });
+      let lastDate;
+      rows.forEach(e => {
+        const b = salesBreakdown(e);
+        xl(ws, r, 1, e.entry_date !== lastDate ? salesDateLabel(e.entry_date) : '');
+        lastDate = e.entry_date;
+        xl(ws, r, 2, salesCustomerName(e));
+        const vals = {
+          3: b.melon, 4: b.suika, 5: b.veggie, 6: b.onion, 7: b.other, 8: b.tax8, 9: b.product,
+          11: b.boxMelon2, 12: b.boxMelon35, 13: b.boxSuika, 14: b.ship, 15: b.tax10, 16: b.box + b.ship,
+        };
+        [3, 4, 5, 6, 7, 11, 12, 13, 14].forEach(c => xl(ws, r, c, vals[c], { yen: true }));
+        xl(ws, r, 9, { formula: `SUM(C${r}:G${r})`, result: vals[9] }, { yen: true });
+        xl(ws, r, 8, { formula: `ROUNDDOWN(I${r}*${b.r8}/(100+${b.r8}),0)`, result: vals[8] }, { yen: true });
+        xl(ws, r, 16, { formula: `SUM(K${r}:N${r})`, result: vals[16] }, { yen: true });
+        xl(ws, r, 15, { formula: `ROUNDDOWN(P${r}*${b.r10}/(100+${b.r10}),0)`, result: vals[15] }, { yen: true });
+        AMOUNT_COLS.forEach(c => { sums[c] += vals[c]; });
+        r++;
+      });
+      const last = r - 1;
+
+      xlTotalLabel(ws, r, 2, '小計');
+      AMOUNT_COLS.forEach(c => {
+        const L = xlCol(c);
+        const value = rows.length ? { formula: `SUM(${L}${first}:${L}${last})`, result: sums[c] } : 0;
+        xl(ws, r, c, value, { yen: true, fill: c === 8 || c === 15 ? XL_FILL_TAX : c === 9 ? XL_FILL_TOTAL : undefined });
+      });
+      subtotalRows.push(r);
+      subtotalSums.push(sums);
+      r++;
+
+      // 中旬の後：1日からの合計、下旬の後：月の総合合計
+      if (bi >= 1) {
+        xlTotalLabel(ws, r, 2, bi === 1 ? '合計' : `${MONTH}月分総合合計`);
+        AMOUNT_COLS.forEach(c => {
+          const L = xlCol(c);
+          const result = subtotalSums.reduce((s, x) => s + x[c], 0);
+          const fill = c === 8 || c === 15 ? XL_FILL_TAX : (c === 9 || (bi === 2 && c === 16)) ? XL_FILL_GRAND : undefined;
+          xl(ws, r, c, { formula: subtotalRows.map(sr => `${L}${sr}`).join('+'), result }, { yen: true, fill });
+        });
+        r++;
+      }
+      r += 2;
+    });
+    xlPageSetup(ws, 'portrait');
+  }
+
+  // ② 現金・領収書あり：1行に「品名・税抜・消費税・税込」。箱代・送料は10%のため別の行にし、赤字で「10%」と書く
+  function buildSalesReceiptSheet(wb, list, title, method) {
+    const ws = wb.addWorksheet(`${method}売上（領収書）`);
+    ws.columns = [10, 24, 18, 13, 12, 13, 6].map(width => ({ width }));
+    xl(ws, 1, 2, `${title}　${method}売上（領収書）`, { border: false, size: 12, align: 'left' });
+    xlHeader(ws, 3, 1, ['日付', '氏名様', '品名', '金額\n（税抜）', '消費税\n（8％）', '合計金額\n（税込）']);
+
+    let r = 4;
+    const sums = { ex: 0, tax: 0, inc: 0 };
+    let lastDate;
+    list.forEach(e => {
+      const b = salesBreakdown(e);
+      const lines = [];
+      if (b.product > 0) lines.push({ name: salesItemName(e), inc: b.product, rate: b.r8, red: false });
+      if (b.box + b.ship > 0) {
+        const name = b.box && b.ship ? '箱代・送料' : b.box ? '箱代' : '送料';
+        lines.push({ name, inc: b.box + b.ship, rate: b.r10, red: true });
+      }
+      lines.forEach(l => {
+        const tax = salesTax(l.inc, l.rate);
+        xl(ws, r, 1, e.entry_date !== lastDate ? salesDateLabel(e.entry_date) : '');
+        lastDate = e.entry_date;
+        xl(ws, r, 2, salesCustomerName(e));
+        xl(ws, r, 3, l.name, { color: l.red ? XL_RED : undefined });
+        xl(ws, r, 6, l.inc, { yen: true });
+        xl(ws, r, 5, { formula: `ROUNDDOWN(F${r}*${l.rate}/(100+${l.rate}),0)`, result: tax }, { yen: true, color: l.red ? XL_RED : undefined });
+        xl(ws, r, 4, { formula: `F${r}-E${r}`, result: l.inc - tax }, { yen: true });
+        if (l.red) xl(ws, r, 7, `${l.rate}%`, { border: false, color: XL_RED, align: 'left' });
+        sums.ex += l.inc - tax;
+        sums.tax += tax;
+        sums.inc += l.inc;
+        r++;
+      });
+    });
+
+    xlTotalLabel(ws, r, 3, '合計');
+    const hasRows = r > 4;
+    [[4, sums.ex], [5, sums.tax], [6, sums.inc]].forEach(([c, result]) => {
+      const L = xlCol(c);
+      xl(ws, r, c, hasRows ? { formula: `SUM(${L}4:${L}${r - 1})`, result } : 0, { yen: true });
+    });
+    xlPageSetup(ws, 'portrait');
+  }
+
+  // ⑤ 発送：依頼主・支払い方法・届け先・商品金額・箱代・送料・税・合計。右端に備考
+  function buildSalesShipSheet(wb, list, title) {
+    const ws = wb.addWorksheet('発送分');
+    ws.columns = [10, 16, 12, 12, 12, 10, 10, 10, 11, 10, 12, 30].map(width => ({ width }));
+    xl(ws, 1, 4, `${title}売り上げ発送分`, { border: false, size: 12, align: 'left' });
+    xlHeader(ws, 3, 1, ['日付', '依頼主様', '支払い', '届け先', '商品金額\n（税込）', '消費税\n8%', '箱代\n（税込）', '送料\n（税込）', '箱代+送料', '消費税\n（10％）', '合計', '備考']);
+
+    let r = 4;
+    const sums = { 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0 };
+    let lastDate;
+    list.forEach(e => {
+      const b = salesBreakdown(e);
+      // 支払い方法（未入金なら「（未入金）」を付ける）。現金以外は現行の表と同じく青字、未入金は赤字
+      const method = (PAYMENT_METHODS.find(p => e[p.field]) || {}).label || '';
+      const pay = e.paid ? (method || '未選択') : `${method}（未入金）`;
+      const payColor = !e.paid ? XL_RED : method === '現金' ? undefined : XL_BLUE;
+      const vals = { 5: b.product, 6: b.tax8, 7: b.box, 8: b.ship, 9: b.box + b.ship, 10: b.tax10, 11: b.product + b.box + b.ship };
+      xl(ws, r, 1, e.entry_date !== lastDate ? salesDateLabel(e.entry_date) : '');
+      lastDate = e.entry_date;
+      xl(ws, r, 2, salesCustomerName(e));
+      xl(ws, r, 3, pay, { color: payColor });
+      xl(ws, r, 4, e.ship_to || '');
+      xl(ws, r, 5, vals[5], { yen: true });
+      xl(ws, r, 6, { formula: `ROUNDDOWN(E${r}*${b.r8}/(100+${b.r8}),0)`, result: vals[6] }, { yen: true });
+      xl(ws, r, 7, vals[7], { yen: true });
+      xl(ws, r, 8, vals[8], { yen: true });
+      xl(ws, r, 9, { formula: `G${r}+H${r}`, result: vals[9] }, { yen: true });
+      xl(ws, r, 10, { formula: `ROUNDDOWN(I${r}*${b.r10}/(100+${b.r10}),0)`, result: vals[10] }, { yen: true });
+      xl(ws, r, 11, { formula: `E${r}+I${r}`, result: vals[11] }, { yen: true, color: payColor === XL_BLUE ? XL_BLUE : undefined });
+      xl(ws, r, 12, e.note || '', { align: 'left', size: 9 });
+      Object.keys(sums).forEach(c => { sums[c] += vals[c]; });
+      r++;
+    });
+
+    xlTotalLabel(ws, r, 4, '小計');
+    const hasRows = r > 4;
+    Object.keys(sums).map(Number).forEach(c => {
+      const L = xlCol(c);
+      xl(ws, r, c, hasRows ? { formula: `SUM(${L}4:${L}${r - 1})`, result: sums[c] } : 0, { yen: true });
+    });
+    xlPageSetup(ws, 'landscape');
+  }
+
   // ── 店頭会計（セルフレジ風の入力画面） ──────────────────
   // 「品物を選ぶ → 箱 → 発送 → お会計 → お預かり・おつり → 完了」の流れで、
   // 1画面に出す選択肢を少なくして順に選ばせる。完了ボタンを押した時点で
@@ -2264,11 +3129,11 @@
   };
 
   const POS_BOXES = [
-    { field: 'box_2',           priceKey: 'box2',          label: 'メロン 2玉入',   icon: '🍈' },
-    { field: 'box_35',          priceKey: 'box35',         label: 'メロン 3〜5玉入', icon: '🍈' },
-    { field: 'box_suika_1',     priceKey: 'boxSuika1',     label: 'スイカ 1玉入',   icon: '🍉' },
-    { field: 'box_suika_2',     priceKey: 'boxSuika2',     label: 'スイカ 2玉入',   icon: '🍉' },
-    { field: 'box_suika_plain', priceKey: 'boxSuikaPlain', label: 'スイカ 無地箱',   icon: '🍉' },
+    { field: 'box_2',           priceField: 'box_unit_price_2',           priceKey: 'box2',          label: 'メロン 2玉入',   icon: '🍈' },
+    { field: 'box_35',          priceField: 'box_unit_price_35',          priceKey: 'box35',         label: 'メロン 3〜5玉入', icon: '🍈' },
+    { field: 'box_suika_1',     priceField: 'box_unit_price_suika_1',     priceKey: 'boxSuika1',     label: 'スイカ 1玉入',   icon: '🍉' },
+    { field: 'box_suika_2',     priceField: 'box_unit_price_suika_2',     priceKey: 'boxSuika2',     label: 'スイカ 2玉入',   icon: '🍉' },
+    { field: 'box_suika_plain', priceField: 'box_unit_price_suika_plain', priceKey: 'boxSuikaPlain', label: 'スイカ 無地箱',   icon: '🍉' },
   ];
 
   const POS_QTY_CHOICES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -2284,13 +3149,19 @@
     return {
       date: shiftedDateStr(0),
       prices: getPricesForDate(shiftedDateStr(0)),
-      customerMode: 'anon',  // 'anon'（匿名） / 'named'（名前を探して選択済み）
+      customerMode: 'anon',  // 'anon'（匿名） / 'named'（名前を探して選択済み） / 'reserved'（予約の行を選択済み）
       customerName: '匿名',
-      cart: [],              // { field, name, unit, price, qty, isKg }
+      reservedEntryId: null, // 予約のお客様を選んだ場合、その行のID（完了時は新しい行を作らずこの行を更新する）
+      // { key, field, priceField, name, unit, price, qty, isKg }
+      // 追加商品は field の代わりに customId, category, bundles を持つ
+      cart: [],
       shipMode: 'face',      // 'face'（対面） / 'ship'（発送）
+      shipTo: '',            // 届け先（都道府県など）
       feeChoice: null,       // 880 / 1000 / 1430 / 'custom' / null
       customFee: '',
       view: 'order',         // 'order'（入力） / 'checkout'（お会計）
+      payMethod: 'cash',     // 'cash'（現金） / 'paypay' / 'transfer'（振込）
+      tenderChoice: null,    // 'exact' / 1000 / 5000 / 10000 / 'custom' / null
       tendered: '',
     };
   }
@@ -2319,6 +3190,7 @@
   }
 
   function posLineAmount(line) {
+    if (line.customId) return customAmount(line.price, line.bundles, line.qty, line.unit);
     return line.isKg ? Math.round(line.qty * line.price) : line.qty * line.price;
   }
 
@@ -2353,7 +3225,7 @@
     const cartHtml = pos.cart.length
       ? pos.cart.map((l, i) => `
           <div class="pos-cart-line">
-            <div class="pos-cart-name">${escHtml(l.name)}</div>
+            <div class="pos-cart-name">${escHtml(l.name)}${l.bundles && l.bundles.length ? `<span class="pos-cart-sub">まとめ買い：${escHtml(bundleLabel(l.bundles, l.unit))}</span>` : ''}</div>
             <div class="pos-qty-ctrl">
               <button type="button" onclick="posChangeQty(${i}, -1)">−</button>
               <span>${posQtyLabel(l)}</span>
@@ -2364,6 +3236,7 @@
       : '<div class="pos-cart-empty">上のアイコンから品物を選んでください</div>' + feeLine;
 
     const feeHtml = pos.shipMode === 'ship' ? `
+      <button type="button" class="pos-wide-btn" style="margin-top:10px;" onclick="posOpenShipTo()">📍 届け先：${pos.shipTo ? escHtml(pos.shipTo) : '<span style="color:#bbb;">選ぶ</span>'}</button>
       <div class="pos-fee-row">
         ${SHIPPING_FEE_PRESETS.map(v => `<button type="button" class="pos-fee-btn ${pos.feeChoice === v ? 'active' : ''}" onclick="posSelectFee(${v})">${formatYen(v)}</button>`).join('')}
         <button type="button" class="pos-fee-btn ${pos.feeChoice === 'custom' ? 'active' : ''}" onclick="posSelectFee('custom')">${pos.feeChoice === 'custom' && posShippingFee() ? `直接記入：${formatYen(posShippingFee())}` : '直接記入'}</button>
@@ -2380,10 +3253,13 @@
       <div class="pos-section">
         <div class="pos-section-label">お客様</div>
         <div class="pos-choice-row">
-          <button type="button" class="pos-choice-btn ${pos.customerMode === 'anon' ? 'active' : ''}" onclick="posSetAnonymous()">👤 匿名</button>
+          <button type="button" class="pos-choice-btn ${pos.customerMode === 'reserved' ? 'active' : ''}" onclick="posOpenReservations()">📅 予約のお客様
+            ${pos.customerMode === 'reserved' ? `<span class="pos-choice-sub">${escHtml(pos.customerName)} 様</span>` : ''}
+          </button>
           <button type="button" class="pos-choice-btn ${pos.customerMode === 'named' ? 'active' : ''}" onclick="posOpenNameSearch()">🔍 名前を探す
             ${pos.customerMode === 'named' ? `<span class="pos-choice-sub">${escHtml(pos.customerName)} 様</span>` : ''}
           </button>
+          <button type="button" class="pos-choice-btn ${pos.customerMode === 'anon' ? 'active' : ''}" onclick="posSetAnonymous()">👤 匿名</button>
         </div>
       </div>
 
@@ -2421,7 +3297,22 @@
       <button type="button" class="pos-primary-btn" onclick="posGoCheckout()" ${pos.cart.length ? '' : 'disabled'}>お会計</button>`;
   }
 
+  // 予約のお客様から別のお客様に切り替えるときは、読み込んだ予約の品物を引き継がない
+  // （そのまま完了すると予約の行とは別の行ができ、二重登録になるため）
+  function posLeaveReservation() {
+    if (pos.customerMode !== 'reserved') return true;
+    if (pos.cart.length && !confirm('読み込んだご予約の品物を取り消して、別のお客様に切り替えますか？')) return false;
+    pos.reservedEntryId = null;
+    pos.cart = [];
+    pos.shipMode = 'face';
+    pos.shipTo = '';
+    pos.feeChoice = null;
+    pos.customFee = '';
+    return true;
+  }
+
   function posSetAnonymous() {
+    if (!posLeaveReservation()) return;
     pos.customerMode = 'anon';
     pos.customerName = '匿名';
     renderPos();
@@ -2429,6 +3320,42 @@
 
   function posSetShipMode(mode) {
     pos.shipMode = mode;
+    renderPos();
+  }
+
+  // 届け先：地域 → 都道府県の2段階（送料の確認用）。複数の届け先などは直接入力
+  function posOpenShipTo() {
+    posCloseStep();
+    posPushStep(isFirst => {
+      const tiles = PREF_REGIONS.map((g, gi) => `
+        <div class="pos-tile tone-${gi % 4}" onclick="posSelectShipRegion(${gi})">
+          <span class="pos-tile-label" style="font-size:17px;">${g.label}</span>
+          <span class="pos-tile-sub">${g.prefs.length > 3 ? `${g.prefs.slice(0, 3).map(p => p.replace(/[都府県]$/, '')).join('・')}…` : g.prefs.map(p => p.replace(/[都府県]$/, '')).join('・')}</span>
+        </div>`).join('');
+      posShowStep('📍 届け先：地域を選ぶ', `
+        <div class="pos-tile-grid">${tiles}</div>
+        <div class="pos-direct-row">
+          <input type="text" id="posShipToFree" placeholder="直接入力（例：大阪府・兵庫県）" style="text-align:left;" value="${escHtml(pos.shipTo)}">
+          <button type="button" onclick="posSetShipTo(document.getElementById('posShipToFree').value.trim())">決定</button>
+        </div>`, isFirst);
+    });
+  }
+
+  function posSelectShipRegion(gi) {
+    const g = PREF_REGIONS[gi];
+    if (g.prefs.length === 1) { posSetShipTo(g.prefs[0]); return; }
+    posPushStep(isFirst => {
+      const tiles = g.prefs.map((p, pi) => `
+        <div class="pos-tile tone-${pi % 4}" onclick="posSetShipTo('${p}')">
+          <span class="pos-tile-label" style="font-size:17px;">${p}</span>
+        </div>`).join('');
+      posShowStep(`📍 ${g.label}：都道府県を選ぶ`, `<div class="pos-tile-grid">${tiles}</div>`, isFirst);
+    });
+  }
+
+  function posSetShipTo(value) {
+    pos.shipTo = value;
+    posCloseStep();
     renderPos();
   }
 
@@ -2461,7 +3388,7 @@
   }
 
   function posAddToCart(item, qty) {
-    const existing = pos.cart.find(l => l.field === item.field);
+    const existing = pos.cart.find(l => l.key === item.key);
     if (existing) existing.qty = Math.round((existing.qty + qty) * 10) / 10;
     else pos.cart.push({ ...item, qty });
     posCloseStep();
@@ -2475,6 +3402,7 @@
       return;
     }
     pos.view = 'checkout';
+    pos.tenderChoice = null;
     pos.tendered = '';
     renderPos();
   }
@@ -2506,26 +3434,63 @@
   }
 
   // スイカは「正規品」「訳あり」だけだと何の品物か分かりにくいため、品名の頭に「スイカ」を付ける
-  function posItemFromSku(catKey, group, item) {
+  function posItemName(catKey, name) {
+    return catKey === 'suika' && !name.includes('スイカ') ? `スイカ ${name}` : name;
+  }
+
+  function posItemFromSku(catKey, groupLabel, sku) {
+    if (sku.type === 'custom') {
+      const ci = sku.ci;
+      const p = customPriceAt(ci, pos.date);
+      return {
+        key: `custom:${ci.id}`,
+        customId: ci.id,
+        category: ci.category,
+        name: posItemName(catKey, customItemName(ci)),
+        unit: ci.unit,
+        price: p.unit_price,
+        bundles: p.bundles || [],
+        isKg: isKgUnit(ci.unit),
+      };
+    }
+    const item = sku.it;
     return {
+      key: item.qtyKey,
       field: item.qtyKey,
-      name: `${catKey === 'suika' ? 'スイカ ' : ''}${group.label}${item.label ? ' ' + item.label : ''}`,
+      priceField: item.priceKey,
+      name: posItemName(catKey, `${groupLabel}${item.label ? ' ' + item.label : ''}`),
       unit: item.unit || '玉',
       price: pos.prices[item.priceDefaultKey],
       isKg: false,
     };
   }
 
+  function posSkuTileLabel(sku) {
+    return sku.type === 'custom' ? (sku.ci.size_label || sku.ci.group_label) : sku.it.label;
+  }
+
+  function posSkuTileSub(sku) {
+    if (sku.type === 'custom') {
+      const p = customPriceAt(sku.ci, pos.date);
+      return customPriceLabel(p.unit_price, p.bundles, sku.ci.unit);
+    }
+    return formatYen(pos.prices[sku.it.priceDefaultKey]);
+  }
+
+  let posCurrentGroups = []; // 開いているカテゴリの「種類」一覧（mergedGroups の結果）
+
   function posOpenCategory(catKey) {
     posCloseStep();
     const cat = POS_CATEGORIES.find(c => c.key === catKey);
     if (catKey === 'onion') {
-      posStartQty({ field: 'onion_kg', name: '玉ねぎ', unit: 'kg', price: pos.prices.onion, isKg: true }, true);
+      posStartQty({ key: 'onion_kg', field: 'onion_kg', priceField: 'onion_unit_price', name: '玉ねぎ', unit: 'kg', price: pos.prices.onion, isKg: true }, true);
       return;
     }
-    // 単価一覧の表示/非表示設定に関係なく、全品種を常に出す（店頭では季節外の品種も売ることがあるため）
+    // 単価一覧の表示/非表示設定に関係なく、従来の品種は常に全部出す（店頭では季節外の品種も売ることがあるため）。
+    // 画面から追加した商品は、販売中かつ本日時点で価格が決まっているものだけ出す
+    posCurrentGroups = mergedGroups(catKey, pos.date);
     posPushStep(isFirst => {
-      const tiles = cat.groups.map((g, gi) => `
+      const tiles = posCurrentGroups.map((g, gi) => `
         <div class="pos-tile tone-${gi % 4}" onclick="posSelectGroup('${catKey}', ${gi})">
           <span class="pos-tile-icon">${POS_GROUP_ICONS[g.label] || cat.icon}</span>
           <span class="pos-tile-label">${escHtml(g.label)}</span>
@@ -2535,26 +3500,25 @@
   }
 
   function posSelectGroup(catKey, gi) {
-    const cat = POS_CATEGORIES.find(c => c.key === catKey);
-    const g = cat.groups[gi];
-    // サイズが1種類しかない品種（日焼け・かぼちゃ等）はサイズ選択を飛ばす
-    if (g.items.length === 1) {
-      posStartQty(posItemFromSku(catKey, g, g.items[0]));
+    const g = posCurrentGroups[gi];
+    // サイズが1種類しかない品種（日焼け等）はサイズ選択を飛ばす
+    if (g.skus.length === 1) {
+      posStartQty(posItemFromSku(catKey, g.label, g.skus[0]));
       return;
     }
     posPushStep(isFirst => {
-      const tiles = g.items.map((it, ii) => `
-        <div class="pos-tile tone-${ii % 4}" onclick="posSelectSku('${catKey}', ${gi}, ${ii})">
-          <span class="pos-tile-big">${escHtml(it.label)}</span>
-          <span class="pos-tile-sub">${formatYen(pos.prices[it.priceDefaultKey])}</span>
+      const tiles = g.skus.map((sku, si) => `
+        <div class="pos-tile tone-${si % 4}" onclick="posSelectSku('${catKey}', ${gi}, ${si})">
+          <span class="pos-tile-big" style="${posSkuTileLabel(sku).length > 4 ? 'font-size:18px;' : ''}">${escHtml(posSkuTileLabel(sku))}</span>
+          <span class="pos-tile-sub">${escHtml(posSkuTileSub(sku))}</span>
         </div>`).join('');
       posShowStep(`${g.label}：サイズを選ぶ`, `<div class="pos-tile-grid">${tiles}</div>`, isFirst);
     });
   }
 
-  function posSelectSku(catKey, gi, ii) {
-    const g = POS_CATEGORIES.find(c => c.key === catKey).groups[gi];
-    posStartQty(posItemFromSku(catKey, g, g.items[ii]));
+  function posSelectSku(catKey, gi, si) {
+    const g = posCurrentGroups[gi];
+    posStartQty(posItemFromSku(catKey, g.label, g.skus[si]));
   }
 
   function posOpenBox() {
@@ -2572,7 +3536,7 @@
 
   function posSelectBox(bi) {
     const b = POS_BOXES[bi];
-    posStartQty({ field: b.field, name: `箱（${b.label}）`, unit: '箱', price: pos.prices[b.priceKey], isKg: false });
+    posStartQty({ key: b.field, field: b.field, priceField: b.priceField, name: `箱（${b.label}）`, unit: '箱', price: pos.prices[b.priceKey], isKg: false });
   }
 
   function posStartQty(item, fresh) {
@@ -2586,7 +3550,7 @@
           <span class="pos-tile-sub">${item.unit}</span>
         </div>`).join('');
       posShowStep(`${item.name}：${item.isKg ? '重さ' : '個数'}を選ぶ`, `
-        <p class="pos-step-note" style="margin:0 0 10px;">単価 ${formatYen(item.price)}${item.isKg ? '/kg' : ''}</p>
+        <p class="pos-step-note" style="margin:0 0 10px;">単価 ${formatYen(item.price)}${item.isKg ? '/kg' : ''}${item.bundles && item.bundles.length ? `　まとめ買い：${escHtml(bundleLabel(item.bundles, item.unit))}（自動で一番安い組み合わせにします）` : ''}</p>
         <div class="pos-tile-grid cols-5">${tiles}</div>
         <div class="pos-direct-row">
           <input type="number" id="posDirectQty" inputmode="decimal" min="0" step="${item.isKg ? '0.1' : '1'}" placeholder="それ以外は直接入力">
@@ -2635,6 +3599,7 @@
   }
 
   function posSetCustomer(name) {
+    if (!posLeaveReservation()) return;
     pos.customerMode = 'named';
     pos.customerName = name;
     posCloseStep();
@@ -2652,6 +3617,81 @@
     const row = guessKanaRow(name);
     if (row) await ensureCustomer(row, name);
     posSetCustomer(name);
+  }
+
+  // ── 予約のお客様（表に登録済みで、今日来店予定・未入金の行から選ぶ） ──
+  function posTodayReservations() {
+    return entries.filter(e => e.entry_date === pos.date && !e.paid && !e.paid_transfer);
+  }
+
+  // 予約の行の中身を、店頭会計の「選んだ品物」の形に読み込む（単価はその行に保存されている単価を使う）
+  function posCartFromEntry(e) {
+    const cart = [];
+    POS_CATEGORIES.filter(c => c.groups).forEach(c => c.groups.forEach(g => g.items.forEach(it => {
+      if (!e[it.qtyKey]) return;
+      cart.push({
+        key: it.qtyKey, field: it.qtyKey, priceField: it.priceKey,
+        name: posItemName(c.key, `${g.label}${it.label ? ' ' + it.label : ''}`),
+        unit: it.unit || '玉', price: e[it.priceKey] ?? pos.prices[it.priceDefaultKey], isKg: false, qty: e[it.qtyKey],
+      });
+    })));
+    if (Number(e.onion_kg)) {
+      cart.push({ key: 'onion_kg', field: 'onion_kg', priceField: 'onion_unit_price', name: '玉ねぎ', unit: 'kg', price: e.onion_unit_price ?? pos.prices.onion, isKg: true, qty: Number(e.onion_kg) });
+    }
+    entryExtraItems(e).filter(x => x.qty > 0).forEach(x => {
+      cart.push({
+        key: `custom:${x.item_id}`, customId: x.item_id, category: x.category, name: x.name, unit: x.unit,
+        price: x.unit_price, bundles: x.bundles || [], isKg: isKgUnit(x.unit), qty: Number(x.qty),
+      });
+    });
+    if (e.qty_other) {
+      cart.push({ key: 'qty_other', field: 'qty_other', priceField: 'unit_price_other', name: e.other_label || 'その他', unit: '点', price: e.unit_price_other || 0, isKg: false, qty: e.qty_other });
+    }
+    POS_BOXES.forEach(b => {
+      if (!e[b.field]) return;
+      cart.push({ key: b.field, field: b.field, priceField: b.priceField, name: `箱（${b.label}）`, unit: '箱', price: e[b.priceField] ?? pos.prices[b.priceKey], isKg: false, qty: e[b.field] });
+    });
+    return cart;
+  }
+
+  function posEntrySummary(e) {
+    const names = posCartFromEntry(e).map(l => `${l.name} ${posQtyLabel(l)}`);
+    if (e.shipping_fee) names.push(`送料 ${formatYen(e.shipping_fee)}`);
+    return names.length ? names.join('、') : '（品物の登録なし）';
+  }
+
+  function posOpenReservations() {
+    posCloseStep();
+    posPushStep(isFirst => {
+      const list = posTodayReservations();
+      const cards = list.length
+        ? list.map(e => `
+            <button type="button" class="pos-reserve-card" onclick="posSelectReservation('${e.id}')">
+              <div class="pos-reserve-name">${escHtml(e.customer_name || '(お名前未入力)')} 様</div>
+              <div class="pos-reserve-items">${escHtml(posEntrySummary(e))}</div>
+              <div class="pos-reserve-total">${formatYen(e.total_amount)}</div>
+            </button>`).join('')
+        : '<p class="pos-step-note" style="text-align:center;padding:20px 0;">今日（未入金）のご予約は表にありません</p>';
+      posShowStep('📅 今日のご予約', `${cards}<p class="pos-step-note">※ 表に今日の日付で登録されていて、まだ「入金」にチェックが入っていないお客様を表示しています。</p>`, isFirst);
+    });
+  }
+
+  function posSelectReservation(entryId) {
+    const e = findEntry(entryId);
+    if (!e) return;
+    if (pos.cart.length && pos.reservedEntryId !== entryId && !confirm('いま選んでいる品物を取り消して、ご予約の内容を読み込みますか？')) return;
+    pos.customerMode = 'reserved';
+    pos.customerName = e.customer_name || '(お名前未入力)';
+    pos.reservedEntryId = e.id;
+    pos.cart = posCartFromEntry(e);
+    const fee = e.shipping_fee || 0;
+    pos.shipMode = e.shipped || fee > 0 ? 'ship' : 'face';
+    pos.shipTo = e.ship_to || '';
+    pos.payMethod = paymentMethodOf(e) || 'cash';
+    pos.feeChoice = fee ? (SHIPPING_FEE_PRESETS.includes(fee) ? fee : 'custom') : null;
+    pos.customFee = fee && !SHIPPING_FEE_PRESETS.includes(fee) ? String(fee) : '';
+    posCloseStep();
+    renderPos();
   }
 
   // ── お会計画面 ──
@@ -2672,27 +3712,47 @@
       </div>`);
     }
 
+    const customerLabel = `${escHtml(pos.customerName)}${pos.customerMode !== 'anon' ? ' 様' : ''}${pos.customerMode === 'reserved' ? '（ご予約）' : ''}`;
+    const tc = pos.tenderChoice;
+    const tenderHtml = pos.payMethod === 'cash' ? `
+      <div class="pos-section">
+        <div class="pos-section-label">お預かり（円）</div>
+        <div class="pos-quick-row wrap" style="margin-top:0;">
+          <button type="button" class="${tc === 'exact' ? 'active' : ''}" onclick="posQuickTender('exact')">ちょうど</button>
+          <button type="button" class="${tc === 1000 ? 'active' : ''}" onclick="posQuickTender(1000)">1,000</button>
+          <button type="button" class="${tc === 5000 ? 'active' : ''}" onclick="posQuickTender(5000)">5,000</button>
+          <button type="button" class="${tc === 10000 ? 'active' : ''}" onclick="posQuickTender(10000)">10,000</button>
+          <button type="button" class="${tc === 'custom' ? 'active' : ''}" onclick="posQuickTender('custom')">${tc === 'custom' && pos.tendered ? `✏️ ${formatYen(pos.tendered)}` : '✏️ 直接入力'}</button>
+        </div>
+        ${tc === 'custom' ? `
+          <div class="pos-fee-custom">
+            <input type="number" class="pos-tender-input" id="posTendered" inputmode="numeric" min="0" step="1" placeholder="お預かり金額" value="${escHtml(pos.tendered)}" onkeydown="if (event.key === 'Enter') posConfirmTendered()">
+            <span>円</span>
+            <button type="button" class="pos-confirm-btn" onclick="posConfirmTendered()">確定</button>
+          </div>` : ''}
+        <div id="posChange"></div>
+      </div>` : pos.payMethod === 'paypay' ? `
+      <div class="pos-section">
+        <div class="pos-paypay-note">📱 PayPayで ${formatYen(total)} をお支払いいただいてください</div>
+      </div>` : `
+      <div class="pos-section">
+        <div class="pos-paypay-note" style="border-color:#1565c0;color:#1565c0;">🏦 振込：${formatYen(total)}<br><span style="font-size:13px;font-weight:700;">入金はまだ「未入金」で記録します。振込を確認したら、表の「入金」にチェックしてください</span></div>
+      </div>`;
+
     document.getElementById('posBody').innerHTML = `
       <div class="pos-checkout-total">お会計：${formatYen(total)}</div>
       <div class="pos-section" style="text-align:center;color:#666;font-size:14px;font-weight:700;">
-        ${escHtml(pos.customerName)}${pos.customerMode === 'named' ? ' 様' : ''} ／ ${pos.shipMode === 'ship' ? '🚚 発送' : '🤝 対面'}
+        ${customerLabel} ／ ${pos.shipMode === 'ship' ? `🚚 発送${pos.shipTo ? `（${escHtml(pos.shipTo)}）` : ''}` : '🤝 対面'}
       </div>
       <div class="pos-section"><div class="pos-receipt">${lines.join('')}</div></div>
 
       <div class="pos-section">
-        <div class="pos-section-label">お預かり（円）</div>
-        <div class="pos-fee-custom" style="margin-top:0;">
-          <input type="number" class="pos-tender-input" id="posTendered" inputmode="numeric" min="0" step="1" placeholder="0" value="${escHtml(pos.tendered)}" oninput="posSetTendered(this.value)" onkeydown="if (event.key === 'Enter') this.blur()">
-          <button type="button" class="pos-confirm-btn" onclick="document.getElementById('posTendered').blur()">確定</button>
+        <div class="pos-section-label">お支払い方法</div>
+        <div class="pos-choice-row">
+          ${PAYMENT_METHODS.map(m => `<button type="button" class="pos-choice-btn ${pos.payMethod === m.key ? 'active' : ''}" onclick="posSetPayMethod('${m.key}')">${m.icon} ${m.label}</button>`).join('')}
         </div>
-        <div class="pos-quick-row">
-          <button type="button" onclick="posQuickTender(${total})">ちょうど</button>
-          <button type="button" onclick="posQuickTender(1000)">1,000</button>
-          <button type="button" onclick="posQuickTender(5000)">5,000</button>
-          <button type="button" onclick="posQuickTender(10000)">10,000</button>
-        </div>
-        <div id="posChange"></div>
-      </div>`;
+      </div>
+      ${tenderHtml}`;
 
     document.getElementById('posFooter').innerHTML = `
       <button type="button" class="pos-secondary-btn" onclick="posBackToOrder()">← 修正する</button>
@@ -2712,15 +3772,32 @@
       : `<div class="pos-change short">あと ${formatYen(-diff)} 足りません</div>`;
   }
 
-  function posSetTendered(val) {
-    pos.tendered = val;
-    renderPosChange();
+  function posSetPayMethod(method) {
+    pos.payMethod = method;
+    renderPos();
   }
 
-  function posQuickTender(amount) {
-    pos.tendered = String(amount);
-    document.getElementById('posTendered').value = pos.tendered;
-    renderPosChange();
+  // ちょうど／1,000／5,000／10,000 はその金額をお預かりにする。直接入力は入力欄を出し、「確定」で反映する
+  function posQuickTender(choice) {
+    pos.tenderChoice = choice;
+    if (choice === 'custom') {
+      pos.tendered = '';
+      renderPos();
+      document.getElementById('posTendered')?.focus();
+      return;
+    }
+    pos.tendered = String(choice === 'exact' ? posTotal() : choice);
+    renderPos();
+  }
+
+  // スマホの数字キーボードには「完了」キーがないことがあるため、確定ボタンでキーボードを閉じて金額を反映する
+  function posConfirmTendered() {
+    const input = document.getElementById('posTendered');
+    const val = parseInt(input.value, 10);
+    if (!(val > 0)) { alert('お預かり金額を入力してください'); return; }
+    pos.tendered = String(val);
+    input.blur();
+    renderPos();
   }
 
   function posBackToOrder() {
@@ -2735,24 +3812,52 @@
     btn.disabled = true;
     btn.textContent = '記録中...';
 
+    // 予約のお客様は、予約の行を更新して入金済みにする（新しい行は作らない）
+    const reserved = pos.customerMode === 'reserved' ? findEntry(pos.reservedEntryId) : null;
     const payload = {
-      sheet_id: sheetId,
-      sort_order: entries.reduce((m, e) => Math.max(m, e.sort_order), 0) + 1,
-      created_by: currentProfile.id,
-      entry_date: pos.date,
       customer_name: pos.customerName,
-      ...buildUnitPricePayload(pos.prices),
       shipped: pos.shipMode === 'ship',
       shipping_fee: posShippingFee(),
-      paid: true,
+      // 振込はその場では入金を確認できないため、未入金のまま記録する（確認後に表の「入金」にチェック）
+      paid: pos.payMethod !== 'transfer',
+      ...paymentMethodPatch(pos.payMethod, reserved),
     };
-    pos.cart.forEach(l => { payload[l.field] = l.qty; });
+    // 届け先の列は migration 前でも従来どおり会計できるよう、必要なときだけ送る
+    const shipTo = pos.shipMode === 'ship' ? pos.shipTo : '';
+    if (shipTo || (reserved && 'ship_to' in reserved)) payload.ship_to = shipTo || null;
+    if (reserved) {
+      // 店頭で品物を増減・削除した場合に備え、数量はいったん全部0にしてから入れ直す
+      ALL_ITEM_GROUPS.forEach(g => g.items.forEach(it => { payload[it.qtyKey] = 0; }));
+      POS_BOXES.forEach(b => { payload[b.field] = 0; });
+      payload.onion_kg = 0;
+      payload.qty_other = 0;
+    } else {
+      Object.assign(payload, {
+        sheet_id: sheetId,
+        sort_order: entries.reduce((m, e) => Math.max(m, e.sort_order), 0) + 1,
+        created_by: currentProfile.id,
+        entry_date: pos.date,
+        ...buildUnitPricePayload(pos.prices),
+      });
+    }
+    pos.cart.filter(l => !l.customId).forEach(l => {
+      payload[l.field] = l.qty;
+      if (l.priceField) payload[l.priceField] = l.price;
+    });
+    const extra = pos.cart.filter(l => l.customId).map(l => ({
+      item_id: l.customId, category: l.category, name: l.name, unit: l.unit,
+      qty: l.qty, unit_price: l.price, bundles: l.bundles || [], amount: posLineAmount(l),
+    }));
+    // 追加商品の列（extra_items）は、migration実行前でも従来どおり会計できるよう、必要なときだけ送る
+    if (extra.length || (reserved && 'extra_items' in reserved)) {
+      payload.extra_items = extra;
+      payload.extra_items_amount = extraItemsAmount(extra);
+    }
 
-    const { data, error } = await supabaseClient
-      .from('melon_entries')
-      .insert(payload)
-      .select()
-      .single();
+    const query = reserved
+      ? supabaseClient.from('melon_entries').update(payload).eq('id', reserved.id)
+      : supabaseClient.from('melon_entries').insert(payload);
+    const { data, error } = await query.select().single();
 
     posSaving = false;
     if (error) {
@@ -2763,7 +3868,12 @@
       return;
     }
 
-    entries.push(data);
+    if (reserved) {
+      const idx = entries.findIndex(e => e.id === reserved.id);
+      if (idx !== -1) entries[idx] = data;
+    } else {
+      entries.push(data);
+    }
     renderTable();
 
     const thanks = document.getElementById('posThanks');
@@ -2774,6 +3884,473 @@
       renderPos();
       document.querySelector('#posOverlay .pos-body').scrollTop = 0;
     }, POS_THANKS_MS);
+  }
+
+  // ── 商品・価格の設定（対話形式） ────────────────────────
+  // 店頭会計と同じく1画面の選択肢を少なくして、順番に選ばせる。
+  //   価格を変える：品物 → 種類 → サイズ → 新しい価格・適用日 → 確認 → 完了
+  //   商品を追加  ：品物 → 品名 → サイズ名 → 単位 → 価格・販売開始日 → 確認 → 完了
+  const SET_PRICE_CATEGORIES = [
+    ...CUSTOM_CATEGORIES,
+    { key: 'onion', label: '玉ねぎ',   icon: '🧅' },
+    { key: 'box',   label: '箱',       icon: '📦' },
+    { key: 'tax',   label: '消費税率', icon: '💰' },
+  ];
+  const SET_UNIT_CHOICES = ['玉', '本', '個', '袋', 'パック', 'セット', '箱', 'kg'];
+  const SET_SIZE_SUGGESTIONS = ['規格外', 'S', 'M', 'L', '2L', '小玉', '大玉', '1袋'];
+
+  let setStack = [];  // 「戻る」用：描画関数の履歴
+  let setDraft = null; // 入力中の内容
+  let setSaving = false;
+
+  function openSettings() {
+    setStack = [];
+    setDraft = null;
+    document.getElementById('setOverlay').classList.add('open');
+    setPush(setHome);
+  }
+
+  function closeSettings() {
+    setStack = [];
+    document.getElementById('setOverlay').classList.remove('open');
+  }
+
+  function setShow(title, html) {
+    document.getElementById('setStepTitle').textContent = title;
+    document.getElementById('setBody').innerHTML = html;
+    document.getElementById('setBackBtn').style.visibility = setStack.length > 1 ? 'visible' : 'hidden';
+    document.querySelector('#setOverlay .pos-body').scrollTop = 0;
+  }
+
+  function setPush(fn) {
+    setStack.push(fn);
+    fn();
+  }
+
+  function setBack() {
+    setStack.pop();
+    const prev = setStack[setStack.length - 1];
+    if (prev) prev();
+    else closeSettings();
+  }
+
+  function setRerender() {
+    setStack[setStack.length - 1]();
+  }
+
+  function setTiles(tiles) {
+    return `<div class="pos-tile-grid">${tiles.map((t, i) => `
+      <div class="pos-tile tone-${i % 4}" onclick="${t.onclick}">
+        ${t.icon ? `<span class="pos-tile-icon">${t.icon}</span>` : ''}
+        <span class="${t.big ? 'pos-tile-big' : 'pos-tile-label'}" style="${t.big && t.label.length > 4 ? 'font-size:18px;' : ''}">${escHtml(t.label)}</span>
+        ${t.sub ? `<span class="pos-tile-sub">${escHtml(t.sub)}</span>` : ''}
+      </div>`).join('')}</div>`;
+  }
+
+  function fullDateJa(dateStr) {
+    return `${Number(dateStr.slice(5, 7))}月${formatDateJa(dateStr)}`;
+  }
+
+  function setHome() {
+    const today = shiftedDateStr(0);
+    setShow('何をしますか？', `
+      <div class="set-menu">
+        <button type="button" class="set-menu-btn" onclick="setStartPrice()">
+          <span class="set-menu-icon">💴</span>
+          <span><b>価格を変える</b><small>商品とサイズを選んで、新しい価格と、いつから変えるかを決めます</small></span>
+        </button>
+        <button type="button" class="set-menu-btn" onclick="setStartAdd()">
+          <span class="set-menu-icon">➕</span>
+          <span><b>商品・サイズを追加する</b><small>新しい野菜や、「1玉」「1袋」などの売り方を追加します。「2玉で500円」のようなまとめ買い価格も設定できます</small></span>
+        </button>
+        ${customItems.length ? `
+        <button type="button" class="set-menu-btn" onclick="setPush(setManageList)">
+          <span class="set-menu-icon">🛑</span>
+          <span><b>追加した商品の販売をやめる・再開する</b><small>販売をやめた商品は、店頭会計や表の入力画面に出なくなります</small></span>
+        </button>` : ''}
+      </div>
+      <p class="pos-step-note" style="margin-top:16px;">本日：${fullDateJa(today)}</p>`);
+  }
+
+  // ── 価格を変える ──
+  function setStartPrice() {
+    setDraft = { mode: 'price' };
+    setPush(setPriceCategory);
+  }
+
+  function setPriceCategory() {
+    setShow('💴 どの品物の価格を変えますか？', setTiles(SET_PRICE_CATEGORIES.map(c => ({
+      icon: c.icon, label: c.label, onclick: `setPickPriceCategory('${c.key}')`,
+    }))));
+  }
+
+  function setPickPriceCategory(catKey) {
+    setDraft.cat = catKey;
+    if (catKey === 'onion') {
+      setGoPriceForm({ type: 'builtin', key: 'onion', name: '玉ねぎ', unit: 'kg' });
+      return;
+    }
+    if (catKey === 'box') {
+      setPush(() => setShow('📦 どの箱ですか？', setTiles(POS_BOXES.map((b, bi) => ({
+        icon: b.icon, label: b.label, sub: formatYen(getPricesForDate()[b.priceKey]), onclick: `setPickBox(${bi})`,
+      })))));
+      return;
+    }
+    if (catKey === 'tax') {
+      setPush(() => setShow('💰 どちらの税率ですか？', setTiles([
+        { icon: '🥬', label: '商品（メロン・野菜など）', sub: formatRate(getPricesForDate().taxStandard), onclick: `setPickTax('taxStandard')` },
+        { icon: '📦', label: '箱代・送料', sub: formatRate(getPricesForDate().taxBoxShipping), onclick: `setPickTax('taxBoxShipping')` },
+      ])));
+      return;
+    }
+    const cat = CUSTOM_CATEGORIES.find(c => c.key === catKey);
+    setDraft.groups = mergedGroups(catKey, shiftedDateStr(0), { includeInactive: true, includeUnpriced: true });
+    setPush(() => setShow(`${cat.icon} ${cat.label}：種類を選ぶ`, setTiles(setDraft.groups.map((g, gi) => ({
+      icon: POS_GROUP_ICONS[g.label] || cat.icon, label: g.label, onclick: `setPickPriceGroup(${gi})`,
+    })))));
+  }
+
+  function setPickBox(bi) {
+    const b = POS_BOXES[bi];
+    setGoPriceForm({ type: 'builtin', key: b.priceKey, name: `箱（${b.label}）`, unit: '箱' });
+  }
+
+  function setPickTax(key) {
+    const col = PRICE_TABLE_COLS.find(c => c.key === key);
+    setGoPriceForm({ type: 'builtin', key, name: col.label, unit: '', isRate: true });
+  }
+
+  function setTargetFromSku(groupLabel, sku) {
+    if (sku.type === 'custom') {
+      return { type: 'custom', item: sku.ci, name: customItemName(sku.ci), unit: sku.ci.unit };
+    }
+    const it = sku.it;
+    return { type: 'builtin', key: it.priceDefaultKey, name: `${groupLabel}${it.label ? ' ' + it.label : ''}`, unit: it.unit || '玉' };
+  }
+
+  function setSkuCurrentLabel(sku) {
+    if (sku.type === 'custom') {
+      const p = customPriceAt(sku.ci, shiftedDateStr(0));
+      return p ? formatYen(p.unit_price) : '販売前';
+    }
+    return formatYen(getPricesForDate()[sku.it.priceDefaultKey]);
+  }
+
+  function setPickPriceGroup(gi) {
+    const g = setDraft.groups[gi];
+    if (g.skus.length === 1) {
+      setGoPriceForm(setTargetFromSku(g.label, g.skus[0]));
+      return;
+    }
+    setPush(() => setShow(`${g.label}：サイズを選ぶ`, setTiles(g.skus.map((sku, si) => ({
+      big: true, label: posSkuTileLabel(sku), sub: `いま ${setSkuCurrentLabel(sku)}`, onclick: `setPickPriceSku(${gi}, ${si})`,
+    })))));
+  }
+
+  function setPickPriceSku(gi, si) {
+    const g = setDraft.groups[gi];
+    setGoPriceForm(setTargetFromSku(g.label, g.skus[si]));
+  }
+
+  // 価格フォームの初期値：追加商品は今のまとめ買い価格を引き継ぐ
+  function setGoPriceForm(target) {
+    const cur = target.type === 'custom' ? customPriceAt(target.item, shiftedDateStr(0)) : null;
+    setDraft.target = target;
+    setDraft.newPrice = '';
+    setDraft.bundles = cur ? (cur.bundles || []).map(b => ({ ...b })) : [];
+    setDraft.date = shiftedDateStr(0);
+    setPush(setPriceForm);
+  }
+
+  function setCurrentPriceHtml(t) {
+    if (t.type === 'new') return '<div class="set-current">新しく追加する商品です</div>';
+    if (t.type === 'custom') {
+      const p = customPriceAt(t.item, shiftedDateStr(0));
+      return `<div class="set-current">いまの価格：<b>${p ? escHtml(customPriceLabel(p.unit_price, p.bundles, t.unit)) : 'まだ販売前'}</b></div>`;
+    }
+    const v = getPricesForDate()[t.key];
+    return `<div class="set-current">いまの${t.isRate ? '税率' : '価格'}：<b>${t.isRate ? formatRate(v) : formatYen(v)}</b>${t.isRate || !t.unit ? '' : ` / 1${escHtml(t.unit)}`}</div>`;
+  }
+
+  function setPriceForm() {
+    const t = setDraft.target;
+    const allowBundles = t.type !== 'builtin' && !isKgUnit(t.unit);
+    const bundleHtml = allowBundles ? `
+      <div class="set-field">
+        <label>まとめ買い価格（なければ空のままでOK）</label>
+        ${setDraft.bundles.map((b, i) => `
+          <div class="set-bundle-row">
+            <input type="number" id="setBundleQty_${i}" inputmode="numeric" min="2" step="1" value="${escHtml(b.qty)}">
+            <span>${escHtml(t.unit)}で</span>
+            <input type="number" class="set-bundle-price" id="setBundlePrice_${i}" inputmode="numeric" min="0" step="1" value="${escHtml(b.price)}">
+            <span>円</span>
+            <button type="button" class="set-small-btn danger" onclick="setRemoveBundle(${i})">削除</button>
+          </div>`).join('')}
+        <button type="button" class="set-small-btn" onclick="setAddBundle()">＋ まとめ買い価格を追加（例：2${escHtml(t.unit)}で500円）</button>
+        <p class="pos-step-note">※ 3${escHtml(t.unit)}以上買われたときは、自動で一番安い組み合わせで計算します（例：3${escHtml(t.unit)} ＝ 2${escHtml(t.unit)}の価格＋1${escHtml(t.unit)}の価格）</p>
+      </div>` : '';
+
+    setShow(`${t.name}：新しい${t.isRate ? '税率' : '価格'}`, `
+      ${setCurrentPriceHtml(t)}
+      <div class="set-field">
+        <label>${t.isRate ? '新しい税率' : `新しい価格（税込み）${t.unit ? ` 1${escHtml(t.unit)}あたり` : ''}`}</label>
+        <div class="set-input-row">
+          <input type="number" id="setNewPrice" inputmode="${t.isRate ? 'decimal' : 'numeric'}" min="0" step="${t.isRate ? '0.1' : '1'}" value="${escHtml(setDraft.newPrice)}" placeholder="${t.isRate ? '8' : '300'}">
+          <span>${t.isRate ? '%' : '円'}</span>
+        </div>
+      </div>
+      ${bundleHtml}
+      <div class="set-field">
+        <label>${t.type === 'new' ? 'いつから売りますか？（販売開始日）' : 'いつから変えますか？（適用日）'}</label>
+        <input type="date" id="setDate" value="${escHtml(setDraft.date)}">
+        <div class="set-chip-row">
+          <button type="button" class="set-small-btn" onclick="setPickDate(0)">今日</button>
+          <button type="button" class="set-small-btn" onclick="setPickDate(1)">明日</button>
+        </div>
+      </div>
+      <button type="button" class="set-next-btn" onclick="setPriceFormNext()">確認へ進む →</button>`);
+  }
+
+  // 再描画で入力中の値が消えないよう、画面の入力欄を setDraft に読み込む
+  function setCollectPriceForm() {
+    setDraft.newPrice = document.getElementById('setNewPrice').value;
+    setDraft.date = document.getElementById('setDate').value;
+    setDraft.bundles = setDraft.bundles.map((b, i) => ({
+      qty: document.getElementById(`setBundleQty_${i}`)?.value ?? b.qty,
+      price: document.getElementById(`setBundlePrice_${i}`)?.value ?? b.price,
+    }));
+  }
+
+  function setAddBundle() {
+    setCollectPriceForm();
+    setDraft.bundles.push({ qty: '', price: '' });
+    setRerender();
+  }
+
+  function setRemoveBundle(i) {
+    setCollectPriceForm();
+    setDraft.bundles.splice(i, 1);
+    setRerender();
+  }
+
+  function setPickDate(offset) {
+    setCollectPriceForm();
+    setDraft.date = shiftedDateStr(offset);
+    setRerender();
+  }
+
+  function setPriceFormNext() {
+    setCollectPriceForm();
+    const t = setDraft.target;
+    const value = t.isRate ? parseFloat(setDraft.newPrice) : parseInt(setDraft.newPrice, 10);
+    if (Number.isNaN(value) || value < 0 || (t.isRate && value > 100)) {
+      alert(t.isRate ? '税率を0〜100の数字で入力してください' : '新しい価格を入力してください');
+      return;
+    }
+    if (!setDraft.date) { alert('日付を選んでください'); return; }
+
+    const bundles = [];
+    for (const b of setDraft.bundles) {
+      if (b.qty === '' && b.price === '') continue; // 空の行は無視
+      const q = parseInt(b.qty, 10), p = parseInt(b.price, 10);
+      if (!(q >= 2) || Number.isNaN(p) || p < 0) { alert('まとめ買い価格は「2以上の数」と「金額」を入力してください（不要な行は削除してください）'); return; }
+      if (bundles.some(x => x.qty === q)) { alert(`まとめ買い価格の「${q}${t.unit}」が重複しています`); return; }
+      bundles.push({ qty: q, price: p });
+    }
+    bundles.sort((a, b) => a.qty - b.qty);
+    setDraft.value = value;
+    setDraft.cleanBundles = bundles;
+    setPush(setPriceConfirm);
+  }
+
+  function setPriceConfirm() {
+    const t = setDraft.target;
+    const fmt = v => t.isRate ? formatRate(v) : formatYen(v);
+    let oldLabel = '';
+    if (t.type === 'builtin') oldLabel = fmt(getPricesForDate()[t.key]);
+    if (t.type === 'custom') {
+      const p = customPriceAt(t.item, shiftedDateStr(0));
+      oldLabel = p ? formatYen(p.unit_price) : '';
+    }
+    const b = bundleLabel(setDraft.cleanBundles, t.unit);
+    const isNew = t.type === 'new';
+    setShow('この内容でよろしいですか？', `
+      <div class="set-confirm">
+        <div class="set-confirm-name">${isNew ? `${CUSTOM_CATEGORIES.find(c => c.key === setDraft.cat).icon} ` : ''}${escHtml(t.name)}</div>
+        <div class="set-confirm-price">${oldLabel ? `<s>${oldLabel}</s> → ` : ''}${fmt(setDraft.value)}${t.isRate || !t.unit ? '' : `<span style="font-size:16px;"> / 1${escHtml(t.unit)}</span>`}</div>
+        ${b ? `<div class="set-confirm-sub">まとめ買い：${escHtml(b)}</div>` : ''}
+        <div class="set-confirm-sub"><b>${fullDateJa(setDraft.date)}</b> から${isNew ? '販売' : '適用'}</div>
+      </div>
+      <p class="pos-step-note">※ すでに表に登録済みの行の金額は変わりません。${isNew ? '販売開始日以降、店頭会計と表の入力画面に出るようになります。' : '適用日以降に登録・会計する分から新しい価格になります（適用日より後に予定していた価格も、この価格に置き換わります）。'}</p>
+      <button type="button" class="set-next-btn" id="setApplyBtn" onclick="setApply()">${isNew ? 'この内容で追加する' : 'この内容で変更する'}</button>`);
+  }
+
+  async function setApply() {
+    if (setSaving) return;
+    setSaving = true;
+    const btn = document.getElementById('setApplyBtn');
+    btn.disabled = true;
+    btn.textContent = '保存中...';
+    const t = setDraft.target;
+    try {
+      if (t.type === 'builtin') {
+        await applyBuiltinPrice(PRICE_TABLE_COLS.find(c => c.key === t.key), setDraft.value, setDraft.date);
+      } else if (t.type === 'custom') {
+        await applyCustomPrice(t.item, setDraft.date, setDraft.value, setDraft.cleanBundles);
+      } else {
+        await setCreateItem();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('保存に失敗しました。通信状態を確認して、もう一度お試しください。');
+      btn.disabled = false;
+      btn.textContent = t.type === 'new' ? 'この内容で追加する' : 'この内容で変更する';
+      return;
+    } finally {
+      setSaving = false;
+    }
+    renderTable();
+    const mode = setDraft.mode;
+    setStack = [setHome];
+    setPush(() => setShow('完了', `
+      <div class="set-done">✅ ${mode === 'add' ? '追加しました' : '変更しました'}</div>
+      <p class="pos-step-note" style="text-align:center;margin-bottom:18px;">${escHtml(t.name)}：${t.isRate ? formatRate(setDraft.value) : formatYen(setDraft.value)}（${fullDateJa(setDraft.date)}から）</p>
+      <button type="button" class="set-next-btn" onclick="setStack = [setHome]; ${mode === 'add' ? 'setStartAdd()' : 'setStartPrice()'}">続けて${mode === 'add' ? '別の商品を追加する' : '別の価格を変える'}</button>
+      <button type="button" class="set-next-btn secondary" style="margin-top:10px;" onclick="closeSettings()">閉じる</button>`));
+  }
+
+  // ── 商品・サイズを追加する ──
+  function setStartAdd() {
+    setDraft = { mode: 'add' };
+    setPush(setAddCategory);
+  }
+
+  function setAddCategory() {
+    setShow('➕ どの品物に追加しますか？', setTiles(CUSTOM_CATEGORIES.map(c => ({
+      icon: c.icon, label: c.label, onclick: `setPickAddCategory('${c.key}')`,
+    }))));
+  }
+
+  function setPickAddCategory(catKey) {
+    setDraft.cat = catKey;
+    setDraft.groupLabels = mergedGroups(catKey, shiftedDateStr(0), { includeInactive: true, includeUnpriced: true }).map(g => g.label);
+    setPush(setAddGroup);
+  }
+
+  function setAddGroup() {
+    const cat = CUSTOM_CATEGORIES.find(c => c.key === setDraft.cat);
+    setShow(`${cat.icon} 品名を選ぶ`, `
+      <p class="pos-step-note" style="margin:0 0 10px;">今ある品名にサイズを追加するときは、品名を選んでください</p>
+      ${setTiles(setDraft.groupLabels.map((label, i) => ({
+        icon: POS_GROUP_ICONS[label] || cat.icon, label, onclick: `setPickAddGroup(${i})`,
+      })))}
+      <div class="set-field" style="margin-top:18px;">
+        <label>新しい品名のときはこちらに入力</label>
+        <div class="pos-direct-row" style="margin-top:0;">
+          <input type="text" id="setNewGroup" placeholder="例：さつまいも" style="text-align:left;">
+          <button type="button" onclick="setUseNewGroup()">決定</button>
+        </div>
+      </div>`);
+  }
+
+  function setPickAddGroup(i) {
+    setDraft.groupLabel = setDraft.groupLabels[i];
+    setPush(setAddSize);
+  }
+
+  function setUseNewGroup() {
+    const v = document.getElementById('setNewGroup').value.trim();
+    if (!v) { alert('品名を入力してください'); return; }
+    setDraft.groupLabel = v;
+    setPush(setAddSize);
+  }
+
+  function setAddSize() {
+    setShow(`${setDraft.groupLabel}：サイズ・規格の名前`, `
+      <div class="set-field">
+        <label>サイズや規格の名前（なければ空のままでOK）</label>
+        <div class="set-input-row"><input type="text" id="setSizeLabel" placeholder="例：1玉、L、規格外" value="${escHtml(setDraft.sizeLabel || '')}"></div>
+        <div class="set-chip-row">
+          ${SET_SIZE_SUGGESTIONS.map(s => `<button type="button" class="set-small-btn" onclick="document.getElementById('setSizeLabel').value='${s}'">${s}</button>`).join('')}
+        </div>
+      </div>
+      <button type="button" class="set-next-btn" onclick="setAddSizeNext()">次へ →</button>`);
+  }
+
+  function setAddSizeNext() {
+    const size = document.getElementById('setSizeLabel').value.trim();
+    const dup = customItems.find(it => it.category === setDraft.cat && it.group_label === setDraft.groupLabel && it.size_label === size);
+    if (dup) {
+      alert(`「${customItemName(dup)}」はすでに追加されています。価格を変えるときは「価格を変える」から、販売を再開するときは「販売をやめる・再開する」から操作してください。`);
+      return;
+    }
+    setDraft.sizeLabel = size;
+    setPush(setAddUnit);
+  }
+
+  function setAddUnit() {
+    setShow('何で数えますか？（単位）', `
+      ${setTiles(SET_UNIT_CHOICES.map(u => ({ big: true, label: u, sub: u === 'kg' ? '量り売り' : '', onclick: `setPickUnit('${u}')` })))}
+      <div class="set-field" style="margin-top:18px;">
+        <label>それ以外の単位</label>
+        <div class="pos-direct-row" style="margin-top:0;">
+          <input type="text" id="setUnitFree" placeholder="例：束" style="text-align:left;">
+          <button type="button" onclick="setPickUnit(document.getElementById('setUnitFree').value.trim())">決定</button>
+        </div>
+      </div>`);
+  }
+
+  function setPickUnit(unit) {
+    if (!unit) { alert('単位を入力してください'); return; }
+    setDraft.unit = unit;
+    setGoPriceForm({ type: 'new', name: `${setDraft.groupLabel}${setDraft.sizeLabel ? ' ' + setDraft.sizeLabel : ''}`, unit });
+  }
+
+  async function setCreateItem() {
+    const { data: item, error } = await supabaseClient
+      .from('ec_items')
+      .insert({
+        category: setDraft.cat,
+        group_label: setDraft.groupLabel,
+        size_label: setDraft.sizeLabel || '',
+        unit: setDraft.unit,
+        active: true,
+        sort_order: customItems.reduce((m, it) => Math.max(m, it.sort_order || 0), 0) + 1,
+        created_by: currentProfile.id,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    const { error: e2 } = await supabaseClient.from('ec_item_prices').insert({
+      item_id: item.id, start_date: setDraft.date, unit_price: setDraft.value, bundles: setDraft.cleanBundles, created_by: currentProfile.id,
+    });
+    if (e2) throw e2;
+    await loadCustomItems();
+  }
+
+  // ── 追加した商品の販売をやめる・再開する ──
+  function setManageList() {
+    const today = shiftedDateStr(0);
+    setShow('🛑 販売をやめる・再開する', customItems.map(it => {
+      const cat = CUSTOM_CATEGORIES.find(c => c.key === it.category);
+      const p = customPriceAt(it, today);
+      return `
+        <div class="set-manage-row ${it.active ? '' : 'inactive'}">
+          <div class="set-manage-name">${cat ? cat.icon : ''} ${escHtml(customItemName(it))}
+            <small>${p ? escHtml(customPriceLabel(p.unit_price, p.bundles, it.unit)) : 'まだ販売前'}／${it.active ? '販売中' : '販売停止中'}</small>
+          </div>
+          <button type="button" class="set-small-btn ${it.active ? 'danger' : ''}" onclick="setToggleActive('${it.id}')">${it.active ? '販売をやめる' : '販売を再開する'}</button>
+        </div>`;
+    }).join('') + '<p class="pos-step-note">※ 販売をやめても、これまでに登録した行の記録はそのまま残ります。</p>');
+  }
+
+  async function setToggleActive(id) {
+    const it = findCustomItem(id);
+    const { error } = await supabaseClient.from('ec_items').update({ active: !it.active }).eq('id', id);
+    if (error) { alert('更新に失敗しました。'); console.error(error); return; }
+    it.active = !it.active;
+    renderCustomItemTable();
+    setRerender();
   }
 
   // ── 初期化 ──────────────────────────────────────────────
@@ -2803,6 +4380,7 @@
 
     await loadProductVisibility();
     renderProductToggles();
+    await loadCustomItems();
     await loadPricePeriods();
     await loadEntries();
 
