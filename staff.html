@@ -718,6 +718,17 @@
 
     .onion-field { margin-bottom: 12px; }
 
+    /* 保存前の確認画面 */
+    .onion-confirm-section { margin-bottom: 12px; }
+    .onion-confirm-label { font-size: 13px; font-weight: 800; color: #7a3f13; margin-bottom: 4px; }
+    .onion-confirm-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; }
+    .onion-confirm-table td { padding: 7px 8px; font-size: 14px; border-bottom: 1px solid #f0f0f0; white-space: pre-wrap; }
+    .onion-confirm-table tr:last-child td { border-bottom: none; }
+    .onion-confirm-empty { font-size: 13px; color: #999; padding: 4px 8px; }
+    .onion-confirm-total { font-size: 15px; font-weight: 800; color: #7a3f13; margin-top: 6px; }
+
+    .onion-block-reporter { font-size: 13px; font-weight: 700; color: #555; margin: -4px 0 12px; }
+
     .onion-field label {
       display: block;
       font-size: 11px;
@@ -1009,6 +1020,10 @@
       <label for="onionCreateDate" class="onion-date-label" id="onionDateLabel">日付</label>
       <input type="date" id="onionCreateDate" class="modal-input">
     </div>
+    <div class="onion-field">
+      <label id="onionSignLabel">報告者（代表1名）</label>
+      <div id="onionSignPicker"></div>
+    </div>
     <div class="onion-dest-cards" id="onionDestCards"></div>
 
     <div class="modal-actions">
@@ -1023,7 +1038,18 @@
     <div id="onionEditBlocks"></div>
     <div class="modal-actions">
       <button type="button" class="btn-modal-cancel" id="onionEditCloseBtn" onclick="closeOnionEditModal()">閉じる</button>
-      <button type="button" class="btn-modal-submit" id="onionSaveBtn" onclick="saveOnionReport()">保存する</button>
+      <button type="button" class="btn-modal-submit" id="onionSaveBtn" onclick="openOnionConfirmModal()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="onionConfirmModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title" id="onionConfirmTitle">これで保存していいですか？</div>
+    <div id="onionConfirmBody"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" id="onionConfirmBackBtn" onclick="closeOnionConfirmModal()">戻って直す</button>
+      <button type="button" class="btn-modal-submit" id="onionConfirmSaveBtn" onclick="saveOnionReport()">保存する</button>
     </div>
   </div>
 </div>
@@ -1649,7 +1675,8 @@
       close: '閉じる', save: '保存する', saving: '保存中...', saved: '保存しました',
       saveFailed: '保存に失敗しました', loadFailed: '読み込みに失敗しました',
       selectDate: '日付を選択してください', dateLabel: '日付',
-      sign: '報告者（代表1名）', signSelected: '選んだ人', signLoadFailed: '名前の一覧を読み込めません',
+      sign: '報告者（代表1名）', signRequired: '報告者（代表1名）を選んでください',
+      confirmTitle: dest => `${dest}は、これで保存していいですか？`, confirmBack: '戻って直す', none: 'なし', countUnit: '個', peopleUnit: '人', signSelected: '選んだ人', signLoadFailed: '名前の一覧を読み込めません',
       sizeSection: '使ったサイズ・荷姿', sizePlaceholder: 'サイズ', sizeOther: 'その他',
       addSize: '＋ サイズを追加', packageHeader: '荷姿', countHeader: '個数', weightHeader: '重さ(kg)',
       pkgCountRequired: '選んだ荷姿の個数を1以上で入力してください',
@@ -1668,7 +1695,8 @@
       close: 'Tutup', save: 'Simpan', saving: 'Menyimpan...', saved: 'Berhasil disimpan',
       saveFailed: 'Gagal menyimpan', loadFailed: 'Gagal memuat data',
       selectDate: 'Silakan pilih tanggal', dateLabel: 'Tanggal',
-      sign: 'Pelapor (1 orang perwakilan)', signSelected: 'Dipilih', signLoadFailed: 'Gagal memuat daftar nama',
+      sign: 'Pelapor (1 orang perwakilan)', signRequired: 'Silakan pilih pelapor (1 orang perwakilan)',
+      confirmTitle: dest => `Simpan ${dest} dengan isi ini?`, confirmBack: 'Kembali & perbaiki', none: 'Tidak ada', countUnit: 'buah', peopleUnit: 'orang', signSelected: 'Dipilih', signLoadFailed: 'Gagal memuat daftar nama',
       sizeSection: 'Ukuran & Kemasan yang digunakan', sizePlaceholder: 'Ukuran', sizeOther: 'Lainnya',
       addSize: '＋ Tambah ukuran', packageHeader: 'Kemasan', countHeader: 'Jumlah', weightHeader: 'Berat (kg)',
       pkgCountRequired: 'Isi jumlah (minimal 1) untuk kemasan yang dipilih',
@@ -1687,7 +1715,8 @@
       close: 'បិទ', save: 'រក្សាទុក', saving: 'កំពុងរក្សាទុក...', saved: 'បានរក្សាទុករួចរាល់',
       saveFailed: 'រក្សាទុកមិនជោគជ័យ', loadFailed: 'ផ្ទុកទិន្នន័យមិនជោគជ័យ',
       selectDate: 'សូមជ្រើសរើសកាលបរិច្ឆេទ', dateLabel: 'កាលបរិច្ឆេទ',
-      sign: 'អ្នករាយការណ៍ (តំណាង 1 នាក់)', signSelected: 'បានជ្រើសរើស', signLoadFailed: 'មិនអាចផ្ទុកបញ្ជីឈ្មោះបានទេ',
+      sign: 'អ្នករាយការណ៍ (តំណាង 1 នាក់)', signRequired: 'សូមជ្រើសរើសអ្នករាយការណ៍ (តំណាង 1 នាក់)',
+      confirmTitle: dest => `រក្សាទុក ${dest} ដូចនេះមែនទេ?`, confirmBack: 'ត្រឡប់ទៅកែ', none: 'គ្មាន', countUnit: 'គ្រាប់', peopleUnit: 'នាក់', signSelected: 'បានជ្រើសរើស', signLoadFailed: 'មិនអាចផ្ទុកបញ្ជីឈ្មោះបានទេ',
       sizeSection: 'ទំហំ និងការវេចខ្ចប់ដែលបានប្រើ', sizePlaceholder: 'ទំហំ', sizeOther: 'ផ្សេងទៀត',
       addSize: '＋ បន្ថែមទំហំ', packageHeader: 'ការវេចខ្ចប់', countHeader: 'ចំនួន', weightHeader: 'ទម្ងន់ (kg)',
       pkgCountRequired: 'សូមបញ្ចូលចំនួន (យ៉ាងហោចណាស់ 1) សម្រាប់ការវេចខ្ចប់ដែលបានជ្រើសរើស',
@@ -1719,6 +1748,7 @@
   function applyOnionStaticText() {
     document.getElementById('onionMenuTitle').textContent      = ot('menuTitle');
     document.getElementById('onionDateLabel').textContent      = ot('dateLabel');
+    document.getElementById('onionSignLabel').textContent      = ot('sign');
     document.getElementById('onionMenuCloseBtn').textContent   = ot('close');
     document.getElementById('onionEditCloseBtn').textContent   = ot('close');
   }
@@ -1726,12 +1756,17 @@
   let onionCurrentDate = null;
   let onionCurrentBlock = null; // 編集中の出荷先（ONION_BLOCK_TEMPLATESの添字）
 
-  // 出荷先カードの表示順（ONION_BLOCK_TEMPLATESの添字）
-  const ONION_DEST_CARD_ORDER = [0, 1, 2];
+  // 出荷先カードの表示順（ONION_BLOCK_TEMPLATESの添字）：ベスト日本・ベスト中国・レインボー
+  const ONION_DEST_CARD_ORDER = [1, 0, 2];
 
-  function openOnionMenuModal() {
+  // 報告者（代表1名）はこの画面で選び、どの出荷先の日報にも同じ人が入る。
+  // 選んだ人はページを閉じるまで覚えておく（続けて別の出荷先を入力するときに選び直さなくてよいように）
+  async function openOnionMenuModal() {
     applyOnionStaticText();
     document.getElementById('onionCreateDate').value = getToday();
+    document.getElementById('onionSignPicker').innerHTML = '';
+    if (await loadOnionSignStaff()) initOnionSignPicker(onionSelectedSign);
+    else document.getElementById('onionSignPicker').textContent = ot('signLoadFailed');
     document.getElementById('onionDestCards').innerHTML = ONION_DEST_CARD_ORDER.map(bi => {
       const t = ONION_BLOCK_TEMPLATES[bi];
       return `<button type="button" class="onion-dest-card ${t.colorClass}" onclick="openOnionEditModal(document.getElementById('onionCreateDate').value, ${bi})">`
@@ -1906,11 +1941,7 @@
     return `
       <div class="onion-block ${t.colorClass}" id="onion-block-${bi}">
         <div class="onion-block-title">🧅 ${t.destination}</div>
-
-        <div class="onion-field">
-          <label>${ot('sign')}</label>
-          <div id="onionSignPicker"></div>
-        </div>
+        <div class="onion-block-reporter">${ot('sign')}：${onionSelectedSign}</div>
 
         <div class="onion-field">
           <label>${ot('sizeSection')}</label>
@@ -2057,6 +2088,7 @@
   // 選んだ出荷先（bi）の欄だけを開く
   async function openOnionEditModal(dateStr, bi) {
     if (!dateStr) { alert(ot('selectDate')); return; }
+    if (!onionSelectedSign) { alert(ot('signRequired')); return; }
     onionCurrentDate = dateStr;
     onionCurrentBlock = bi;
 
@@ -2067,7 +2099,6 @@
       .maybeSingle();
 
     if (error) { alert(ot('loadFailed')); console.error(error); return; }
-    if (!(await loadOnionSignStaff())) { alert(ot('signLoadFailed')); return; }
 
     const block = data?.data?.blocks?.[bi] ?? {};
 
@@ -2075,7 +2106,6 @@
     document.getElementById('onionEditCloseBtn').textContent = ot('close');
     document.getElementById('onionSaveBtn').textContent = ot('save');
     document.getElementById('onionEditBlocks').innerHTML = renderOnionBlock(bi, block);
-    initOnionSignPicker(block.sign);
     recalcOnionUsedCount();
     recalcOnionProduced();
 
@@ -2112,16 +2142,67 @@
     };
   }
 
-  // 1日1件の日報（3つの出荷先をまとめて保存）のうち、開いている出荷先の欄だけを書き換える。
-  // 別の人が同じ日の他の出荷先を保存していても消さないよう、保存直前に最新の内容を読み直す
-  async function saveOnionReport() {
+  // ── 保存前の確認画面：入力内容を項目ごとに一覧で見せる ──
+  let onionPendingBlock = null;
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
+  function onionConfirmSection(label, bodyHtml) {
+    return `<div class="onion-confirm-section"><div class="onion-confirm-label">${label}</div>${bodyHtml}</div>`;
+  }
+
+  function onionConfirmRows(rows) {
+    if (!rows.length) return `<div class="onion-confirm-empty">${ot('none')}</div>`;
+    return `<table class="onion-confirm-table">${rows.map(cells =>
+      `<tr>${cells.map(c => `<td>${escapeHtml(String(c ?? ''))}</td>`).join('')}</tr>`).join('')}</table>`;
+  }
+
+  function openOnionConfirmModal() {
     const bi = onionCurrentBlock;
     const block = collectOnionBlock(bi);
     const badCount = block.sizeEntries.some(e => e.packages.some(p => !(parseInt(p.count, 10) >= 1)));
     if (badCount) { alert(ot('pkgCountRequired')); return; }
     const badProduced = block.producedRows.some(r => !(parseInt(r.count, 10) >= 1));
     if (badProduced) { alert(ot('prodCountRequired')); return; }
-    const btn = document.getElementById('onionSaveBtn');
+    onionPendingBlock = block;
+
+    const kg = w => (w == null || isNaN(w) ? '?' : `${w} kg`);
+    const kindLabel = k => (k === 'やり直し' ? ot('redo') : ot('usual'));
+    const produced = calcOnionProducedKg(block.producedRows);
+
+    const html = [
+      onionConfirmSection(ot('dateLabel'), onionConfirmRows([[formatDateJa(onionCurrentDate), ONION_BLOCK_TEMPLATES[bi].destination]])),
+      onionConfirmSection(ot('sign'), onionConfirmRows([[block.sign]])),
+      onionConfirmSection(ot('sizeSection'), onionConfirmRows(
+        block.sizeEntries.flatMap(e => e.packages.map(p => [e.size, p.type, `${p.count} ${ot('countUnit')}`, kg(onionPackageKg(p))])))),
+      onionConfirmSection(`${ot('usedCount')} (kg)`, onionConfirmRows([[`${block.usedCount || 0} kg`]])),
+      onionConfirmSection(ot('timeSection'), onionConfirmRows(
+        block.timeRows.filter(r => r.start || r.end || r.people).map(r => [`${r.start || '--'} 〜 ${r.end || '--'}`, `${r.people || 0} ${ot('peopleUnit')}`]))),
+      onionConfirmSection(ot('produced'), onionConfirmRows(
+        block.producedRows.map(r => [formatDateJa(r.date), r.container, kindLabel(r.kind), `${r.count} ${ot('countUnit')}`, kg(onionProducedKg(r))]))
+        + `<div class="onion-confirm-total">${ot('prodTotal')}：${produced.total} kg</div>`),
+      onionConfirmSection(ot('condition'), onionConfirmRows(block.todayCondition ? [[block.todayCondition]] : [])),
+    ].join('');
+
+    document.getElementById('onionConfirmTitle').textContent = ot('confirmTitle')(ONION_BLOCK_TEMPLATES[bi].destination);
+    document.getElementById('onionConfirmBackBtn').textContent = ot('confirmBack');
+    document.getElementById('onionConfirmSaveBtn').textContent = ot('save');
+    document.getElementById('onionConfirmBody').innerHTML = html;
+    document.getElementById('onionConfirmModalOverlay').classList.add('open');
+  }
+
+  function closeOnionConfirmModal() {
+    document.getElementById('onionConfirmModalOverlay').classList.remove('open');
+  }
+
+  // 1日1件の日報（3つの出荷先をまとめて保存）のうち、開いている出荷先の欄だけを書き換える。
+  // 別の人が同じ日の他の出荷先を保存していても消さないよう、保存直前に最新の内容を読み直す
+  async function saveOnionReport() {
+    const bi = onionCurrentBlock;
+    const block = onionPendingBlock;
+    const btn = document.getElementById('onionConfirmSaveBtn');
     btn.disabled = true;
     btn.textContent = ot('saving');
 
@@ -2152,6 +2233,7 @@
 
     if (error) { alert(ot('saveFailed')); console.error(error); return; }
 
+    closeOnionConfirmModal();
     closeOnionEditModal();
     // 作業効率は今保存した出荷先の分だけ表示する
     showOnionEfficiencyFeedback({ blocks: ONION_BLOCK_TEMPLATES.map((_, i) => (i === bi ? block : {})) });
