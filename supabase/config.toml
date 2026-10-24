@@ -11,3 +11,7 @@ verify_jwt = false
 [functions.notify-order-requests]
 # pg_cronからの定期呼び出しのみで使うため、JWT検証を無効化する
 verify_jwt = false
+
+[functions.staff-qr-login]
+# ログイン前のページ（start.html）から呼ばれるため、JWT検証を無効化する（QRの合言葉は関数内で照合する）
+verify_jwt = false
