@@ -738,7 +738,7 @@
     }
 
     /* 使ったサイズ・荷姿（サイズごとに1枠。＋で枠を増やす） */
-    .onion-size-entry {
+    .onion-size-entry, .onion-prod-entry {
       background: #fff;
       border: 1.5px solid #e5e5e5;
       border-radius: 8px;
@@ -764,8 +764,8 @@
     .onion-pkg-table td { padding: 3px 4px; }
     .onion-pkg-table td:first-child { width: 38%; }
     .onion-pkg-table .onion-toggle-btn { width: 100%; padding: 10px 4px; font-size: 14px; }
-    .onion-pkg-table .pkg-count, .onion-pkg-table .pkg-kg { width: 100%; padding: 9px; font-size: 15px; border: 1.5px solid #ddd; border-radius: 6px; }
-    .onion-pkg-table .pkg-count:disabled, .onion-pkg-table .pkg-kg:disabled { background: #f3f3f3; }
+    .onion-pkg-table .pkg-count, .onion-pkg-table .pkg-kg, .onion-pkg-table .pr-count { width: 100%; padding: 9px; font-size: 15px; border: 1.5px solid #ddd; border-radius: 6px; }
+    .onion-pkg-table .pkg-count:disabled, .onion-pkg-table .pkg-kg:disabled, .onion-pkg-table .pr-count:disabled { background: #f3f3f3; }
     .onion-pkg-table .pkg-kg-auto { display: block; text-align: center; font-size: 13px; font-weight: 700; color: #7a3f13; margin-top: 2px; }
 
     /* 入力項目ごとの区切り（項目ごとに色を変えて、切れ目が分かるようにする） */
@@ -862,30 +862,13 @@
       cursor: pointer;
     }
 
-    /* できたもの（使用日ごとの行。＋で行を増やす） */
-    .onion-prod-row {
-      background: #fff;
-      border: 1.5px solid #e5e5e5;
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .pr-line { display: flex; gap: 6px; align-items: center; }
+    /* できたもの（使用日ごとの枠に、コンテナ別の表。＋で使用日の枠を増やす） */
     .pr-line-label { flex-shrink: 0; font-size: 12px; font-weight: 700; color: #777; }
-    .pr-line input, .pr-line select { padding: 8px; font-size: 15px; border: 1.5px solid #ddd; border-radius: 6px; min-width: 0; }
-    .pr-line .pr-date { flex: 1; }
-    .pr-line .pr-container { flex: 0 0 96px; font-weight: 800; }
-    .pr-line .pr-container-other { flex: 1; }
-    .pr-line .pr-kind { display: flex; gap: 4px; flex: 1; }
-    .pr-line .pr-kind .onion-toggle-btn { padding: 9px 2px; font-size: 13px; }
-    .pr-line .pr-count { flex: 0 0 80px; }
-    .pr-line .pr-kg { flex: 0 0 90px; }
-    .pr-line .pr-kg-auto { font-size: 16px; font-weight: 800; color: #7a3f13; }
-    .pr-line .btn-onion-remove-row { flex: 0 0 32px; margin-left: auto; }
+    .onion-prod-entry .pr-date { flex: 1; padding: 8px; font-size: 15px; min-width: 0; }
+    .onion-prod-entry .pr-kind { display: flex; gap: 4px; margin-bottom: 8px; }
+    .onion-prod-entry .pr-kind .onion-toggle-btn { padding: 9px 2px; font-size: 13px; }
+    .onion-prod-entry .pr-container-other { width: 100%; margin-top: 4px; padding: 7px; font-size: 13px; border: 1.5px solid #ddd; border-radius: 6px; }
+    .onion-prod-entry .pr-container-other:disabled { display: none; }
 
     .onion-prod-total {
       background: #fff;
@@ -898,22 +881,7 @@
     .onion-prod-total-main { font-size: 18px; font-weight: 800; color: #7a3f13; }
     .onion-prod-total-sub { font-size: 13px; color: #555; margin-top: 4px; line-height: 1.6; }
 
-    /* 名前（グループ）選択 */
-    .login-name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-
-    .login-name-btn {
-      background: #fff;
-      border: 2px solid #dde8dd;
-      border-radius: 14px;
-      padding: 18px 8px;
-      font-size: 17px;
-      font-weight: 800;
-      color: #1a3d17;
-      cursor: pointer;
-      word-break: break-all;
-    }
-
-    .login-name-btn:active { border-color: #4caf50; background: #f1f8e9; }
+    /* QRコードから来た人の自動ログイン中・エラー表示 */
     .login-message { text-align: center; color: #666; padding: 20px 8px; line-height: 1.7; }
 
     .modal-overlay {
@@ -1225,8 +1193,6 @@
       homeOther: 'その他の報告',
       comingSoonBadge: '準備中', comingSoonAlert: 'この日報はまだ準備中です',
       backToMenu: '← メニュー', homeReport: 'レポート出力',
-      loginTitle: '名前を選んでください',
-      confirmName: name => `${name} ですか？`,
       loginInvalidKey: 'QRコードが使えません。現場のQRコードをもう一度読み取ってください。',
       loginNoStaff: '名前が登録されていません。管理者に聞いてください。',
       fieldMapTitle: '作業場所（露地）',
@@ -1281,8 +1247,6 @@
       homeOther: 'Laporan Lainnya',
       comingSoonBadge: 'Dalam Persiapan', comingSoonAlert: 'Laporan ini masih dalam persiapan.',
       backToMenu: '← Menu', homeReport: 'Ekspor Laporan',
-      loginTitle: 'Pilih nama Anda',
-      confirmName: name => `Apakah Anda ${name}?`,
       loginInvalidKey: 'Kode QR tidak dapat digunakan. Silakan scan ulang kode QR di lokasi kerja.',
       loginNoStaff: 'Belum ada nama yang terdaftar. Silakan tanya admin.',
       fieldMapTitle: 'Lokasi Kerja (Lahan Terbuka)',
@@ -1337,8 +1301,6 @@
       homeOther: 'របាយការណ៍ផ្សេងៗ',
       comingSoonBadge: 'កំពុងរៀបចំ', comingSoonAlert: 'របាយការណ៍នេះកំពុងរៀបចំនៅឡើយ។',
       backToMenu: '← ម៉ឺនុយ', homeReport: 'នាំចេញរបាយការណ៍',
-      loginTitle: 'សូមជ្រើសរើសឈ្មោះរបស់អ្នក',
-      confirmName: name => `តើអ្នកគឺ ${name} មែនទេ?`,
       loginInvalidKey: 'កូដ QR មិនអាចប្រើបានទេ។ សូមស្កេនកូដ QR នៅកន្លែងធ្វើការម្ដងទៀត។',
       loginNoStaff: 'មិនទាន់មានឈ្មោះបានចុះឈ្មោះទេ។ សូមសួរអ្នកគ្រប់គ្រង។',
       fieldMapTitle: 'ទីតាំងការងារ (ដីវាល)',
@@ -1701,7 +1663,7 @@
       timeSection: '時間と人数', start: '開始', end: '終了', people: '人数',
       addRow: '＋ 行を追加', condition: 'きょうのようす',
       produced: 'できたもの', prodDate: '使用日', prodContainer: 'コンテナ', usual: 'つうじょう', redo: 'やりなおし',
-      prodCount: '個数', prodTotal: 'きょう作った出来高の合計', usedTotal: 'きょう使った数の合計',
+      prodCount: '個数', prodTotal: 'きょう作った出来高の合計', addProdDate: '＋ 使用日を追加', usedTotal: 'きょう使った数の合計',
       prodByDate: date => `${formatDateJa(date)}使用分`,
       prodCountRequired: '「できたもの」の個数は1以上で入力してください',
       editTitle: date => `玉ねぎ作業日報（${formatDateJa(date)}）`,
@@ -1721,7 +1683,7 @@
       timeSection: 'Waktu dan Jumlah orang', start: 'Mulai', end: 'Selesai', people: 'Orang',
       addRow: '＋ Tambah baris', condition: 'Kondisi hari ini',
       produced: 'Hasil', prodDate: 'Tanggal pakai', prodContainer: 'Kontainer', usual: 'Biasa', redo: 'Diulang',
-      prodCount: 'Jumlah', prodTotal: 'Total hasil yang dibuat hari ini', usedTotal: 'Total yang digunakan hari ini',
+      prodCount: 'Jumlah', prodTotal: 'Total hasil yang dibuat hari ini', addProdDate: '＋ Tambah tanggal pakai', usedTotal: 'Total yang digunakan hari ini',
       prodByDate: date => `Untuk ${formatDateJa(date)}`,
       prodCountRequired: 'Isi jumlah "Hasil" minimal 1',
       editTitle: date => `Laporan Kerja Bawang（${formatDateJa(date)}）`,
@@ -1741,7 +1703,7 @@
       timeSection: 'ពេលវេលា និង ចំនួនមនុស្ស', start: 'ចាប់ផ្តើម', end: 'បញ្ចប់', people: 'ចំនួនមនុស្ស',
       addRow: '＋ បន្ថែមជួរ', condition: 'ស្ថានភាពថ្ងៃនេះ',
       produced: 'លទ្ធផល', prodDate: 'ថ្ងៃប្រើ', prodContainer: 'កុងតឺន័រ', usual: 'ធម្មតា', redo: 'ធ្វើឡើងវិញ',
-      prodCount: 'ចំនួន', prodTotal: 'លទ្ធផលសរុបដែលបានធ្វើថ្ងៃនេះ', usedTotal: 'សរុបដែលបានប្រើថ្ងៃនេះ',
+      prodCount: 'ចំនួន', prodTotal: 'លទ្ធផលសរុបដែលបានធ្វើថ្ងៃនេះ', addProdDate: '＋ បន្ថែមថ្ងៃប្រើ', usedTotal: 'សរុបដែលបានប្រើថ្ងៃនេះ',
       prodByDate: date => `សម្រាប់ ${formatDateJa(date)}`,
       prodCountRequired: 'សូមបញ្ចូលចំនួន "លទ្ធផល" យ៉ាងហោចណាស់ 1',
       editTitle: date => `របាយការណ៍ខ្ទឹម（${formatDateJa(date)}）`,
@@ -1925,7 +1887,7 @@
     const root = document.getElementById(`onion-block-${onionCurrentBlock}`);
     if (!root) return;
     // DB・ネットの行に「個数×1個の重さ」を表示
-    root.querySelectorAll('.onion-pkg-table tr').forEach(row => {
+    root.querySelectorAll('.onion-size-entry .onion-pkg-table tr').forEach(row => {
       const auto = row.querySelector('.pkg-kg-auto');
       if (!auto) return;
       const btn = row.querySelector('.pkg-toggle');
@@ -1952,7 +1914,7 @@
     const t = ONION_BLOCK_TEMPLATES[bi];
     const timeRows = block.timeRows?.length ? block.timeRows : [{}, {}, {}];
     const sizeEntries = block.sizeEntries?.length ? block.sizeEntries : [ONION_DEFAULT_SIZE_ENTRY];
-    const producedRows = block.producedRows?.length ? block.producedRows : [defaultOnionProducedRow(bi)];
+    const producedEntries = block.producedRows?.length ? groupOnionProducedRows(block.producedRows) : [defaultOnionProducedEntry(bi)];
 
     return `
       <div class="onion-block ${t.colorClass}" id="onion-block-${bi}">
@@ -1986,8 +1948,8 @@
 
         <div class="onion-section sec-produced">
           <div class="onion-section-title">🧅 ${ot('produced')}</div>
-          <div id="onion-b${bi}-prodrows">${producedRows.map(r => onionProducedRowHtml(bi, r)).join('')}</div>
-          <button type="button" class="btn-onion-add-row" onclick="addOnionProducedRow(${bi})">${ot('addRow')}</button>
+          <div id="onion-b${bi}-prodrows">${producedEntries.map(e => onionProducedEntryHtml(bi, e)).join('')}</div>
+          <button type="button" class="btn-onion-add-row" onclick="addOnionProducedEntry(${bi})">${ot('addProdDate')}</button>
           <div class="onion-prod-total">
             <div class="onion-prod-total-main onion-produced-total"></div>
             <div class="onion-prod-total-sub onion-produced-bydate"></div>
@@ -2001,52 +1963,79 @@
       </div>`;
   }
 
-  // ── できたもの（使用日・コンテナ・通常/やり直し・個数 → 重さ） ──
+  // ── できたもの（使用日ごとの枠に、コンテナ別の表：個数 → 重さ） ──
+  // 同じ日に619・615・その他を複数作ることがあるため、「使ったサイズ・荷姿」と同じ表形式にしている。
+  // 枠＝使用日＋通常/やり直し。同じ使用日に通常とやり直しの両方がある場合は「＋ 使用日を追加」で枠を分ける。
+  // 保存形式は従来どおり1行1コンテナの producedRows（[{ date, container, kind, count, kg? }]）。
   // 基本は翌日配送分を前日に作るため、使用日の初期値は日報の日付の翌日
-  function defaultOnionProducedRow(bi) {
-    return { date: addDaysIso(onionCurrentDate, 1), container: ONION_BLOCK_TEMPLATES[bi].producedContainers[0] ?? '', kind: '通常', count: '' };
+  function defaultOnionProducedEntry(bi) {
+    const first = ONION_BLOCK_TEMPLATES[bi].producedContainers[0] ?? '';
+    return { date: addDaysIso(onionCurrentDate, 1), kind: '通常', rows: [{ container: first, count: '' }] };
   }
 
-  function onionProducedRowHtml(bi, row) {
-    const options = ONION_BLOCK_TEMPLATES[bi].producedContainers;
-    const isPreset = options.includes(row.container);
-    const autoKg = ONION_PRODUCED_UNIT_KG[row.container] != null;
+  // 保存済みの producedRows を「使用日＋区分」ごとの枠にまとめる（並びは保存順）
+  function groupOnionProducedRows(rows) {
+    const entries = [];
+    rows.forEach(r => {
+      let e = entries.find(x => x.date === r.date && x.kind === r.kind);
+      if (!e) { e = { date: r.date, kind: r.kind, rows: [] }; entries.push(e); }
+      e.rows.push(r);
+    });
+    return entries;
+  }
+
+  function onionProducedEntryHtml(bi, entry) {
+    const presets = ONION_BLOCK_TEMPLATES[bi].producedContainers;
+    const byContainer = Object.fromEntries(entry.rows.map(r => [r.container, r]));
+    const other = entry.rows.find(r => !presets.includes(r.container));
+    const countInput = (row, active) =>
+      `<input type="number" class="pr-count" min="1" step="1" inputmode="numeric" value="${active ? (row?.count ?? '') : ''}" ${active ? '' : 'disabled'} oninput="recalcOnionProduced()">`;
+
+    const presetRows = presets.map(c => {
+      const row = byContainer[c];
+      return `<tr>
+        <td><button type="button" class="onion-toggle-btn pr-toggle ${row ? 'active' : ''}" data-container="${c}" onclick="toggleOnionProducedContainer(this)">${c}</button></td>
+        <td>${countInput(row, !!row)}</td>
+        <td><span class="pkg-kg-auto pr-kg-auto"></span></td>
+      </tr>`;
+    }).join('');
+
+    // その他：コンテナ名と重さを手入力（レインボーは決まったコンテナがないため、この行だけ）
+    const otherRow = `<tr>
+        <td>
+          <button type="button" class="onion-toggle-btn pr-toggle ${other ? 'active' : ''}" data-container="" onclick="toggleOnionProducedContainer(this)">${ot('sizeOther')}</button>
+          <input class="pr-container-other" placeholder="${ot('prodContainer')}" value="${other?.container ?? ''}" ${other ? '' : 'disabled'}>
+        </td>
+        <td>${countInput(other, !!other)}</td>
+        <td><input type="number" class="pkg-kg pr-kg" min="0" step="any" inputmode="decimal" value="${other?.kg ?? ''}" ${other ? '' : 'disabled'} oninput="recalcOnionProduced()"></td>
+      </tr>`;
+
     return `
-      <div class="onion-prod-row">
-        <div class="pr-line">
+      <div class="onion-prod-entry">
+        <div class="onion-size-head">
           <span class="pr-line-label">${ot('prodDate')}</span>
-          <input type="date" class="pr-date" value="${row.date ?? ''}" onchange="recalcOnionProduced()">
-          <button type="button" class="btn-onion-remove-row" onclick="removeOnionProducedRow(this)">×</button>
+          <input type="date" class="modal-input pr-date" value="${entry.date ?? ''}" onchange="recalcOnionProduced()">
+          <button type="button" class="btn-onion-remove-row" onclick="removeOnionProducedEntry(this)">×</button>
         </div>
-        <div class="pr-line">
-          <select class="pr-container" onchange="onOnionContainerChange(this)" style="${options.length ? '' : 'display:none'}">
-            ${options.map(c => `<option value="${c}" ${row.container === c ? 'selected' : ''}>${c}</option>`).join('')}
-            <option value="" ${isPreset ? '' : 'selected'}>${ot('sizeOther')}</option>
-          </select>
-          <input class="pr-container-other" placeholder="${ot('prodContainer')}" value="${isPreset ? '' : (row.container ?? '')}" style="${isPreset ? 'display:none' : ''}">
+        <div class="pr-kind">
+          ${ONION_PRODUCED_KINDS.map(k => `<button type="button" class="onion-toggle-btn ${entry.kind === k ? 'active' : ''}" data-kind="${k}" onclick="selectOnionProducedKind(this)">${k === '通常' ? ot('usual') : ot('redo')}</button>`).join('')}
         </div>
-        <div class="pr-line">
-          <div class="pr-kind">
-            ${ONION_PRODUCED_KINDS.map(k => `<button type="button" class="onion-toggle-btn ${row.kind === k ? 'active' : ''}" data-kind="${k}" onclick="selectOnionProducedKind(this)">${k === '通常' ? ot('usual') : ot('redo')}</button>`).join('')}
-          </div>
-        </div>
-        <div class="pr-line">
-          <input type="number" class="pr-count" min="1" step="1" inputmode="numeric" placeholder="${ot('prodCount')}" value="${row.count ?? ''}" oninput="recalcOnionProduced()">
-          <span class="pr-line-label">${ot('prodCount')}</span>
-          <span class="pr-kg-auto" style="${autoKg ? '' : 'display:none'}"></span>
-          <input type="number" class="pr-kg" min="0" step="any" inputmode="decimal" placeholder="kg" value="${autoKg ? '' : (row.kg ?? '')}" style="${autoKg ? 'display:none' : ''}" oninput="recalcOnionProduced()">
-          <span class="pr-line-label pr-kg-unit" style="${autoKg ? 'display:none' : ''}">kg</span>
-        </div>
+        <table class="onion-pkg-table">
+          <tr><th>${ot('prodContainer')}</th><th>${ot('countHeader')}</th><th>${ot('weightHeader')}</th></tr>
+          ${presetRows}${otherRow}
+        </table>
       </div>`;
   }
 
-  function addOnionProducedRow(bi) {
-    document.getElementById(`onion-b${bi}-prodrows`).insertAdjacentHTML('beforeend', onionProducedRowHtml(bi, defaultOnionProducedRow(bi)));
+  function addOnionProducedEntry(bi) {
+    document.getElementById(`onion-b${bi}-prodrows`).insertAdjacentHTML('beforeend', onionProducedEntryHtml(bi, defaultOnionProducedEntry(bi)));
     recalcOnionProduced();
   }
 
-  function removeOnionProducedRow(btn) {
-    btn.closest('.onion-prod-row').remove();
+  function removeOnionProducedEntry(btn) {
+    const list = btn.closest('.onion-prod-entry').parentElement;
+    if (list.children.length <= 1) return; // 最低1枠は残す
+    btn.closest('.onion-prod-entry').remove();
     recalcOnionProduced();
   }
 
@@ -2054,42 +2043,47 @@
     btn.parentElement.querySelectorAll('.onion-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
   }
 
-  // 619・615は「個数×1個の重さ」で自動計算、それ以外（村上・その他）は重さを手入力
-  function onOnionContainerChange(select) {
-    const row = select.closest('.onion-prod-row');
-    const other = row.querySelector('.pr-container-other');
-    other.style.display = select.value ? 'none' : '';
-    if (!select.value) other.focus();
-    const autoKg = ONION_PRODUCED_UNIT_KG[select.value] != null;
-    row.querySelector('.pr-kg-auto').style.display = autoKg ? '' : 'none';
-    row.querySelector('.pr-kg').style.display = autoKg ? 'none' : '';
-    row.querySelector('.pr-kg-unit').style.display = autoKg ? 'none' : '';
+  function toggleOnionProducedContainer(btn) {
+    const row = btn.closest('tr');
+    const active = btn.classList.toggle('active');
+    row.querySelectorAll('input').forEach(input => {
+      input.disabled = !active;
+      if (!active) input.value = '';
+    });
+    if (active) row.querySelector(btn.dataset.container ? '.pr-count' : '.pr-container-other').focus();
     recalcOnionProduced();
   }
 
   function collectOnionProducedRows(root) {
-    return [...root.querySelectorAll('.onion-prod-row')].map(el => {
-      const container = el.querySelector('.pr-container').value || el.querySelector('.pr-container-other').value.trim();
-      const row = {
-        date: el.querySelector('.pr-date').value,
-        container,
-        kind: el.querySelector('.pr-kind .onion-toggle-btn.active')?.dataset.kind ?? '通常',
-        count: el.querySelector('.pr-count').value,
-      };
-      if (ONION_PRODUCED_UNIT_KG[container] == null) row.kg = el.querySelector('.pr-kg').value;
-      return row;
+    return [...root.querySelectorAll('.onion-prod-entry')].flatMap(el => {
+      const date = el.querySelector('.pr-date').value;
+      const kind = el.querySelector('.pr-kind .onion-toggle-btn.active')?.dataset.kind ?? '通常';
+      return [...el.querySelectorAll('.pr-toggle.active')].map(btn => {
+        const tr = btn.closest('tr');
+        const isOther = !btn.dataset.container;
+        const row = {
+          date,
+          container: isOther ? (tr.querySelector('.pr-container-other').value.trim() || ot('sizeOther')) : btn.dataset.container,
+          kind,
+          count: tr.querySelector('.pr-count').value,
+        };
+        if (isOther) row.kg = tr.querySelector('.pr-kg').value;
+        return row;
+      });
     });
   }
 
   function recalcOnionProduced() {
     const root = document.getElementById(`onion-block-${onionCurrentBlock}`);
     if (!root) return;
-    root.querySelectorAll('.onion-prod-row').forEach(el => {
-      const container = el.querySelector('.pr-container').value;
-      const unit = ONION_PRODUCED_UNIT_KG[container];
-      if (unit == null) return;
-      const count = parseInt(el.querySelector('.pr-count').value, 10) || 0;
-      el.querySelector('.pr-kg-auto').textContent = `× ${unit}kg = ${count * unit} kg`;
+    // 619・615の行に「個数×1個の重さ」を表示
+    root.querySelectorAll('.onion-prod-entry tr').forEach(tr => {
+      const auto = tr.querySelector('.pr-kg-auto');
+      if (!auto) return;
+      const btn = tr.querySelector('.pr-toggle');
+      const unit = ONION_PRODUCED_UNIT_KG[btn.dataset.container];
+      const count = parseInt(tr.querySelector('.pr-count').value, 10) || 0;
+      auto.textContent = btn.classList.contains('active') && unit != null ? `= ${count * unit} kg` : '';
     });
     const rows = collectOnionProducedRows(root).filter(r => r.count !== '' || (r.kg ?? '') !== '');
     const { total, byDate, missingWeight } = calcOnionProducedKg(rows);
@@ -2639,25 +2633,16 @@
   async function loadTasks() {
     const today = getToday();
 
-    // ① 担当タスクID取得
-    const { data: assignments } = await supabaseClient
-      .from('task_assignments')
-      .select('task_id')
-      .eq('staff_id', currentProfile.id);
-
-    if (!assignments?.length) { renderTimeline([]); return; }
-
-    const taskIds = assignments.map(a => a.task_id);
-
-    // ② タスク取得（completions は別クエリ）
+    // ①② その日のタスクを全部取得（スタッフ側はグループ（A/B/C）で分けない運用のため、担当割り当てで絞り込まない）
     const { data: tasks, error: tErr } = await supabaseClient
       .from('tasks')
       .select('id, crop, task_name, scheduled_start, scheduled_end, note')
       .eq('date', today)
-      .in('id', taskIds)
       .order('scheduled_start');
 
     if (tErr || !tasks?.length) { renderTimeline([]); return; }
+
+    const taskIds = tasks.map(t => t.id);
 
     // ③ 完了記録を別クエリで取得
     const { data: completions } = await supabaseClient
@@ -2908,15 +2893,34 @@
   window.addEventListener('hashchange', applyView);
 
   // ── QRコードから来た人のログイン ─────────────────────────
-  // QRコード → 言語選択 → メニューまではログインなしで表示し、
-  // カードを押した時点でまだログインしていなければ名前を選んでもらう（Edge Function staff-qr-login）。
-  // 一度選ぶとそのスマホではログインしたままになる。
-  let pendingAfterLogin = null;
+  // QRコード → 言語選択 → メニューまではログインなしで表示し、カードを押した時点で自動でログインする
+  // （Edge Function staff-qr-login）。スタッフ側ではグループ（A/B/C）を選ばない運用になったため、
+  // スタッフ用アカウント一覧の先頭のアカウントで裏でログインする（画面にはアカウント名を出さない）。
+  // 一度ログインするとそのスマホではログインしたままになる。
+  const isQrMode = () => !!localStorage.getItem('staffQrKey');
 
-  function requireStaffLogin(action) {
+  async function requireStaffLogin(action) {
     if (currentProfile) { action(); return; }
-    pendingAfterLogin = action;
-    openLoginModal();
+
+    document.getElementById('loginModalTitle').textContent = '';
+    document.getElementById('loginModalCloseBtn').textContent = st('close');
+    showLoginMessage(st('loading'));
+    document.getElementById('loginModalOverlay').classList.add('open');
+
+    try {
+      const { staff } = await callQrLogin({ action: 'list' });
+      if (!staff.length) { showLoginMessage(st('loginNoStaff')); return; }
+      const { token_hash } = await callQrLogin({ action: 'login', staff_id: staff[0].id });
+      const { error } = await supabaseClient.auth.verifyOtp({ token_hash, type: 'email' });
+      if (error) throw error;
+      currentProfile = await getMyProfile();
+      if (!currentProfile) throw new Error('general');
+      closeLoginModal();
+      await startStaffSession();
+      action();
+    } catch (err) {
+      showLoginError(err);
+    }
   }
 
   async function callQrLogin(body) {
@@ -2940,63 +2944,22 @@
     showLoginMessage(err.message === 'invalid_key' ? st('loginInvalidKey') : st('errorGeneral'));
   }
 
-  async function openLoginModal() {
-    document.getElementById('loginModalTitle').textContent = st('loginTitle');
-    document.getElementById('loginModalCloseBtn').textContent = st('close');
-    showLoginMessage(st('loading'));
-    document.getElementById('loginModalOverlay').classList.add('open');
-
-    try {
-      const { staff } = await callQrLogin({ action: 'list' });
-      if (!staff.length) { showLoginMessage(st('loginNoStaff')); return; }
-      const body = document.getElementById('loginModalBody');
-      body.innerHTML = '<div class="login-name-grid"></div>';
-      staff.forEach(s => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'login-name-btn';
-        btn.textContent = s.name;
-        btn.onclick = () => loginAsStaff(s);
-        body.firstChild.appendChild(btn);
-      });
-    } catch (err) {
-      showLoginError(err);
-    }
-  }
-
   function closeLoginModal() {
     document.getElementById('loginModalOverlay').classList.remove('open');
-    pendingAfterLogin = null;
   }
 
-  async function loginAsStaff(staff) {
-    if (!confirm(st('confirmName', staff.name))) return;
-    showLoginMessage(st('loading'));
-    try {
-      const { token_hash } = await callQrLogin({ action: 'login', staff_id: staff.id });
-      const { error } = await supabaseClient.auth.verifyOtp({ token_hash, type: 'email' });
-      if (error) throw error;
-      currentProfile = await getMyProfile();
-      if (!currentProfile) throw new Error('general');
-      const action = pendingAfterLogin;
-      closeLoginModal();
-      await startStaffSession();
-      action?.();
-    } catch (err) {
-      showLoginError(err);
-    }
-  }
-
-  // QRコードから来た人はメニューに戻る（次に使う人が名前を選び直せるように）
   async function staffLogout() {
     await supabaseClient.auth.signOut({ scope: 'local' });
-    window.location.href = localStorage.getItem('staffQrKey') ? 'staff.html' : 'login.html?loggedout=1';
+    window.location.href = isQrMode() ? 'staff.html' : 'login.html?loggedout=1';
   }
 
-  // ログイン後に、担当タスクの読み込みとリアルタイム反映を始める
+  // ログイン後に、タスクの読み込みとリアルタイム反映を始める
   async function startStaffSession() {
-    document.getElementById('userName').textContent = currentProfile.name;
-    document.getElementById('logoutBtnLabel').style.display = '';
+    // QRコードから来た人は共用アカウントで裏でログインしているため、アカウント名とログアウトは出さない
+    if (!isQrMode()) {
+      document.getElementById('userName').textContent = currentProfile.name;
+      document.getElementById('logoutBtnLabel').style.display = '';
+    }
 
     // 1分ごとに再描画（作業中/次の作業の切り替えのため）
     setInterval(loadTasks, 60000);

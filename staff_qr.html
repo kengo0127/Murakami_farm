@@ -85,6 +85,8 @@
 <div class="toolbar">
   <a href="admin.html">← 管理画面へ戻る</a>
   <button type="button" class="btn-print" onclick="window.print()">🖨 印刷する</button>
+  <button type="button" onclick="downloadQrImage()">🖼 QR画像を保存</button>
+  <button type="button" onclick="copyStartUrl()">🔗 URLをコピー</button>
   <button type="button" class="btn-reset" onclick="resetKey()">QRコードを作り直す</button>
 </div>
 
@@ -101,7 +103,7 @@
 <div class="note">
   <div>QRコードの中身（URL）：<span class="url" id="qrUrl"></span></div>
   <div style="margin-top:8px">
-    ・このQRコードを読み取ると、だれでもスタッフとして名前を選んでログインできます（管理者のアカウントにはログインできません）。<br>
+    ・このQRコード（またはURL）を開くと、だれでもスタッフ画面に入れます（管理者のアカウントにはログインできません）。メール等で送るときは「QR画像を保存」「URLをコピー」を使ってください。<br>
     ・QRコードの写真が外部に出てしまった場合は「QRコードを作り直す」を押して、新しいQRコードを貼り直してください。古いQRコードは使えなくなります（すでにログイン済みのスマホはそのまま使えます）。
   </div>
 </div>
@@ -122,6 +124,28 @@
     const el = document.getElementById('qr');
     el.innerHTML = '';
     new QRCode(el, { text: url, width: 600, height: 600, correctLevel: QRCode.CorrectLevel.M });
+  }
+
+  // メールなどで送れるように、QRコードを画像ファイル（PNG）で保存する
+  function downloadQrImage() {
+    const canvas = document.querySelector('#qr canvas');
+    if (!canvas) return;
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = '村上農園_スタッフ用QRコード.png';
+    a.click();
+  }
+
+  async function copyStartUrl() {
+    const url = document.getElementById('qrUrl').textContent;
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('URLをコピーしました。メールに貼り付けて送れます。');
+    } catch (err) {
+      console.error(err);
+      prompt('このURLをコピーしてください', url);
+    }
   }
 
   async function loadKey() {
