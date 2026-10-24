@@ -444,70 +444,102 @@
     }
 
     /* ── 自発的な作業報告 ── */
-    .fab-report {
-      position: fixed;
-      right: 18px;
-      bottom: 22px;
-      z-index: 200;
+    /* ── メニュー（ホーム）画面 ── */
+    body.view-home .timeline,
+    body.view-home .tasks-back-row { display: none; }
+    body.view-tasks .home-view { display: none; }
+
+    .home-view {
+      padding: 16px 12px;
+      max-width: 480px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .home-card {
+      position: relative;
+      background: #fff;
+      border: 2px solid #dde8dd;
+      border-radius: 18px;
+      padding: 20px 10px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 3px 12px rgba(0, 80, 0, 0.08);
+      color: #1a3d17;
+    }
+
+    .home-card:active { transform: scale(0.98); border-color: #4caf50; }
+
+    /* 「今日の作業」は一番よく使うので横幅いっぱいに大きく */
+    .home-card.wide {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      justify-content: center;
+      gap: 16px;
+      padding: 26px 16px;
       background: #2e5c28;
+      border-color: #2e5c28;
       color: #fff;
-      border: none;
-      border-radius: 30px;
-      padding: 14px 20px;
-      font-size: 14px;
-      font-weight: 800;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.28);
-      cursor: pointer;
     }
 
-    .fab-report:active { background: #1a3d17; }
+    .home-card-icon { font-size: 46px; line-height: 1; }
+    .home-card.wide .home-card-icon { font-size: 52px; }
 
-    .fab-onion {
-      position: fixed;
-      right: 18px;
-      bottom: 78px;
-      z-index: 200;
-      background: #c9752e;
-      color: #fff;
-      border: none;
-      border-radius: 30px;
-      padding: 14px 20px;
-      font-size: 14px;
+    .home-card-label {
+      font-size: 15px;
       font-weight: 800;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.28);
-      cursor: pointer;
+      line-height: 1.4;
+      text-align: center;
     }
 
-    .fab-onion:active { background: #a35c1f; }
+    .home-card.wide .home-card-label { font-size: 20px; text-align: left; }
+
+    .home-card-sub {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0.65;
+      margin-top: 2px;
+    }
+
+    .home-card.coming-soon { background: #f7f7f7; border-style: dashed; color: #888; padding-top: 32px; }
+    .home-card.coming-soon .home-card-icon { opacity: 0.55; }
+
+    .coming-soon-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #9e9e9e;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      border-radius: 10px;
+      padding: 2px 8px;
+    }
+
+    .tasks-back-row {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 12px 12px 0;
+    }
+
+    .btn-back-menu {
+      background: #fff;
+      border: 2px solid #dde8dd;
+      border-radius: 12px;
+      padding: 10px 18px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #2e5c28;
+      cursor: pointer;
+    }
 
     /* ── 玉ねぎ日報 ── */
-    .onion-lang-switch {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-
-    .onion-lang-btn {
-      flex: 1;
-      background: #f5f5f5;
-      border: 1.5px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 8px 4px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .onion-lang-btn.active {
-      background: #fff3e8;
-      border-color: #c9752e;
-      color: #7a3f13;
-    }
-
-    .onion-sign-other {
-      margin-top: 6px;
-    }
-
     .onion-efficiency-sheet { text-align: center; }
 
     .onion-efficiency-card {
@@ -599,12 +631,71 @@
 
     .onion-date-row {
       display: flex;
-      gap: 8px;
-      margin-top: 14px;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
     }
 
+    .onion-date-label { flex-shrink: 0; font-size: 14px; font-weight: 700; color: #555; }
     .onion-date-row input { flex: 1; }
-    .onion-date-row button { flex-shrink: 0; }
+
+    /* 出荷先カード（ベスト中国／ベスト日本／レインボー） */
+    .onion-dest-cards { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+
+    .onion-dest-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      padding: 24px 20px;
+      border-radius: 16px;
+      border: 2.5px solid;
+      font-size: 22px;
+      font-weight: 800;
+      color: #4a2a10;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .onion-dest-card:active { transform: scale(0.98); }
+    .onion-dest-card.block-china   { background: #fdeaf0; border-color: #ef9fbd; }
+    .onion-dest-card.block-japan   { background: #e9f2fb; border-color: #93bde8; }
+    .onion-dest-card.block-rainbow { background: #eaf7ee; border-color: #92d3a5; }
+    .onion-dest-icon { font-size: 40px; line-height: 1; }
+
+    /* サイン（社員リストから選ぶ） */
+    .sign-tabs { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+
+    .sign-tab {
+      background: #fff;
+      border: 1.5px solid #ddd;
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #555;
+      cursor: pointer;
+    }
+
+    .sign-tab.active { background: #7a3f13; border-color: #7a3f13; color: #fff; }
+
+    .sign-names { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+
+    .sign-name-btn {
+      background: #fff;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      padding: 12px 4px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #333;
+      cursor: pointer;
+      word-break: break-all;
+    }
+
+    .sign-name-btn.selected { background: #ffe0c2; border-color: #c9752e; color: #7a3f13; }
+
+    .sign-current { font-size: 13px; color: #7a3f13; font-weight: 700; margin-top: 8px; }
 
     .onion-block {
       background: #fafafa;
@@ -635,23 +726,51 @@
       margin-bottom: 5px;
     }
 
-    .onion-size-cols {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .onion-size-col {
+    /* 使ったサイズ・荷姿（サイズごとに1枠。＋で枠を増やす） */
+    .onion-size-entry {
       background: #fff;
       border: 1.5px solid #e5e5e5;
       border-radius: 8px;
-      padding: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
     }
 
-    .onion-size-col .modal-input { padding: 7px; font-size: 13px; margin-bottom: 6px; }
+    .onion-size-head { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+    .onion-size-head select { flex: 0 0 110px; padding: 8px; font-size: 15px; font-weight: 800; }
+    .onion-size-head .s-size-other { flex: 1; padding: 8px; font-size: 14px; }
+    .onion-size-head .btn-onion-remove-row { flex: 0 0 32px; margin-left: auto; }
 
-    .onion-toggle-group { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+    .onion-pkg-table { width: 100%; border-collapse: collapse; }
+
+    .onion-pkg-table th {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      text-align: left;
+      padding: 0 4px 4px;
+    }
+
+    .onion-pkg-table td { padding: 3px 4px; }
+    .onion-pkg-table td:first-child { width: 38%; }
+    .onion-pkg-table .onion-toggle-btn { width: 100%; padding: 10px 4px; font-size: 14px; }
+    .onion-pkg-table .pkg-count, .onion-pkg-table .pkg-kg { width: 100%; padding: 9px; font-size: 15px; border: 1.5px solid #ddd; border-radius: 6px; }
+    .onion-pkg-table .pkg-count:disabled, .onion-pkg-table .pkg-kg:disabled { background: #f3f3f3; }
+    .onion-pkg-table .pkg-kg-auto { display: block; text-align: center; font-size: 13px; font-weight: 700; color: #7a3f13; margin-top: 2px; }
+    .onion-pkg-table .pkg-unit { display: flex; gap: 3px; }
+    .onion-pkg-table .pkg-unit-btn { padding: 8px 2px; font-size: 12px; min-width: 0; }
+    .onion-pkg-table .pkg-unit-btn:disabled { opacity: 0.4; }
+
+    .onion-usedcount-auto {
+      background: #fff;
+      border: 1.5px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 18px;
+      font-weight: 800;
+      color: #7a3f13;
+    }
+
+    .onion-usedcount-note { font-size: 12px; color: #c0392b; font-weight: 600; margin-top: 4px; }
 
     .onion-toggle-btn {
       flex: 1;
@@ -670,9 +789,6 @@
       border-color: #c9752e;
       color: #7a3f13;
     }
-
-    .onion-weight-row { display: flex; gap: 4px; align-items: center; }
-    .onion-weight-row input { width: 100%; padding: 6px; font-size: 12px; }
 
     .onion-time-table { margin-bottom: 12px; }
 
@@ -722,92 +838,59 @@
       cursor: pointer;
     }
 
-    .btn-onion-delete {
-      flex: 1;
-      padding: 13px;
-      background: #fff0ef;
-      color: #c0392b;
-      border: 1.5px solid #f3c3bd;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .onion-produced-table {
-      width: 100%;
-      overflow-x: auto;
-    }
-
-    .onion-produced-grid {
-      display: grid;
-      gap: 4px;
-      min-width: 100%;
-    }
-
-    .onion-produced-grid .cell {
+    /* できたもの（使用日ごとの行。＋で行を増やす） */
+    .onion-prod-row {
       background: #fff;
-      border: 1px solid #e5e5e5;
-      border-radius: 4px;
-      padding: 5px;
-      font-size: 11px;
-      min-width: 64px;
-    }
-
-    .onion-produced-grid .cell.label-cell {
-      background: #f0eee9;
-      font-weight: 700;
+      border: 1.5px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .onion-produced-grid input {
-      width: 100%;
-      border: none;
-      background: transparent;
-      font-size: 12px;
-      text-align: center;
-      padding: 3px;
-    }
+    .pr-line { display: flex; gap: 6px; align-items: center; }
+    .pr-line-label { flex-shrink: 0; font-size: 12px; font-weight: 700; color: #777; }
+    .pr-line input, .pr-line select { padding: 8px; font-size: 15px; border: 1.5px solid #ddd; border-radius: 6px; min-width: 0; }
+    .pr-line .pr-date { flex: 1; }
+    .pr-line .pr-container { flex: 0 0 96px; font-weight: 800; }
+    .pr-line .pr-container-other { flex: 1; }
+    .pr-line .pr-kind { display: flex; gap: 4px; flex: 1; }
+    .pr-line .pr-kind .onion-toggle-btn { padding: 9px 2px; font-size: 13px; }
+    .pr-line .pr-count { flex: 0 0 80px; }
+    .pr-line .pr-kg { flex: 0 0 90px; }
+    .pr-line .pr-kg-auto { font-size: 16px; font-weight: 800; color: #7a3f13; }
+    .pr-line .btn-onion-remove-row { flex: 0 0 32px; margin-left: auto; }
 
-    .onion-produced-grid input:focus { outline: 1px solid #c9752e; border-radius: 3px; }
-
-    .onion-export-table-wrap { overflow-x: auto; }
-
-    .onion-export-table { min-width: 460px; }
-
-    .onion-export-row {
-      display: grid;
-      grid-template-columns: 26px 1fr 56px 56px 56px 40px;
-      align-items: center;
-      gap: 6px;
+    .onion-prod-total {
       background: #fff;
-      border-radius: 10px;
+      border: 1.5px solid #e5e5e5;
+      border-radius: 8px;
       padding: 10px 12px;
-      margin-bottom: 6px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      margin-top: 8px;
     }
 
-    .onion-export-row.onion-export-header {
-      background: transparent;
-      box-shadow: none;
-      padding: 0 12px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #777;
-      text-align: center;
+    .onion-prod-total-main { font-size: 18px; font-weight: 800; color: #7a3f13; }
+    .onion-prod-total-sub { font-size: 13px; color: #555; margin-top: 4px; line-height: 1.6; }
+
+    /* 名前（グループ）選択 */
+    .login-name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+
+    .login-name-btn {
+      background: #fff;
+      border: 2px solid #dde8dd;
+      border-radius: 14px;
+      padding: 18px 8px;
+      font-size: 17px;
+      font-weight: 800;
+      color: #1a3d17;
+      cursor: pointer;
+      word-break: break-all;
     }
 
-    .onion-export-row input[type="checkbox"] { width: 20px; height: 20px; }
-    .onion-export-row .onion-list-date { font-size: 14px; font-weight: 700; }
-    .onion-export-row .onion-list-open { font-size: 12px; color: #c9752e; font-weight: 700; cursor: pointer; text-align: center; }
-
-    .onion-eff-cell { font-size: 13px; font-weight: 700; text-align: center; }
-    .onion-eff-cell.ok { color: #2e7d32; }
-    .onion-eff-cell.ng { color: #444; }
-    .onion-eff-cell.na { color: #ccc; }
+    .login-name-btn:active { border-color: #4caf50; background: #f1f8e9; }
+    .login-message { text-align: center; color: #666; padding: 20px 8px; line-height: 1.7; }
 
     .modal-overlay {
       display: none;
@@ -891,7 +974,7 @@
     .empty-state p { font-size: 15px; line-height: 1.7; }
   </style>
 </head>
-<body>
+<body class="view-home">
 
 <header>
   <div class="ui-lang-switch">
@@ -903,7 +986,7 @@
     <div class="header-title">🌿 村上農園</div>
     <div class="header-right">
       <span id="userName"></span>
-      <button class="btn-logout" id="logoutBtnLabel" onclick="logout()">ログアウト</button>
+      <button class="btn-logout" id="logoutBtnLabel" onclick="staffLogout()" style="display:none">ログアウト</button>
     </div>
   </div>
   <div class="header-row2">
@@ -912,30 +995,24 @@
   </div>
 </header>
 
+<div class="home-view" id="homeView"></div>
+
+<div class="tasks-back-row">
+  <button type="button" class="btn-back-menu" id="backToMenuBtn" onclick="openHomeView()">← メニュー</button>
+</div>
+
 <div class="timeline" id="timeline">
   <div class="loading-state" id="loadingLabel">読み込み中（よみこみちゅう）...</div>
 </div>
 
-<button class="fab-onion" onclick="openOnionMenuModal()" id="fabOnionLabel">🧅 玉ねぎ日報（たまねぎにっぽう）</button>
-<button class="fab-report" onclick="openReportModal()" id="fabReportLabel">📋 作業を報告（さぎょうをほうこく）</button>
-
 <div class="modal-overlay" id="onionMenuModalOverlay">
   <div class="modal-sheet">
-    <div class="onion-lang-switch">
-      <button type="button" class="onion-lang-btn" data-lang="none" onclick="setOnionLang('none')">日本語のみ（にほんごのみ）</button>
-      <button type="button" class="onion-lang-btn" data-lang="id" onclick="setOnionLang('id')">+ Indonesia</button>
-      <button type="button" class="onion-lang-btn" data-lang="km" onclick="setOnionLang('km')">+ ខ្មែរ</button>
-    </div>
     <div class="modal-title" id="onionMenuTitle">玉ねぎ作業日報（たまねぎさぎょうにっぽう）</div>
-    <button type="button" class="onion-menu-btn" id="onionCreateBtnLabel" onclick="showOnionDatePicker()">📝 日報（にっぽう）をつくる</button>
-    <button type="button" class="onion-menu-btn" id="onionExportBtnLabel" onclick="openOnionExportModal()">📤 日報（にっぽう）を出力（しゅつりょく）する</button>
-
-    <div id="onionDatePickerArea" style="display:none">
-      <div class="onion-date-row">
-        <input type="date" id="onionCreateDate" class="modal-input">
-        <button type="button" class="btn-modal-submit" id="onionDateOpenBtn" style="flex:0 0 auto;padding:12px 18px;" onclick="openOnionEditModal(document.getElementById('onionCreateDate').value)">開く（ひらく）</button>
-      </div>
+    <div class="onion-date-row">
+      <label for="onionCreateDate" class="onion-date-label" id="onionDateLabel">日付（ひづけ）</label>
+      <input type="date" id="onionCreateDate" class="modal-input">
     </div>
+    <div class="onion-dest-cards" id="onionDestCards"></div>
 
     <div class="modal-actions">
       <button type="button" class="btn-modal-cancel" id="onionMenuCloseBtn" onclick="closeOnionMenuModal()">閉じる（とじる）</button>
@@ -954,25 +1031,21 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="loginModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title" id="loginModalTitle"></div>
+    <div id="loginModalBody"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" id="loginModalCloseBtn" onclick="closeLoginModal()"></button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="onionEfficiencyModalOverlay">
   <div class="modal-sheet onion-efficiency-sheet">
     <div id="onionEfficiencyCards"></div>
     <div class="modal-actions">
       <button type="button" class="btn-modal-submit" onclick="closeOnionEfficiencyModal()">OK</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="onionExportModalOverlay">
-  <div class="modal-sheet">
-    <div class="modal-title" id="onionExportTitle">日報を出力する（にっぽうをしゅつりょくする）</div>
-    <div id="onionExportList"></div>
-    <div class="modal-actions">
-      <button type="button" class="btn-modal-cancel" id="onionExportCloseBtn" onclick="closeOnionExportModal()">閉じる（とじる）</button>
-      <button type="button" class="btn-onion-delete" id="onionDeleteBtn" onclick="deleteSelectedOnionReports()">削除する（さくじょする）</button>
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="btn-modal-submit" id="onionExportBtn" style="flex:1;" onclick="exportOnionReportsExcel()">選択した日をExcel出力（せんたくしたひをExcelしゅつりょく）</button>
     </div>
   </div>
 </div>
@@ -1100,15 +1173,23 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="js/supabase.js"></script>
+<script src="js/onion-common.js"></script>
 <script>
 
   // ── 多言語対応（日本語 / インドネシア語 / クメール語） ──
   const STAFF_I18N = {
     ja: {
       logout: 'ログアウト', loading: '読み込み中（よみこみちゅう）...',
-      fabOnion: '🧅 玉ねぎ日報（たまねぎにっぽう）', fabReport: '📋 作業を報告（さぎょうをほうこく）',
+      homeTasks: '今日の作業（きょうのさぎょう）', homeOnion: '玉ねぎ日報（たまねぎにっぽう）',
+      homeCarrot: 'ニンジン日報（にっぽう）', homeChestnut: '栗日報（くりにっぽう）',
+      homeOther: 'その他の報告（そのたのほうこく）',
+      comingSoonBadge: '準備中', comingSoonAlert: 'この日報（にっぽう）は まだ準備中（じゅんびちゅう）です',
+      backToMenu: '← メニュー', homeReport: 'レポート出力（しゅつりょく）',
+      loginTitle: 'あなたの 名前（なまえ）を えらんでください',
+      confirmName: name => `${name} ですか？`,
+      loginInvalidKey: 'QRコードが 使（つか）えません。現場（げんば）のQRコードを もう一度（いちど） 読（よ）み取（と）ってください。',
+      loginNoStaff: '名前（なまえ）が 登録（とうろく）されていません。管理者（かんりしゃ）に 聞（き）いてください。',
       fieldMapTitle: '作業場所（さぎょうばしょ）（露地／ろじ）',
       fieldNorth: '村上農園（むらかみのうえん）の北側（きたがわ）', fieldSouth: '村上農園（むらかみのうえん）の南側（みなみがわ）',
       close: '閉じる（とじる）', cancel: 'キャンセル',
@@ -1156,7 +1237,15 @@
     },
     id: {
       logout: 'Keluar', loading: 'Memuat...',
-      fabOnion: '🧅 Laporan Bawang', fabReport: '📋 Laporkan Pekerjaan',
+      homeTasks: 'Pekerjaan Hari Ini', homeOnion: 'Laporan Bawang',
+      homeCarrot: 'Laporan Wortel', homeChestnut: 'Laporan Kastanye',
+      homeOther: 'Laporan Lainnya',
+      comingSoonBadge: 'Dalam Persiapan', comingSoonAlert: 'Laporan ini masih dalam persiapan.',
+      backToMenu: '← Menu', homeReport: 'Ekspor Laporan',
+      loginTitle: 'Pilih nama Anda',
+      confirmName: name => `Apakah Anda ${name}?`,
+      loginInvalidKey: 'Kode QR tidak dapat digunakan. Silakan scan ulang kode QR di lokasi kerja.',
+      loginNoStaff: 'Belum ada nama yang terdaftar. Silakan tanya admin.',
       fieldMapTitle: 'Lokasi Kerja (Lahan Terbuka)',
       fieldNorth: 'Murakami Farm - Sisi Utara', fieldSouth: 'Murakami Farm - Sisi Selatan',
       close: 'Tutup', cancel: 'Batal',
@@ -1204,7 +1293,15 @@
     },
     km: {
       logout: 'ចេញ', loading: 'កំពុងផ្ទុក...',
-      fabOnion: '🧅 របាយការណ៍ខ្ទឹម', fabReport: '📋 រាយការណ៍ការងារ',
+      homeTasks: 'ការងារថ្ងៃនេះ', homeOnion: 'របាយការណ៍ខ្ទឹមបារាំង',
+      homeCarrot: 'របាយការណ៍ការ៉ុត', homeChestnut: 'របាយការណ៍គ្រាប់ចេសណាត់',
+      homeOther: 'របាយការណ៍ផ្សេងៗ',
+      comingSoonBadge: 'កំពុងរៀបចំ', comingSoonAlert: 'របាយការណ៍នេះកំពុងរៀបចំនៅឡើយ។',
+      backToMenu: '← ម៉ឺនុយ', homeReport: 'នាំចេញរបាយការណ៍',
+      loginTitle: 'សូមជ្រើសរើសឈ្មោះរបស់អ្នក',
+      confirmName: name => `តើអ្នកគឺ ${name} មែនទេ?`,
+      loginInvalidKey: 'កូដ QR មិនអាចប្រើបានទេ។ សូមស្កេនកូដ QR នៅកន្លែងធ្វើការម្ដងទៀត។',
+      loginNoStaff: 'មិនទាន់មានឈ្មោះបានចុះឈ្មោះទេ។ សូមសួរអ្នកគ្រប់គ្រង។',
       fieldMapTitle: 'ទីតាំងការងារ (ដីវាល)',
       fieldNorth: 'កសិដ្ឋានមូរាកាមី - ភាគខាងជើង', fieldSouth: 'កសិដ្ឋានមូរាកាមី - ភាគខាងត្បូង',
       close: 'បិទ', cancel: 'បោះបង់',
@@ -1278,8 +1375,8 @@
     // loadingLabelはタスク読み込み後にrenderTimeline()でDOMごと置き換わるため、存在する場合のみ更新
     const loadingEl = document.getElementById('loadingLabel');
     if (loadingEl) loadingEl.textContent = st('loading');
-    document.getElementById('fabOnionLabel').textContent    = st('fabOnion');
-    document.getElementById('fabReportLabel').textContent   = st('fabReport');
+    document.getElementById('backToMenuBtn').textContent    = st('backToMenu');
+    renderHomeCards();
     document.getElementById('fieldMapTitle').textContent    = st('fieldMapTitle');
     document.getElementById('fieldMapNorthLabel').textContent = st('fieldNorth');
     document.getElementById('fieldMapSouthLabel').textContent = st('fieldSouth');
@@ -1521,17 +1618,18 @@
     document.getElementById('fieldMapModalOverlay').classList.remove('open');
   }
 
-  // ── 玉ねぎ作業日報 ──────────────────────────────────────
-  const ONION_BLOCK_TEMPLATES = [
-    { destination: 'ベスト中国', colorClass: 'block-china',   sizeEditable: true,  sizeLabels: ['', '', ''],
-      producedLabels: ['619', '615', '', ''], producedEditable: [false, false, true, true] },
-    { destination: 'ベスト日本', colorClass: 'block-japan',   sizeEditable: false, sizeLabels: ['M', 'L', '-'],
-      producedLabels: ['619', '615', '', ''], producedEditable: [false, false, true, true] },
-    { destination: 'レインボー', colorClass: 'block-rainbow', sizeEditable: false, sizeLabels: ['M', 'L', '-'],
-      producedLabels: ['村上', '', ''], producedEditable: [false, true, true] },
-  ];
+  // ── 玉ねぎ作業日報（出荷先・重さ・作業効率の定義と計算は js/onion-common.js） ──
 
-  const ONION_KNOWN_SIGNS = ['ヴィチェカー', 'ソピアン', 'アンドレ', 'ダン', 'トゥティ'];
+  // サイン欄：社員リスト（kintai_staff）の在籍メンバーから国別タブで選ぶ。
+  // 最初に開くタブは、スタート画面で選んだ言語の国（例：ខ្មែរ → カンボジア）
+  const SIGN_LANG_CATEGORY = { ja: '日本人', id: 'インドネシア', km: 'カンボジア' };
+  const SIGN_CATEGORY_FLAGS = { '日本人': '🇯🇵', 'インドネシア': '🇮🇩', 'カンボジア': '🇰🇭', 'ベトナム': '🇻🇳' };
+  const ONION_SIZE_OPTIONS = ['M', 'L'];
+  const ONION_DEFAULT_SIZE_ENTRY = { size: 'M', packages: [{ type: 'DB', count: '' }] };
+
+  let onionSignStaff = null; // [{ id, name, category }]
+  let onionSignTab = null;
+  let onionSelectedSign = '';
 
   // 時刻セレクト用の選択肢（6:00〜20:00、10分刻み）
   function onionTimeOptionsHtml(selected) {
@@ -1550,74 +1648,69 @@
   // ── 多言語対応（日本語 / インドネシア語 / クメール語） ──
   const ONION_I18N = {
     ja: {
-      menuTitle: '玉ねぎ作業日報（たまねぎさぎょうにっぽう）', createBtn: '📝 日報（にっぽう）をつくる', exportBtn: '📤 日報（にっぽう）を出力（しゅつりょく）する',
+      menuTitle: '玉ねぎ作業日報（たまねぎさぎょうにっぽう）',
       close: '閉じる（とじる）', save: '保存する（ほぞんする）', saving: '保存中（ほぞんちゅう）...', saved: '保存しました（ほぞんしました）',
       saveFailed: '保存（ほぞん）に失敗（しっぱい）しました', loadFailed: '読み込み（よみこみ）に失敗（しっぱい）しました',
-      selectDate: '日付（ひづけ）を選択（せんたく）してください', dateOpen: '開く（ひらく）', selectPlaceholder: '-- 選択（せんたく） --',
-      sign: 'サイン', signOtherPlaceholder: '上記（じょうき）にない場合（ばあい）はこちらに直接記入（ちょくせつきにゅう）',
-      sizeSection: '使った（つかった）サイズ・しゅるい・おもさ', sizePlaceholder: 'サイズ',
-      weightOtherPlaceholder: 'その他（た）kg', usedCount: 'つかったかず',
+      selectDate: '日付（ひづけ）を選択（せんたく）してください', dateLabel: '日付（ひづけ）',
+      sign: 'サイン', signSelected: '選んだ人（えらんだひと）', signLoadFailed: '名前（なまえ）の一覧（いちらん）を読み込めません（よみこめません）',
+      sizeSection: '使った（つかった）サイズ・荷姿（にすがた）', sizePlaceholder: 'サイズ', sizeOther: 'その他（た）',
+      addSize: '＋ サイズを追加（ついか）', packageHeader: '荷姿（にすがた）', countHeader: '個数（こすう）', weightHeader: '重さ（おもさ）kg',
+      pkgCountRequired: '選んだ（えらんだ）荷姿（にすがた）の個数（こすう）を1以上（いじょう）で入力（にゅうりょく）してください',
+      weightNotSet: '重さ（おもさ）が入っていない荷姿（にすがた）があります', autoCalc: '自動計算（じどうけいさん）',
+      usedCount: 'つかったかず',
       timeSection: '時間（じかん）と人数（にんずう）', start: '開始（かいし）', end: '終了（しゅうりょう）', people: '人数（にんずう）',
       addRow: '＋ 行（ぎょう）を追加（ついか）', condition: 'きょうのようす',
-      produced: 'できたもの（つうじょう／やりなおし／ざいこ）', otherLabelPlaceholder: 'そのほか',
-      usual: 'つうじょう', redo: 'やりなおし', stock: 'ざいこ',
-      exportTitle: '日報（にっぽう）を出力（しゅつりょく）する', exportListEmpty: 'まだ日報（にっぽう）がありません',
-      selectExportDate: '出力（しゅつりょく）する日付（ひづけ）を選択（せんたく）してください', exporting: '出力中（しゅつりょくちゅう）...',
-      exportBtnLabel: '選択（せんたく）した日（ひ）をExcel出力（しゅつりょく）', fetchFailed: 'データの取得（しゅとく）に失敗（しっぱい）しました',
-      openLink: '開く（ひらく）', editTitle: date => `玉ねぎ作業日報（たまねぎさぎょうにっぽう）（${formatDateJa(date)}）`,
-      deleteBtnLabel: '削除する（さくじょする）', deleting: '削除中（さくじょちゅう）...', deleteFailed: '削除（さくじょ）に失敗（しっぱい）しました',
-      selectDeleteDate: '削除（さくじょ）する日付（ひづけ）を選択（せんたく）してください',
-      deleteConfirm: n => `${n}件（けん）の日報（にっぽう）を削除（さくじょ）しますか？\nこの操作（そうさ）は取り消せません（とりけせません）。`,
+      produced: 'できたもの', prodDate: '使用日（しようび）', prodContainer: 'コンテナ', usual: 'つうじょう', redo: 'やりなおし',
+      prodCount: '個数（こすう）', prodTotal: 'きょう作った（つくった）出来高（できだか）の合計（ごうけい）',
+      prodByDate: date => `${formatDateJa(date)}使用分（しようぶん）`,
+      prodCountRequired: '「できたもの」の個数（こすう）は1以上（いじょう）で入力（にゅうりょく）してください',
+      editTitle: date => `玉ねぎ作業日報（たまねぎさぎょうにっぽう）（${formatDateJa(date)}）`,
     },
     id: {
-      menuTitle: 'Laporan Kerja Bawang', createBtn: '📝 Buat Laporan', exportBtn: '📤 Ekspor Laporan',
+      menuTitle: 'Laporan Kerja Bawang',
       close: 'Tutup', save: 'Simpan', saving: 'Menyimpan...', saved: 'Berhasil disimpan',
       saveFailed: 'Gagal menyimpan', loadFailed: 'Gagal memuat data',
-      selectDate: 'Silakan pilih tanggal', dateOpen: 'Buka', selectPlaceholder: '-- Pilih --',
-      sign: 'Tanda tangan', signOtherPlaceholder: 'Jika tidak ada di atas, tulis di sini',
-      sizeSection: 'Ukuran, Jenis, Berat yang digunakan', sizePlaceholder: 'Ukuran',
-      weightOtherPlaceholder: 'Berat lain (kg)', usedCount: 'Jumlah yang digunakan',
+      selectDate: 'Silakan pilih tanggal', dateLabel: 'Tanggal',
+      sign: 'Tanda tangan', signSelected: 'Dipilih', signLoadFailed: 'Gagal memuat daftar nama',
+      sizeSection: 'Ukuran & Kemasan yang digunakan', sizePlaceholder: 'Ukuran', sizeOther: 'Lainnya',
+      addSize: '＋ Tambah ukuran', packageHeader: 'Kemasan', countHeader: 'Jumlah', weightHeader: 'Berat (kg)',
+      pkgCountRequired: 'Isi jumlah (minimal 1) untuk kemasan yang dipilih',
+      weightNotSet: 'Ada kemasan yang beratnya belum diisi', autoCalc: 'otomatis',
+      usedCount: 'Jumlah yang digunakan',
       timeSection: 'Waktu dan Jumlah orang', start: 'Mulai', end: 'Selesai', people: 'Orang',
       addRow: '＋ Tambah baris', condition: 'Kondisi hari ini',
-      produced: 'Hasil (Biasa／Ulang／Stok)', otherLabelPlaceholder: 'Lainnya',
-      usual: 'Biasa', redo: 'Diulang', stock: 'Stok',
-      exportTitle: 'Ekspor Laporan', exportListEmpty: 'Belum ada laporan',
-      selectExportDate: 'Silakan pilih tanggal untuk diekspor', exporting: 'Mengekspor...',
-      exportBtnLabel: 'Ekspor Excel untuk tanggal terpilih', fetchFailed: 'Gagal mengambil data',
-      openLink: 'Buka', editTitle: date => `Laporan Kerja Bawang（${formatDateJa(date)}）`,
-      deleteBtnLabel: 'Hapus', deleting: 'Menghapus...', deleteFailed: 'Gagal menghapus',
-      selectDeleteDate: 'Silakan pilih tanggal untuk dihapus',
-      deleteConfirm: n => `Hapus ${n} laporan? Tindakan ini tidak dapat dibatalkan.`,
+      produced: 'Hasil', prodDate: 'Tanggal pakai', prodContainer: 'Kontainer', usual: 'Biasa', redo: 'Diulang',
+      prodCount: 'Jumlah', prodTotal: 'Total hasil yang dibuat hari ini',
+      prodByDate: date => `Untuk ${formatDateJa(date)}`,
+      prodCountRequired: 'Isi jumlah "Hasil" minimal 1',
+      editTitle: date => `Laporan Kerja Bawang（${formatDateJa(date)}）`,
     },
     km: {
-      menuTitle: 'របាយការណ៍ការងារខ្ទឹមប្រចាំថ្ងៃ', createBtn: '📝 បង្កើតរបាយការណ៍', exportBtn: '📤 នាំចេញរបាយការណ៍',
+      menuTitle: 'របាយការណ៍ការងារខ្ទឹមប្រចាំថ្ងៃ',
       close: 'បិទ', save: 'រក្សាទុក', saving: 'កំពុងរក្សាទុក...', saved: 'បានរក្សាទុករួចរាល់',
       saveFailed: 'រក្សាទុកមិនជោគជ័យ', loadFailed: 'ផ្ទុកទិន្នន័យមិនជោគជ័យ',
-      selectDate: 'សូមជ្រើសរើសកាលបរិច្ឆេទ', dateOpen: 'បើក', selectPlaceholder: '-- ជ្រើសរើស --',
-      sign: 'ហត្ថលេខា', signOtherPlaceholder: 'ប្រសិនបើមិនមានខាងលើ សូមសរសេរនៅទីនេះ',
-      sizeSection: 'ទំហំ, ប្រភេទ, ទម្ងន់ដែលបានប្រើ', sizePlaceholder: 'ទំហំ',
-      weightOtherPlaceholder: 'ទម្ងន់ផ្សេង (គីឡូក្រាម)', usedCount: 'ចំនួនដែលបានប្រើ',
+      selectDate: 'សូមជ្រើសរើសកាលបរិច្ឆេទ', dateLabel: 'កាលបរិច្ឆេទ',
+      sign: 'ហត្ថលេខា', signSelected: 'បានជ្រើសរើស', signLoadFailed: 'មិនអាចផ្ទុកបញ្ជីឈ្មោះបានទេ',
+      sizeSection: 'ទំហំ និងការវេចខ្ចប់ដែលបានប្រើ', sizePlaceholder: 'ទំហំ', sizeOther: 'ផ្សេងទៀត',
+      addSize: '＋ បន្ថែមទំហំ', packageHeader: 'ការវេចខ្ចប់', countHeader: 'ចំនួន', weightHeader: 'ទម្ងន់ (kg)',
+      pkgCountRequired: 'សូមបញ្ចូលចំនួន (យ៉ាងហោចណាស់ 1) សម្រាប់ការវេចខ្ចប់ដែលបានជ្រើសរើស',
+      weightNotSet: 'មានការវេចខ្ចប់ដែលមិនទាន់បញ្ចូលទម្ងន់', autoCalc: 'គណនាស្វ័យប្រវត្តិ',
+      usedCount: 'ចំនួនដែលបានប្រើ',
       timeSection: 'ពេលវេលា និង ចំនួនមនុស្ស', start: 'ចាប់ផ្តើម', end: 'បញ្ចប់', people: 'ចំនួនមនុស្ស',
       addRow: '＋ បន្ថែមជួរ', condition: 'ស្ថានភាពថ្ងៃនេះ',
-      produced: 'លទ្ធផល (ធម្មតា／ធ្វើឡើងវិញ／ស្តុក)', otherLabelPlaceholder: 'ផ្សេងទៀត',
-      usual: 'ធម្មតា', redo: 'ធ្វើឡើងវិញ', stock: 'ស្តុក',
-      exportTitle: 'នាំចេញរបាយការណ៍', exportListEmpty: 'មិនទាន់មានរបាយការណ៍ទេ',
-      selectExportDate: 'សូមជ្រើសរើសកាលបរិច្ឆេទសម្រាប់នាំចេញ', exporting: 'កំពុងនាំចេញ...',
-      exportBtnLabel: 'នាំចេញ Excel សម្រាប់ថ្ងៃដែលបានជ្រើសរើស', fetchFailed: 'ទាញយកទិន្នន័យមិនជោគជ័យ',
-      openLink: 'បើក', editTitle: date => `របាយការណ៍ខ្ទឹម（${formatDateJa(date)}）`,
-      deleteBtnLabel: 'លុប', deleting: 'កំពុងលុប...', deleteFailed: 'លុបមិនជោគជ័យ',
-      selectDeleteDate: 'សូមជ្រើសរើសកាលបរិច្ឆេទសម្រាប់លុប',
-      deleteConfirm: n => `លុបរបាយការណ៍ ${n} ចំនួន? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។`,
+      produced: 'លទ្ធផល', prodDate: 'ថ្ងៃប្រើ', prodContainer: 'កុងតឺន័រ', usual: 'ធម្មតា', redo: 'ធ្វើឡើងវិញ',
+      prodCount: 'ចំនួន', prodTotal: 'លទ្ធផលសរុបដែលបានធ្វើថ្ងៃនេះ',
+      prodByDate: date => `សម្រាប់ ${formatDateJa(date)}`,
+      prodCountRequired: 'សូមបញ្ចូលចំនួន "លទ្ធផល" យ៉ាងហោចណាស់ 1',
+      editTitle: date => `របាយការណ៍ខ្ទឹម（${formatDateJa(date)}）`,
     },
   };
 
-  // onionLang: 'none'（日本語のみ）| 'id'（+インドネシア語）| 'km'（+クメール語）
-  // 日本語は常に表示し、選択した言語があればそれを併記する。
-  let onionLang = localStorage.getItem('onionLang') || 'none';
-
+  // 日本語は常に表示し、スタート画面（またはヘッダー）で日本語以外の言語を選んでいればそれを併記する。
   function ot(key) {
     const jaVal = ONION_I18N.ja[key];
-    if (onionLang === 'none' || !ONION_I18N[onionLang]) return jaVal;
+    const onionLang = uiLang;
+    if (onionLang === 'ja' || !ONION_I18N[onionLang]) return jaVal;
 
     const secVal = ONION_I18N[onionLang][key] ?? jaVal;
     if (typeof jaVal === 'function') {
@@ -1626,30 +1719,27 @@
     return secVal === jaVal ? jaVal : `${jaVal} / ${secVal}`;
   }
 
-  function setOnionLang(lang) {
-    onionLang = lang;
-    localStorage.setItem('onionLang', lang);
-    applyOnionStaticText();
-  }
-
   function applyOnionStaticText() {
-    document.querySelectorAll('.onion-lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === onionLang));
     document.getElementById('onionMenuTitle').textContent      = ot('menuTitle');
-    document.getElementById('onionCreateBtnLabel').textContent = ot('createBtn');
-    document.getElementById('onionExportBtnLabel').textContent = ot('exportBtn');
-    document.getElementById('onionDateOpenBtn').textContent    = ot('dateOpen');
+    document.getElementById('onionDateLabel').textContent      = ot('dateLabel');
     document.getElementById('onionMenuCloseBtn').textContent   = ot('close');
     document.getElementById('onionEditCloseBtn').textContent   = ot('close');
-    document.getElementById('onionExportCloseBtn').textContent = ot('close');
-    document.getElementById('onionExportTitle').textContent    = ot('exportTitle');
-    document.getElementById('onionExportBtn').textContent      = ot('exportBtnLabel');
   }
 
   let onionCurrentDate = null;
+  let onionCurrentBlock = null; // 編集中の出荷先（ONION_BLOCK_TEMPLATESの添字）
+
+  // 出荷先カードの表示順（ONION_BLOCK_TEMPLATESの添字）
+  const ONION_DEST_CARD_ORDER = [0, 1, 2];
 
   function openOnionMenuModal() {
-    document.getElementById('onionDatePickerArea').style.display = 'none';
     applyOnionStaticText();
+    document.getElementById('onionCreateDate').value = getToday();
+    document.getElementById('onionDestCards').innerHTML = ONION_DEST_CARD_ORDER.map(bi => {
+      const t = ONION_BLOCK_TEMPLATES[bi];
+      return `<button type="button" class="onion-dest-card ${t.colorClass}" onclick="openOnionEditModal(document.getElementById('onionCreateDate').value, ${bi})">`
+        + `<span class="onion-dest-icon">🧅</span><span>${t.destination}</span></button>`;
+    }).join('');
     document.getElementById('onionMenuModalOverlay').classList.add('open');
   }
 
@@ -1657,15 +1747,167 @@
     document.getElementById('onionMenuModalOverlay').classList.remove('open');
   }
 
-  function showOnionDatePicker() {
-    document.getElementById('onionCreateDate').value = getToday();
-    document.getElementById('onionDatePickerArea').style.display = 'block';
+  async function loadOnionSignStaff() {
+    if (onionSignStaff) return true;
+    const { data, error } = await supabaseClient.rpc('staff_sign_names');
+    if (error) { console.error(error); return false; }
+    onionSignStaff = data ?? [];
+    return true;
   }
 
-  function selectOnionToggle(btn, value) {
-    const group = btn.parentElement;
-    group.querySelectorAll('.onion-toggle-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+  function onionSignCategories() {
+    const cats = [...new Set(onionSignStaff.map(s => s.category || 'その他'))];
+    const preferred = SIGN_LANG_CATEGORY[uiLang];
+    return cats.sort((a, b) => (b === preferred) - (a === preferred));
+  }
+
+  function renderOnionSignPicker() {
+    const el = document.getElementById('onionSignPicker');
+    if (!el) return;
+    const cats = onionSignCategories();
+    const tabsHtml = cats.length > 1
+      ? `<div class="sign-tabs">${cats.map(c =>
+          `<button type="button" class="sign-tab ${c === onionSignTab ? 'active' : ''}" data-cat="${c}">${SIGN_CATEGORY_FLAGS[c] ?? '🌏'} ${c}</button>`).join('')}</div>`
+      : '';
+    const names = onionSignStaff.filter(s => (s.category || 'その他') === onionSignTab);
+    const namesHtml = `<div class="sign-names">${names.map(s =>
+      `<button type="button" class="sign-name-btn ${s.name === onionSelectedSign ? 'selected' : ''}" data-name="${s.name}">${s.name}</button>`).join('')}</div>`;
+    const currentHtml = onionSelectedSign
+      ? `<div class="sign-current">✔ ${ot('signSelected')}：${onionSelectedSign}</div>`
+      : '';
+    el.innerHTML = tabsHtml + namesHtml + currentHtml;
+
+    el.querySelectorAll('.sign-tab').forEach(btn => btn.onclick = () => {
+      onionSignTab = btn.dataset.cat;
+      renderOnionSignPicker();
+    });
+    el.querySelectorAll('.sign-name-btn').forEach(btn => btn.onclick = () => {
+      // もう一度押すと選択解除
+      onionSelectedSign = onionSelectedSign === btn.dataset.name ? '' : btn.dataset.name;
+      renderOnionSignPicker();
+    });
+  }
+
+  function initOnionSignPicker(currentSign) {
+    onionSelectedSign = currentSign ?? '';
+    const cats = onionSignCategories();
+    const selectedStaff = onionSignStaff.find(s => s.name === onionSelectedSign);
+    onionSignTab = selectedStaff ? (selectedStaff.category || 'その他') : cats[0];
+    renderOnionSignPicker();
+  }
+
+  function onionSizeEntryHtml(entry) {
+    const isPreset = ONION_SIZE_OPTIONS.includes(entry.size);
+    const pkgs = Object.fromEntries((entry.packages ?? []).map(p => [p.type, p]));
+    return `
+      <div class="onion-size-entry">
+        <div class="onion-size-head">
+          <select class="modal-input s-size" onchange="onOnionSizeSelectChange(this)">
+            ${ONION_SIZE_OPTIONS.map(s => `<option value="${s}" ${entry.size === s ? 'selected' : ''}>${s}</option>`).join('')}
+            <option value="" ${isPreset ? '' : 'selected'}>${ot('sizeOther')}</option>
+          </select>
+          <input class="modal-input s-size-other" placeholder="${ot('sizePlaceholder')}" value="${isPreset ? '' : (entry.size ?? '')}" style="${isPreset ? 'display:none' : ''}">
+          <button type="button" class="btn-onion-remove-row" onclick="removeOnionSizeEntry(this)">×</button>
+        </div>
+        <table class="onion-pkg-table">
+          <tr><th>${ot('packageHeader')}</th><th>${ot('countHeader')}</th><th>${ot('weightHeader')}</th></tr>
+          ${ONION_PACKAGES.map(type => {
+            const p = pkgs[type];
+            const active = !!p;
+            const manual = ONION_MANUAL_WEIGHT_PACKAGES.includes(type);
+            return `<tr>
+              <td><button type="button" class="onion-toggle-btn pkg-toggle ${active ? 'active' : ''}" data-pkg="${type}" onclick="toggleOnionPackage(this)">${type}</button></td>
+              <td><input type="number" class="pkg-count" min="1" step="1" inputmode="numeric" value="${active ? (p.count ?? '') : ''}" ${active ? '' : 'disabled'} oninput="recalcOnionUsedCount()"></td>
+              <td>${manual
+                ? `<input type="number" class="pkg-kg" min="0" step="any" inputmode="decimal" value="${active ? (p.kg ?? '') : ''}" ${active ? '' : 'disabled'} oninput="recalcOnionUsedCount()">`
+                : onionPackageUnitHtml(type, p?.unitKg ?? ONION_DEFAULT_PACKAGE_UNIT_KG, active)}</td>
+            </tr>`;
+          }).join('')}
+        </table>
+      </div>`;
+  }
+
+  // DB・ネット：1個の重さ（10kg／20kg）を選ぶボタンと、「個数×重さ」の表示
+  function onionPackageUnitHtml(type, unitKg, active) {
+    return `<div class="pkg-unit">${ONION_PACKAGE_UNIT_OPTIONS[type].map(u =>
+        `<button type="button" class="onion-toggle-btn pkg-unit-btn ${u === unitKg ? 'active' : ''}" data-unit="${u}" ${active ? '' : 'disabled'} onclick="selectOnionPackageUnit(this)">${u}kg</button>`).join('')}</div>`
+      + `<span class="pkg-kg-auto"></span>`;
+  }
+
+  function selectOnionPackageUnit(btn) {
+    btn.parentElement.querySelectorAll('.pkg-unit-btn').forEach(b => b.classList.toggle('active', b === btn));
+    recalcOnionUsedCount();
+  }
+
+  function onOnionSizeSelectChange(select) {
+    const other = select.parentElement.querySelector('.s-size-other');
+    other.style.display = select.value ? 'none' : '';
+    if (!select.value) other.focus();
+  }
+
+  function addOnionSizeEntry(bi) {
+    document.getElementById(`onion-b${bi}-sizes`).insertAdjacentHTML('beforeend', onionSizeEntryHtml(ONION_DEFAULT_SIZE_ENTRY));
+    recalcOnionUsedCount();
+  }
+
+  function removeOnionSizeEntry(btn) {
+    const list = btn.closest('.onion-size-entry').parentElement;
+    if (list.children.length <= 1) return; // 最低1枠は残す
+    btn.closest('.onion-size-entry').remove();
+    recalcOnionUsedCount();
+  }
+
+  function toggleOnionPackage(btn) {
+    const row = btn.closest('tr');
+    const active = btn.classList.toggle('active');
+    row.querySelectorAll('input').forEach(input => {
+      input.disabled = !active;
+      if (!active) input.value = '';
+    });
+    row.querySelectorAll('.pkg-unit-btn').forEach(b => { b.disabled = !active; });
+    if (active) row.querySelector('.pkg-count').focus();
+    recalcOnionUsedCount();
+  }
+
+  function collectOnionSizeEntries(root) {
+    return [...root.querySelectorAll('.onion-size-entry')].map(el => {
+      const sel = el.querySelector('.s-size').value;
+      return {
+        size: sel || el.querySelector('.s-size-other').value.trim(),
+        packages: [...el.querySelectorAll('.pkg-toggle.active')].map(btn => {
+          const row = btn.closest('tr');
+          const kgInput = row.querySelector('.pkg-kg');
+          const unitBtn = row.querySelector('.pkg-unit-btn.active');
+          return {
+            type: btn.dataset.pkg,
+            count: row.querySelector('.pkg-count').value,
+            ...(kgInput ? { kg: kgInput.value } : {}),
+            ...(unitBtn ? { unitKg: Number(unitBtn.dataset.unit) } : {}),
+          };
+        }),
+      };
+    });
+  }
+
+  function recalcOnionUsedCount() {
+    const root = document.getElementById(`onion-block-${onionCurrentBlock}`);
+    if (!root) return;
+    // DB・ネットの行に「個数×1個の重さ」を表示
+    root.querySelectorAll('.onion-pkg-table tr').forEach(row => {
+      const auto = row.querySelector('.pkg-kg-auto');
+      if (!auto) return;
+      const btn = row.querySelector('.pkg-toggle');
+      const unitBtn = row.querySelector('.pkg-unit-btn.active');
+      const w = onionPackageKg({
+        type: btn.dataset.pkg,
+        count: row.querySelector('.pkg-count').value,
+        unitKg: unitBtn ? Number(unitBtn.dataset.unit) : null,
+      });
+      auto.textContent = btn.classList.contains('active') && w != null ? `= ${w} kg` : '';
+    });
+    const { kg, missingWeight } = calcOnionUsedKg(collectOnionSizeEntries(root));
+    root.querySelector('.onion-usedcount-auto').textContent = `${kg} kg`;
+    root.querySelector('.onion-usedcount-note').textContent = missingWeight ? ot('weightNotSet') : '';
   }
 
   function addOnionTimeRow(bi) {
@@ -1682,46 +1924,28 @@
   function renderOnionBlock(bi, block) {
     const t = ONION_BLOCK_TEMPLATES[bi];
     const timeRows = block.timeRows?.length ? block.timeRows : [{}, {}, {}];
-    const signIsKnown = ONION_KNOWN_SIGNS.includes(block.sign);
+    const sizeEntries = block.sizeEntries?.length ? block.sizeEntries : [ONION_DEFAULT_SIZE_ENTRY];
+    const producedRows = block.producedRows?.length ? block.producedRows : [defaultOnionProducedRow(bi)];
 
     return `
       <div class="onion-block ${t.colorClass}" id="onion-block-${bi}">
-        <div class="onion-block-title">${['①', '②', '③'][bi]} ${t.destination}</div>
+        <div class="onion-block-title">🧅 ${t.destination}</div>
 
         <div class="onion-field">
           <label>${ot('sign')}</label>
-          <select class="modal-input onion-sign-select">
-            <option value="">${ot('selectPlaceholder')}</option>
-            ${ONION_KNOWN_SIGNS.map(s => `<option value="${s}" ${signIsKnown && block.sign === s ? 'selected' : ''}>${s}</option>`).join('')}
-          </select>
-          <input class="modal-input onion-sign-other" placeholder="${ot('signOtherPlaceholder')}" value="${!signIsKnown ? (block.sign ?? '') : ''}">
+          <div id="onionSignPicker"></div>
         </div>
 
         <div class="onion-field">
           <label>${ot('sizeSection')}</label>
-          <div class="onion-size-cols">
-            ${t.sizeLabels.map((label, si) => {
-              const col = block.sizeColumns?.[si] ?? {};
-              return `
-              <div class="onion-size-col">
-                ${t.sizeEditable
-                  ? `<input class="modal-input s-label" placeholder="${ot('sizePlaceholder')}" value="${col.label ?? ''}">`
-                  : `<div style="text-align:center;font-weight:800;margin-bottom:6px;">${label}</div>`}
-                <div class="onion-toggle-group">
-                  ${['DB', 'ネット', '鉄コン'].map(v => `<button type="button" class="onion-toggle-btn ${col.kind === v ? 'active' : ''}" onclick="selectOnionToggle(this,'${v}')">${v}</button>`).join('')}
-                </div>
-                <div class="onion-weight-row">
-                  <button type="button" class="onion-toggle-btn ${col.weightMode === '20kg' ? 'active' : ''}" style="flex:0 0 48px;" onclick="this.classList.toggle('active')">20kg</button>
-                  <input type="number" class="w-custom" placeholder="${ot('weightOtherPlaceholder')}" value="${col.weightCustom ?? ''}">
-                </div>
-              </div>`;
-            }).join('')}
-          </div>
+          <div id="onion-b${bi}-sizes">${sizeEntries.map(onionSizeEntryHtml).join('')}</div>
+          <button type="button" class="btn-onion-add-row" onclick="addOnionSizeEntry(${bi})">${ot('addSize')}</button>
         </div>
 
         <div class="onion-field">
-          <label>${ot('usedCount')} (kg)</label>
-          <input class="modal-input onion-usedcount" value="${block.usedCount ?? ''}">
+          <label>${ot('usedCount')} (kg)（${ot('autoCalc')}）</label>
+          <div class="onion-usedcount-auto"></div>
+          <div class="onion-usedcount-note"></div>
         </div>
 
         <div class="onion-field">
@@ -1740,36 +1964,125 @@
         </div>
 
         <div class="onion-field">
-          <label>${ot('condition')}</label>
-          <textarea class="modal-input onion-condition" rows="2">${block.todayCondition ?? ''}</textarea>
+          <label>${ot('produced')}</label>
+          <div id="onion-b${bi}-prodrows">${producedRows.map(r => onionProducedRowHtml(bi, r)).join('')}</div>
+          <button type="button" class="btn-onion-add-row" onclick="addOnionProducedRow(${bi})">${ot('addRow')}</button>
+          <div class="onion-prod-total">
+            <div class="onion-prod-total-main"></div>
+            <div class="onion-prod-total-sub"></div>
+          </div>
         </div>
 
         <div class="onion-field">
-          <label>${ot('produced')}</label>
-          <div class="onion-produced-table">
-            <div class="onion-produced-grid" style="grid-template-columns: 70px repeat(${t.producedLabels.length}, 1fr);">
-              <div class="cell label-cell"></div>
-              ${t.producedLabels.map((label, pi) => {
-                const col = block.producedColumns?.[pi] ?? {};
-                return t.producedEditable[pi]
-                  ? `<div class="cell label-cell"><input class="p-label" placeholder="${ot('otherLabelPlaceholder')}" value="${col.label ?? ''}"></div>`
-                  : `<div class="cell label-cell">${label}</div>`;
-              }).join('')}
-              <div class="cell label-cell">${ot('usual')}(kg)</div>
-              ${t.producedLabels.map((_, pi) => `<div class="cell"><input class="p-usual" value="${block.producedColumns?.[pi]?.usual ?? ''}"></div>`).join('')}
-              <div class="cell label-cell">${ot('redo')}</div>
-              ${t.producedLabels.map((_, pi) => `<div class="cell"><input class="p-redo" value="${block.producedColumns?.[pi]?.redo ?? ''}"></div>`).join('')}
-              <div class="cell label-cell">${ot('stock')}</div>
-              ${t.producedLabels.map((_, pi) => `<div class="cell"><input class="p-stock" value="${block.producedColumns?.[pi]?.stock ?? ''}"></div>`).join('')}
-            </div>
-          </div>
+          <label>${ot('condition')}</label>
+          <textarea class="modal-input onion-condition" rows="2">${block.todayCondition ?? ''}</textarea>
         </div>
       </div>`;
   }
 
-  async function openOnionEditModal(dateStr) {
+  // ── できたもの（使用日・コンテナ・通常/やり直し・個数 → 重さ） ──
+  // 基本は翌日配送分を前日に作るため、使用日の初期値は日報の日付の翌日
+  function defaultOnionProducedRow(bi) {
+    return { date: addDaysIso(onionCurrentDate, 1), container: ONION_BLOCK_TEMPLATES[bi].producedContainers[0] ?? '', kind: '通常', count: '' };
+  }
+
+  function onionProducedRowHtml(bi, row) {
+    const options = ONION_BLOCK_TEMPLATES[bi].producedContainers;
+    const isPreset = options.includes(row.container);
+    const autoKg = ONION_PRODUCED_UNIT_KG[row.container] != null;
+    return `
+      <div class="onion-prod-row">
+        <div class="pr-line">
+          <span class="pr-line-label">${ot('prodDate')}</span>
+          <input type="date" class="pr-date" value="${row.date ?? ''}" onchange="recalcOnionProduced()">
+          <button type="button" class="btn-onion-remove-row" onclick="removeOnionProducedRow(this)">×</button>
+        </div>
+        <div class="pr-line">
+          <select class="pr-container" onchange="onOnionContainerChange(this)" style="${options.length ? '' : 'display:none'}">
+            ${options.map(c => `<option value="${c}" ${row.container === c ? 'selected' : ''}>${c}</option>`).join('')}
+            <option value="" ${isPreset ? '' : 'selected'}>${ot('sizeOther')}</option>
+          </select>
+          <input class="pr-container-other" placeholder="${ot('prodContainer')}" value="${isPreset ? '' : (row.container ?? '')}" style="${isPreset ? 'display:none' : ''}">
+        </div>
+        <div class="pr-line">
+          <div class="pr-kind">
+            ${ONION_PRODUCED_KINDS.map(k => `<button type="button" class="onion-toggle-btn ${row.kind === k ? 'active' : ''}" data-kind="${k}" onclick="selectOnionProducedKind(this)">${k === '通常' ? ot('usual') : ot('redo')}</button>`).join('')}
+          </div>
+        </div>
+        <div class="pr-line">
+          <input type="number" class="pr-count" min="1" step="1" inputmode="numeric" placeholder="${ot('prodCount')}" value="${row.count ?? ''}" oninput="recalcOnionProduced()">
+          <span class="pr-line-label">${ot('prodCount')}</span>
+          <span class="pr-kg-auto" style="${autoKg ? '' : 'display:none'}"></span>
+          <input type="number" class="pr-kg" min="0" step="any" inputmode="decimal" placeholder="kg" value="${autoKg ? '' : (row.kg ?? '')}" style="${autoKg ? 'display:none' : ''}" oninput="recalcOnionProduced()">
+          <span class="pr-line-label pr-kg-unit" style="${autoKg ? 'display:none' : ''}">kg</span>
+        </div>
+      </div>`;
+  }
+
+  function addOnionProducedRow(bi) {
+    document.getElementById(`onion-b${bi}-prodrows`).insertAdjacentHTML('beforeend', onionProducedRowHtml(bi, defaultOnionProducedRow(bi)));
+    recalcOnionProduced();
+  }
+
+  function removeOnionProducedRow(btn) {
+    btn.closest('.onion-prod-row').remove();
+    recalcOnionProduced();
+  }
+
+  function selectOnionProducedKind(btn) {
+    btn.parentElement.querySelectorAll('.onion-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  }
+
+  // 619・615は「個数×1個の重さ」で自動計算、それ以外（村上・その他）は重さを手入力
+  function onOnionContainerChange(select) {
+    const row = select.closest('.onion-prod-row');
+    const other = row.querySelector('.pr-container-other');
+    other.style.display = select.value ? 'none' : '';
+    if (!select.value) other.focus();
+    const autoKg = ONION_PRODUCED_UNIT_KG[select.value] != null;
+    row.querySelector('.pr-kg-auto').style.display = autoKg ? '' : 'none';
+    row.querySelector('.pr-kg').style.display = autoKg ? 'none' : '';
+    row.querySelector('.pr-kg-unit').style.display = autoKg ? 'none' : '';
+    recalcOnionProduced();
+  }
+
+  function collectOnionProducedRows(root) {
+    return [...root.querySelectorAll('.onion-prod-row')].map(el => {
+      const container = el.querySelector('.pr-container').value || el.querySelector('.pr-container-other').value.trim();
+      const row = {
+        date: el.querySelector('.pr-date').value,
+        container,
+        kind: el.querySelector('.pr-kind .onion-toggle-btn.active')?.dataset.kind ?? '通常',
+        count: el.querySelector('.pr-count').value,
+      };
+      if (ONION_PRODUCED_UNIT_KG[container] == null) row.kg = el.querySelector('.pr-kg').value;
+      return row;
+    });
+  }
+
+  function recalcOnionProduced() {
+    const root = document.getElementById(`onion-block-${onionCurrentBlock}`);
+    if (!root) return;
+    root.querySelectorAll('.onion-prod-row').forEach(el => {
+      const container = el.querySelector('.pr-container').value;
+      const unit = ONION_PRODUCED_UNIT_KG[container];
+      if (unit == null) return;
+      const count = parseInt(el.querySelector('.pr-count').value, 10) || 0;
+      el.querySelector('.pr-kg-auto').textContent = `× ${unit}kg = ${count * unit} kg`;
+    });
+    const rows = collectOnionProducedRows(root).filter(r => r.count !== '' || (r.kg ?? '') !== '');
+    const { total, byDate, missingWeight } = calcOnionProducedKg(rows);
+    root.querySelector('.onion-prod-total-main').textContent = `${ot('prodTotal')}：${total} kg`;
+    root.querySelector('.onion-prod-total-sub').innerHTML =
+      Object.keys(byDate).sort().map(d => `${ot('prodByDate')(d)}：${byDate[d]} kg`).join('<br>')
+      + (missingWeight ? `<div class="onion-usedcount-note">${ot('weightNotSet')}</div>` : '');
+  }
+
+  // 選んだ出荷先（bi）の欄だけを開く
+  async function openOnionEditModal(dateStr, bi) {
     if (!dateStr) { alert(ot('selectDate')); return; }
     onionCurrentDate = dateStr;
+    onionCurrentBlock = bi;
 
     const { data, error } = await supabaseClient
       .from('onion_reports')
@@ -1778,16 +2091,19 @@
       .maybeSingle();
 
     if (error) { alert(ot('loadFailed')); console.error(error); return; }
+    if (!(await loadOnionSignStaff())) { alert(ot('signLoadFailed')); return; }
 
-    const state = data?.data ?? { blocks: ONION_BLOCK_TEMPLATES.map(() => ({})) };
+    const block = data?.data?.blocks?.[bi] ?? {};
 
     document.getElementById('onionEditTitle').textContent = ot('editTitle')(dateStr);
     document.getElementById('onionEditCloseBtn').textContent = ot('close');
     document.getElementById('onionSaveBtn').textContent = ot('save');
-    document.getElementById('onionEditBlocks').innerHTML = state.blocks.map((b, bi) => renderOnionBlock(bi, b)).join('');
+    document.getElementById('onionEditBlocks').innerHTML = renderOnionBlock(bi, block);
+    initOnionSignPicker(block.sign);
+    recalcOnionUsedCount();
+    recalcOnionProduced();
 
     closeOnionMenuModal();
-    closeOnionExportModal();
     document.getElementById('onionEditModalOverlay').classList.add('open');
   }
 
@@ -1795,65 +2111,65 @@
     document.getElementById('onionEditModalOverlay').classList.remove('open');
   }
 
-  function collectOnionState() {
+  function collectOnionBlock(bi) {
+    const root = document.getElementById(`onion-block-${bi}`);
+
+    const sizeEntries = collectOnionSizeEntries(root);
+    const { kg: usedKg } = calcOnionUsedKg(sizeEntries);
+
+    const timeRows = [...root.querySelectorAll('.onion-time-row')].map(row => ({
+      start: row.querySelector('.t-start').value,
+      end: row.querySelector('.t-end').value,
+      people: row.querySelector('.t-people').value,
+    }));
+
+    // 個数も重さも空の行（初期表示のまま使わなかった行）は保存しない
+    const producedRows = collectOnionProducedRows(root).filter(r => r.count !== '' || (r.kg ?? '') !== '');
+
     return {
-      blocks: ONION_BLOCK_TEMPLATES.map((t, bi) => {
-        const root = document.getElementById(`onion-block-${bi}`);
-
-        const sizeColumns = [...root.querySelectorAll('.onion-size-col')].map(col => ({
-          label: col.querySelector('.s-label')?.value?.trim() ?? '',
-          kind: col.querySelector('.onion-toggle-group .onion-toggle-btn.active')?.textContent ?? '',
-          weightMode: col.querySelector('.onion-weight-row .onion-toggle-btn')?.classList.contains('active') ? '20kg' : '',
-          weightCustom: col.querySelector('.w-custom')?.value ?? '',
-        }));
-
-        const timeRows = [...root.querySelectorAll('.onion-time-row')].map(row => ({
-          start: row.querySelector('.t-start').value,
-          end: row.querySelector('.t-end').value,
-          people: row.querySelector('.t-people').value,
-        }));
-
-        const labelInputs = [...root.querySelectorAll('.p-label')];
-        const usualInputs = [...root.querySelectorAll('.p-usual')];
-        const redoInputs  = [...root.querySelectorAll('.p-redo')];
-        const stockInputs = [...root.querySelectorAll('.p-stock')];
-        let labelIdx = 0;
-        const producedColumns = t.producedLabels.map((fixedLabel, pi) => ({
-          label: t.producedEditable[pi] ? (labelInputs[labelIdx++]?.value?.trim() ?? '') : fixedLabel,
-          usual: usualInputs[pi]?.value ?? '',
-          redo:  redoInputs[pi]?.value ?? '',
-          stock: stockInputs[pi]?.value ?? '',
-        }));
-
-        const signOther = root.querySelector('.onion-sign-other')?.value?.trim() ?? '';
-        const signSelect = root.querySelector('.onion-sign-select')?.value ?? '';
-
-        return {
-          sign: signOther || signSelect,
-          sizeColumns,
-          usedCount: root.querySelector('.onion-usedcount')?.value?.trim() ?? '',
-          timeRows,
-          todayCondition: root.querySelector('.onion-condition')?.value?.trim() ?? '',
-          producedColumns,
-        };
-      }),
+      sign: onionSelectedSign,
+      sizeEntries,
+      usedCount: usedKg > 0 ? String(usedKg) : '',
+      timeRows,
+      producedRows,
+      todayCondition: root.querySelector('.onion-condition')?.value?.trim() ?? '',
     };
   }
 
+  // 1日1件の日報（3つの出荷先をまとめて保存）のうち、開いている出荷先の欄だけを書き換える。
+  // 別の人が同じ日の他の出荷先を保存していても消さないよう、保存直前に最新の内容を読み直す
   async function saveOnionReport() {
-    const state = collectOnionState();
+    const bi = onionCurrentBlock;
+    const block = collectOnionBlock(bi);
+    const badCount = block.sizeEntries.some(e => e.packages.some(p => !(parseInt(p.count, 10) >= 1)));
+    if (badCount) { alert(ot('pkgCountRequired')); return; }
+    const badProduced = block.producedRows.some(r => !(parseInt(r.count, 10) >= 1));
+    if (badProduced) { alert(ot('prodCountRequired')); return; }
     const btn = document.getElementById('onionSaveBtn');
     btn.disabled = true;
     btn.textContent = ot('saving');
 
-    const { error } = await supabaseClient
+    const { data: latest, error: loadErr } = await supabaseClient
       .from('onion_reports')
-      .upsert({
-        date: onionCurrentDate,
-        data: state,
-        updated_by: currentProfile.id,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'date' });
+      .select('data')
+      .eq('date', onionCurrentDate)
+      .maybeSingle();
+
+    let error = loadErr;
+    if (!error) {
+      const state = latest?.data ?? {};
+      state.blocks = ONION_BLOCK_TEMPLATES.map((_, i) => state.blocks?.[i] ?? {});
+      // 旧形式の項目（sizeColumns等）は残したまま、今回の入力で上書きする
+      state.blocks[bi] = { ...state.blocks[bi], ...block };
+      ({ error } = await supabaseClient
+        .from('onion_reports')
+        .upsert({
+          date: onionCurrentDate,
+          data: state,
+          updated_by: currentProfile.id,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'date' }));
+    }
 
     btn.disabled = false;
     btn.textContent = ot('save');
@@ -1861,47 +2177,11 @@
     if (error) { alert(ot('saveFailed')); console.error(error); return; }
 
     closeOnionEditModal();
-    showOnionEfficiencyFeedback(state);
+    // 作業効率は今保存した出荷先の分だけ表示する
+    showOnionEfficiencyFeedback({ blocks: ONION_BLOCK_TEMPLATES.map((_, i) => (i === bi ? block : {})) });
   }
 
-  // ── 作業効率フィードバック ──────────────────────────────
-  // 中国・日本：作業効率(kg/人時) = つかったかず(kg) / (作業時間h × 作業人数)
-  // レインボー：作業効率(kg/人時) = できたもの(kg・つうじょう合計) / (作業時間h × 作業人数)
-  const ONION_EFFICIENCY_TARGETS = { 'ベスト日本': 60, 'ベスト中国': 120, 'レインボー': 70 };
-
-  function parseOnionNumber(text) {
-    const m = String(text ?? '').match(/[\d.]+/);
-    return m ? parseFloat(m[0]) : 0;
-  }
-
-  function calcOnionPersonHours(block) {
-    let total = 0;
-    (block.timeRows ?? []).forEach(r => {
-      if (!r.start || !r.end || !r.people) return;
-      const [sh, sm] = r.start.split(':').map(Number);
-      const [eh, em] = r.end.split(':').map(Number);
-      const hours = (eh * 60 + em - (sh * 60 + sm)) / 60;
-      const people = parseFloat(r.people) || 0;
-      if (hours > 0 && people > 0) total += hours * people;
-    });
-    return total;
-  }
-
-  function calcOnionEfficiency(bi, block) {
-    const t = ONION_BLOCK_TEMPLATES[bi];
-    const personHours = calcOnionPersonHours(block);
-    if (personHours <= 0) return null;
-
-    const amountKg = t.destination === 'レインボー'
-      ? (block.producedColumns ?? []).reduce((sum, c) => sum + parseOnionNumber(c.usual), 0)
-      : parseOnionNumber(block.usedCount);
-    if (amountKg <= 0) return null;
-
-    const target = ONION_EFFICIENCY_TARGETS[t.destination];
-    const efficiency = amountKg / personHours;
-    return { destination: t.destination, efficiency, target, achieved: efficiency > target };
-  }
-
+  // ── 作業効率フィードバック（計算は js/onion-common.js の calcOnionEfficiency） ──
   function showOnionEfficiencyFeedback(state) {
     const results = ONION_BLOCK_TEMPLATES
       .map((t, bi) => calcOnionEfficiency(bi, state.blocks?.[bi] ?? {}))
@@ -1929,165 +2209,6 @@
 
   function closeOnionEfficiencyModal() {
     document.getElementById('onionEfficiencyModalOverlay').classList.remove('open');
-  }
-
-  // 一覧表示の列順：ベスト日本・ベスト中国・レインボー（ONION_BLOCK_TEMPLATESの並びとは異なる）
-  const ONION_EXPORT_COLUMN_ORDER = [1, 0, 2];
-
-  async function openOnionExportModal() {
-    const { data, error } = await supabaseClient
-      .from('onion_reports')
-      .select('id, date, data')
-      .order('date', { ascending: false });
-
-    document.getElementById('onionExportTitle').textContent = ot('exportTitle');
-    document.getElementById('onionExportCloseBtn').textContent = ot('close');
-    document.getElementById('onionExportBtn').textContent = ot('exportBtnLabel');
-    document.getElementById('onionDeleteBtn').textContent = ot('deleteBtnLabel');
-
-    const el = document.getElementById('onionExportList');
-    if (error || !data?.length) {
-      el.innerHTML = `<div class="empty-state" style="padding:30px 10px;"><p>${ot('exportListEmpty')}</p></div>`;
-    } else {
-      const headerCells = ONION_EXPORT_COLUMN_ORDER
-        .map(bi => `<span>${ONION_BLOCK_TEMPLATES[bi].destination}</span>`).join('');
-
-      const rows = data.map(r => {
-        const effByBi = ONION_BLOCK_TEMPLATES.map((t, bi) => calcOnionEfficiency(bi, r.data?.blocks?.[bi] ?? {}));
-        const cells = ONION_EXPORT_COLUMN_ORDER.map(bi => {
-          const e = effByBi[bi];
-          if (!e) return '<span class="onion-eff-cell na">-</span>';
-          return `<span class="onion-eff-cell ${e.achieved ? 'ok' : 'ng'}">${e.efficiency.toFixed(1)}</span>`;
-        }).join('');
-        return `
-          <div class="onion-export-row">
-            <input type="checkbox" class="onion-export-cb" value="${r.date}">
-            <span class="onion-list-date">${formatDateJa(r.date)}</span>
-            ${cells}
-            <span class="onion-list-open" onclick="event.preventDefault(); openOnionEditModal('${r.date}')">${ot('openLink')}</span>
-          </div>`;
-      }).join('');
-
-      el.innerHTML = `
-        <div class="onion-export-table-wrap">
-          <div class="onion-export-table">
-            <div class="onion-export-row onion-export-header">
-              <span></span><span></span>${headerCells}<span></span>
-            </div>
-            ${rows}
-          </div>
-        </div>`;
-    }
-
-    closeOnionMenuModal();
-    document.getElementById('onionExportModalOverlay').classList.add('open');
-  }
-
-  function closeOnionExportModal() {
-    document.getElementById('onionExportModalOverlay').classList.remove('open');
-  }
-
-  function buildOnionSheet(date, state) {
-    const rows = [['玉ねぎ作業日報', '', '', 'ひづけ', date], []];
-
-    ONION_BLOCK_TEMPLATES.forEach((t, bi) => {
-      const b = state.blocks?.[bi] ?? {};
-      rows.push(['出荷先', t.destination, '', 'サイン', b.sign ?? '']);
-      rows.push([]);
-
-      const sizeCols = b.sizeColumns ?? [];
-      const sizeLabelRow = ['使ったサイズ'];
-      const kindRow = ['しゅるい'];
-      const weightRow = ['おもさ'];
-      t.sizeLabels.forEach((fixedLabel, si) => {
-        const c = sizeCols[si] ?? {};
-        sizeLabelRow.push(t.sizeEditable ? (c.label ?? '') : fixedLabel);
-        kindRow.push(c.kind ?? '');
-        weightRow.push(c.weightCustom ? `${c.weightCustom}kg` : (c.weightMode === '20kg' ? '20kg' : ''));
-      });
-      rows.push(sizeLabelRow, kindRow, weightRow);
-      rows.push(['つかったかず', b.usedCount ?? '']);
-      rows.push([]);
-
-      rows.push(['時間と人数']);
-      rows.push(['開始', '終了', '人数']);
-      (b.timeRows ?? []).forEach(r => {
-        if (r.start || r.end || r.people) rows.push([r.start ?? '', r.end ?? '', r.people ?? '']);
-      });
-      rows.push([]);
-
-      rows.push(['今日の様子', b.todayCondition ?? '']);
-      rows.push([]);
-
-      const producedCols = b.producedColumns ?? [];
-      const producedHeaderRow = ['できたもの'];
-      const usualRow = ['つうじょう'];
-      const redoRow  = ['やりなおし'];
-      const stockRow = ['ざいこ'];
-      t.producedLabels.forEach((fixedLabel, pi) => {
-        const c = producedCols[pi] ?? {};
-        producedHeaderRow.push(t.producedEditable[pi] ? (c.label ?? '') : fixedLabel);
-        usualRow.push(c.usual ?? '');
-        redoRow.push(c.redo ?? '');
-        stockRow.push(c.stock ?? '');
-      });
-      rows.push(producedHeaderRow, usualRow, redoRow, stockRow);
-      rows.push([]);
-      rows.push([]);
-    });
-
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
-    return ws;
-  }
-
-  async function exportOnionReportsExcel() {
-    const dates = [...document.querySelectorAll('.onion-export-cb:checked')].map(cb => cb.value);
-    if (!dates.length) { alert(ot('selectExportDate')); return; }
-
-    const btn = document.getElementById('onionExportBtn');
-    btn.disabled = true;
-    btn.textContent = ot('exporting');
-
-    const { data, error } = await supabaseClient
-      .from('onion_reports')
-      .select('date, data')
-      .in('date', dates)
-      .order('date');
-
-    btn.disabled = false;
-    btn.textContent = ot('exportBtnLabel');
-
-    if (error || !data?.length) { alert(ot('fetchFailed')); console.error(error); return; }
-
-    const wb = XLSX.utils.book_new();
-    data.forEach(r => {
-      const ws = buildOnionSheet(r.date, r.data);
-      XLSX.utils.book_append_sheet(wb, ws, r.date);
-    });
-    XLSX.writeFile(wb, `玉ねぎ作業日報_${dates[0]}_${dates[dates.length - 1]}.xlsx`);
-  }
-
-  async function deleteSelectedOnionReports() {
-    const dates = [...document.querySelectorAll('.onion-export-cb:checked')].map(cb => cb.value);
-    if (!dates.length) { alert(ot('selectDeleteDate')); return; }
-    if (!confirm(ot('deleteConfirm')(dates.length))) return;
-
-    const btn = document.getElementById('onionDeleteBtn');
-    btn.disabled = true;
-    btn.textContent = ot('deleting');
-
-    const { error } = await supabaseClient
-      .from('onion_reports')
-      .delete()
-      .in('date', dates);
-
-    btn.disabled = false;
-    btn.textContent = ot('deleteBtnLabel');
-
-    if (error) { alert(ot('deleteFailed')); console.error(error); return; }
-
-    await openOnionExportModal();
   }
 
   // ── タイムライン描画 ───────────────────────────────────
@@ -2670,17 +2791,140 @@
     alert(st('reportSent'));
   }
 
-  // ── 初期化 ────────────────────────────────────────────
-  (async () => {
-    currentProfile = await requireAuth('staff');
-    if (!currentProfile) return;
+  // ── メニュー（ホーム）画面 ──────────────────────────────
+  // 「今日の作業」はURL末尾を #tasks にして表示する（スマホの「戻る」でメニューに戻れるように）
+  // ja は日本語以外を選んだときに小さく併記する日本語名（管理者との会話用）
+  const HOME_CARDS = [
+    { icon: '📋', labelKey: 'homeTasks',    ja: '今日の作業',   wide: true, onClick: () => openTasksView() },
+    { icon: '🧅', labelKey: 'homeOnion',    ja: '玉ねぎ日報',   onClick: () => openOnionMenuModal() },
+    { icon: '🥕', labelKey: 'homeCarrot',   ja: 'ニンジン日報', comingSoon: true },
+    { icon: '🌰', labelKey: 'homeChestnut', ja: '栗日報',       comingSoon: true },
+    { icon: '📝', labelKey: 'homeOther',    ja: 'その他の報告', onClick: () => openReportModal() },
+    { icon: '📊', labelKey: 'homeReport',   ja: 'レポート出力', onClick: () => { window.location.href = 'onion_reports.html'; } },
+  ];
 
+  function renderHomeCards() {
+    const el = document.getElementById('homeView');
+    el.innerHTML = '';
+    HOME_CARDS.forEach(card => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'home-card' + (card.wide ? ' wide' : '') + (card.comingSoon ? ' coming-soon' : '');
+      const sub = uiLang === 'ja' ? '' : `<span class="home-card-sub">${card.ja}</span>`;
+      const badge = card.comingSoon ? `<span class="coming-soon-badge">${st('comingSoonBadge')}</span>` : '';
+      btn.innerHTML = `${badge}<span class="home-card-icon">${card.icon}</span>`
+        + `<span class="home-card-label">${st(card.labelKey)}${sub}</span>`;
+      btn.onclick = card.comingSoon ? () => alert(st('comingSoonAlert')) : () => requireStaffLogin(card.onClick);
+      el.appendChild(btn);
+    });
+  }
+
+  function applyView() {
+    const isTasks = window.location.hash === '#tasks';
+    document.body.classList.toggle('view-tasks', isTasks);
+    document.body.classList.toggle('view-home', !isTasks);
+    window.scrollTo(0, 0);
+  }
+
+  function openTasksView() { window.location.hash = 'tasks'; }
+
+  function openHomeView() {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+    applyView();
+  }
+
+  window.addEventListener('hashchange', applyView);
+
+  // ── QRコードから来た人のログイン ─────────────────────────
+  // QRコード → 言語選択 → メニューまではログインなしで表示し、
+  // カードを押した時点でまだログインしていなければ名前を選んでもらう（Edge Function staff-qr-login）。
+  // 一度選ぶとそのスマホではログインしたままになる。
+  let pendingAfterLogin = null;
+
+  function requireStaffLogin(action) {
+    if (currentProfile) { action(); return; }
+    pendingAfterLogin = action;
+    openLoginModal();
+  }
+
+  async function callQrLogin(body) {
+    const { data, error } = await supabaseClient.functions.invoke('staff-qr-login', {
+      body: { key: localStorage.getItem('staffQrKey'), ...body },
+    });
+    if (error) {
+      let code = null;
+      try { code = (await error.context.json()).error; } catch (_) {}
+      throw new Error(code || 'general');
+    }
+    return data;
+  }
+
+  function showLoginMessage(text) {
+    document.getElementById('loginModalBody').innerHTML = `<div class="login-message">${text}</div>`;
+  }
+
+  function showLoginError(err) {
+    console.error(err);
+    showLoginMessage(err.message === 'invalid_key' ? st('loginInvalidKey') : st('errorGeneral'));
+  }
+
+  async function openLoginModal() {
+    document.getElementById('loginModalTitle').textContent = st('loginTitle');
+    document.getElementById('loginModalCloseBtn').textContent = st('close');
+    showLoginMessage(st('loading'));
+    document.getElementById('loginModalOverlay').classList.add('open');
+
+    try {
+      const { staff } = await callQrLogin({ action: 'list' });
+      if (!staff.length) { showLoginMessage(st('loginNoStaff')); return; }
+      const body = document.getElementById('loginModalBody');
+      body.innerHTML = '<div class="login-name-grid"></div>';
+      staff.forEach(s => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'login-name-btn';
+        btn.textContent = s.name;
+        btn.onclick = () => loginAsStaff(s);
+        body.firstChild.appendChild(btn);
+      });
+    } catch (err) {
+      showLoginError(err);
+    }
+  }
+
+  function closeLoginModal() {
+    document.getElementById('loginModalOverlay').classList.remove('open');
+    pendingAfterLogin = null;
+  }
+
+  async function loginAsStaff(staff) {
+    if (!confirm(st('confirmName', staff.name))) return;
+    showLoginMessage(st('loading'));
+    try {
+      const { token_hash } = await callQrLogin({ action: 'login', staff_id: staff.id });
+      const { error } = await supabaseClient.auth.verifyOtp({ token_hash, type: 'email' });
+      if (error) throw error;
+      currentProfile = await getMyProfile();
+      if (!currentProfile) throw new Error('general');
+      const action = pendingAfterLogin;
+      closeLoginModal();
+      await startStaffSession();
+      action?.();
+    } catch (err) {
+      showLoginError(err);
+    }
+  }
+
+  // QRコードから来た人はメニューに戻る（次に使う人が名前を選び直せるように）
+  async function staffLogout() {
+    await supabaseClient.auth.signOut({ scope: 'local' });
+    window.location.href = localStorage.getItem('staffQrKey') ? 'staff.html' : 'login.html?loggedout=1';
+  }
+
+  // ログイン後に、担当タスクの読み込みとリアルタイム反映を始める
+  async function startStaffSession() {
     document.getElementById('userName').textContent = currentProfile.name;
-    applyStaffI18n();
-    document.getElementById('todayLabel').textContent = formatDateJa(getToday());
-
-    updateClock();
-    setInterval(updateClock, 30000);
+    document.getElementById('logoutBtnLabel').style.display = '';
 
     // 1分ごとに再描画（作業中/次の作業の切り替えのため）
     setInterval(loadTasks, 60000);
@@ -2708,6 +2952,30 @@
         }
       )
       .subscribe();
+  }
+
+  // ── 初期化 ────────────────────────────────────────────
+  (async () => {
+    applyView();
+    applyStaffI18n();
+    document.getElementById('todayLabel').textContent = formatDateJa(getToday());
+    updateClock();
+    setInterval(updateClock, 30000);
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+      currentProfile = await requireAuth('staff');
+      if (!currentProfile) return;
+      await startStaffSession();
+      return;
+    }
+
+    // 未ログイン：QRコードから来た人はメニューだけ表示（カードを押したら名前を選ぶ）。それ以外はログイン画面へ
+    if (!localStorage.getItem('staffQrKey')) {
+      window.location.href = 'login.html';
+      return;
+    }
+    if (window.location.hash === '#tasks') openHomeView();
   })();
 
 </script>
