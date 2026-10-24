@@ -756,9 +756,6 @@
     .onion-pkg-table .pkg-count, .onion-pkg-table .pkg-kg { width: 100%; padding: 9px; font-size: 15px; border: 1.5px solid #ddd; border-radius: 6px; }
     .onion-pkg-table .pkg-count:disabled, .onion-pkg-table .pkg-kg:disabled { background: #f3f3f3; }
     .onion-pkg-table .pkg-kg-auto { display: block; text-align: center; font-size: 13px; font-weight: 700; color: #7a3f13; margin-top: 2px; }
-    .onion-pkg-table .pkg-unit { display: flex; gap: 3px; }
-    .onion-pkg-table .pkg-unit-btn { padding: 8px 2px; font-size: 12px; min-width: 0; }
-    .onion-pkg-table .pkg-unit-btn:disabled { opacity: 0.4; }
 
     .onion-usedcount-auto {
       background: #fff;
@@ -1625,7 +1622,7 @@
   const SIGN_LANG_CATEGORY = { ja: '日本人', id: 'インドネシア', km: 'カンボジア' };
   const SIGN_CATEGORY_FLAGS = { '日本人': '🇯🇵', 'インドネシア': '🇮🇩', 'カンボジア': '🇰🇭', 'ベトナム': '🇻🇳' };
   const ONION_SIZE_OPTIONS = ['M', 'L'];
-  const ONION_DEFAULT_SIZE_ENTRY = { size: 'M', packages: [{ type: 'DB', count: '' }] };
+  const ONION_DEFAULT_SIZE_ENTRY = { size: 'M', packages: [{ type: 'DB(20kg)', count: '' }] };
 
   let onionSignStaff = null; // [{ id, name, category }]
   let onionSignTab = null;
@@ -1820,23 +1817,11 @@
               <td><input type="number" class="pkg-count" min="1" step="1" inputmode="numeric" value="${active ? (p.count ?? '') : ''}" ${active ? '' : 'disabled'} oninput="recalcOnionUsedCount()"></td>
               <td>${manual
                 ? `<input type="number" class="pkg-kg" min="0" step="any" inputmode="decimal" value="${active ? (p.kg ?? '') : ''}" ${active ? '' : 'disabled'} oninput="recalcOnionUsedCount()">`
-                : onionPackageUnitHtml(type, p?.unitKg ?? ONION_DEFAULT_PACKAGE_UNIT_KG, active)}</td>
+                : `<span class="pkg-kg-auto"></span>`}</td>
             </tr>`;
           }).join('')}
         </table>
       </div>`;
-  }
-
-  // DB・ネット：1個の重さ（10kg／20kg）を選ぶボタンと、「個数×重さ」の表示
-  function onionPackageUnitHtml(type, unitKg, active) {
-    return `<div class="pkg-unit">${ONION_PACKAGE_UNIT_OPTIONS[type].map(u =>
-        `<button type="button" class="onion-toggle-btn pkg-unit-btn ${u === unitKg ? 'active' : ''}" data-unit="${u}" ${active ? '' : 'disabled'} onclick="selectOnionPackageUnit(this)">${u}kg</button>`).join('')}</div>`
-      + `<span class="pkg-kg-auto"></span>`;
-  }
-
-  function selectOnionPackageUnit(btn) {
-    btn.parentElement.querySelectorAll('.pkg-unit-btn').forEach(b => b.classList.toggle('active', b === btn));
-    recalcOnionUsedCount();
   }
 
   function onOnionSizeSelectChange(select) {
@@ -1863,9 +1848,7 @@
     row.querySelectorAll('input').forEach(input => {
       input.disabled = !active;
       if (!active) input.value = '';
-    });
-    row.querySelectorAll('.pkg-unit-btn').forEach(b => { b.disabled = !active; });
-    if (active) row.querySelector('.pkg-count').focus();
+    });    if (active) row.querySelector('.pkg-count').focus();
     recalcOnionUsedCount();
   }
 
@@ -1877,12 +1860,10 @@
         packages: [...el.querySelectorAll('.pkg-toggle.active')].map(btn => {
           const row = btn.closest('tr');
           const kgInput = row.querySelector('.pkg-kg');
-          const unitBtn = row.querySelector('.pkg-unit-btn.active');
           return {
             type: btn.dataset.pkg,
             count: row.querySelector('.pkg-count').value,
             ...(kgInput ? { kg: kgInput.value } : {}),
-            ...(unitBtn ? { unitKg: Number(unitBtn.dataset.unit) } : {}),
           };
         }),
       };
@@ -1897,12 +1878,7 @@
       const auto = row.querySelector('.pkg-kg-auto');
       if (!auto) return;
       const btn = row.querySelector('.pkg-toggle');
-      const unitBtn = row.querySelector('.pkg-unit-btn.active');
-      const w = onionPackageKg({
-        type: btn.dataset.pkg,
-        count: row.querySelector('.pkg-count').value,
-        unitKg: unitBtn ? Number(unitBtn.dataset.unit) : null,
-      });
+      const w = onionPackageKg({ type: btn.dataset.pkg, count: row.querySelector('.pkg-count').value });
       auto.textContent = btn.classList.contains('active') && w != null ? `= ${w} kg` : '';
     });
     const { kg, missingWeight } = calcOnionUsedKg(collectOnionSizeEntries(root));
