@@ -768,15 +768,31 @@
     .onion-pkg-table .pkg-count:disabled, .onion-pkg-table .pkg-kg:disabled { background: #f3f3f3; }
     .onion-pkg-table .pkg-kg-auto { display: block; text-align: center; font-size: 13px; font-weight: 700; color: #7a3f13; margin-top: 2px; }
 
-    .onion-usedcount-auto {
-      background: #fff;
-      border: 1.5px solid #e5e5e5;
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 18px;
-      font-weight: 800;
-      color: #7a3f13;
+    /* 入力項目ごとの区切り（項目ごとに色を変えて、切れ目が分かるようにする） */
+    .onion-section {
+      border-radius: 12px;
+      border: 2px solid;
+      padding: 0 10px 12px;
+      margin-bottom: 14px;
+      overflow: hidden;
     }
+
+    .onion-section-title {
+      margin: 0 -10px 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .onion-section.sec-used      { background: #fff4e6; border-color: #e8a25c; }
+    .onion-section.sec-used .onion-section-title      { background: #d9822b; }
+    .onion-section.sec-time      { background: #f2effa; border-color: #a99ad6; }
+    .onion-section.sec-time .onion-section-title      { background: #7e6cc0; }
+    .onion-section.sec-produced  { background: #eaf6ec; border-color: #7fc28e; }
+    .onion-section.sec-produced .onion-section-title  { background: #3f9a55; }
+    .onion-section.sec-condition { background: #f4f4f4; border-color: #c4c4c4; }
+    .onion-section.sec-condition .onion-section-title { background: #8a8a8a; }
 
     .onion-usedcount-note { font-size: 12px; color: #c0392b; font-weight: 600; margin-top: 4px; }
 
@@ -1685,7 +1701,7 @@
       timeSection: '時間と人数', start: '開始', end: '終了', people: '人数',
       addRow: '＋ 行を追加', condition: 'きょうのようす',
       produced: 'できたもの', prodDate: '使用日', prodContainer: 'コンテナ', usual: 'つうじょう', redo: 'やりなおし',
-      prodCount: '個数', prodTotal: 'きょう作った出来高の合計',
+      prodCount: '個数', prodTotal: 'きょう作った出来高の合計', usedTotal: 'きょう使った数の合計',
       prodByDate: date => `${formatDateJa(date)}使用分`,
       prodCountRequired: '「できたもの」の個数は1以上で入力してください',
       editTitle: date => `玉ねぎ作業日報（${formatDateJa(date)}）`,
@@ -1705,7 +1721,7 @@
       timeSection: 'Waktu dan Jumlah orang', start: 'Mulai', end: 'Selesai', people: 'Orang',
       addRow: '＋ Tambah baris', condition: 'Kondisi hari ini',
       produced: 'Hasil', prodDate: 'Tanggal pakai', prodContainer: 'Kontainer', usual: 'Biasa', redo: 'Diulang',
-      prodCount: 'Jumlah', prodTotal: 'Total hasil yang dibuat hari ini',
+      prodCount: 'Jumlah', prodTotal: 'Total hasil yang dibuat hari ini', usedTotal: 'Total yang digunakan hari ini',
       prodByDate: date => `Untuk ${formatDateJa(date)}`,
       prodCountRequired: 'Isi jumlah "Hasil" minimal 1',
       editTitle: date => `Laporan Kerja Bawang（${formatDateJa(date)}）`,
@@ -1725,7 +1741,7 @@
       timeSection: 'ពេលវេលា និង ចំនួនមនុស្ស', start: 'ចាប់ផ្តើម', end: 'បញ្ចប់', people: 'ចំនួនមនុស្ស',
       addRow: '＋ បន្ថែមជួរ', condition: 'ស្ថានភាពថ្ងៃនេះ',
       produced: 'លទ្ធផល', prodDate: 'ថ្ងៃប្រើ', prodContainer: 'កុងតឺន័រ', usual: 'ធម្មតា', redo: 'ធ្វើឡើងវិញ',
-      prodCount: 'ចំនួន', prodTotal: 'លទ្ធផលសរុបដែលបានធ្វើថ្ងៃនេះ',
+      prodCount: 'ចំនួន', prodTotal: 'លទ្ធផលសរុបដែលបានធ្វើថ្ងៃនេះ', usedTotal: 'សរុបដែលបានប្រើថ្ងៃនេះ',
       prodByDate: date => `សម្រាប់ ${formatDateJa(date)}`,
       prodCountRequired: 'សូមបញ្ចូលចំនួន "លទ្ធផល" យ៉ាងហោចណាស់ 1',
       editTitle: date => `របាយការណ៍ខ្ទឹម（${formatDateJa(date)}）`,
@@ -1917,7 +1933,7 @@
       auto.textContent = btn.classList.contains('active') && w != null ? `= ${w} kg` : '';
     });
     const { kg, missingWeight } = calcOnionUsedKg(collectOnionSizeEntries(root));
-    root.querySelector('.onion-usedcount-auto').textContent = `${kg} kg`;
+    root.querySelector('.onion-usedcount-auto').textContent = `${ot('usedTotal')}：${kg} kg`;
     root.querySelector('.onion-usedcount-note').textContent = missingWeight ? ot('weightNotSet') : '';
   }
 
@@ -1943,20 +1959,18 @@
         <div class="onion-block-title">🧅 ${t.destination}</div>
         <div class="onion-block-reporter">${ot('sign')}：${onionSelectedSign}</div>
 
-        <div class="onion-field">
-          <label>${ot('sizeSection')}</label>
+        <div class="onion-section sec-used">
+          <div class="onion-section-title">📦 ${ot('sizeSection')}</div>
           <div id="onion-b${bi}-sizes">${sizeEntries.map(onionSizeEntryHtml).join('')}</div>
           <button type="button" class="btn-onion-add-row" onclick="addOnionSizeEntry(${bi})">${ot('addSize')}</button>
+          <div class="onion-prod-total">
+            <div class="onion-prod-total-main onion-usedcount-auto"></div>
+            <div class="onion-usedcount-note"></div>
+          </div>
         </div>
 
-        <div class="onion-field">
-          <label>${ot('usedCount')} (kg)（${ot('autoCalc')}）</label>
-          <div class="onion-usedcount-auto"></div>
-          <div class="onion-usedcount-note"></div>
-        </div>
-
-        <div class="onion-field">
-          <label>${ot('timeSection')}</label>
+        <div class="onion-section sec-time">
+          <div class="onion-section-title">⏰ ${ot('timeSection')}</div>
           <div class="onion-time-header"><span>${ot('start')}</span><span>${ot('end')}</span><span>${ot('people')}</span><span></span></div>
           <div id="onion-b${bi}-timerows-list">
             ${timeRows.map(r => `
@@ -1970,18 +1984,18 @@
           <button type="button" class="btn-onion-add-row" onclick="addOnionTimeRow(${bi})">${ot('addRow')}</button>
         </div>
 
-        <div class="onion-field">
-          <label>${ot('produced')}</label>
+        <div class="onion-section sec-produced">
+          <div class="onion-section-title">🧅 ${ot('produced')}</div>
           <div id="onion-b${bi}-prodrows">${producedRows.map(r => onionProducedRowHtml(bi, r)).join('')}</div>
           <button type="button" class="btn-onion-add-row" onclick="addOnionProducedRow(${bi})">${ot('addRow')}</button>
           <div class="onion-prod-total">
-            <div class="onion-prod-total-main"></div>
-            <div class="onion-prod-total-sub"></div>
+            <div class="onion-prod-total-main onion-produced-total"></div>
+            <div class="onion-prod-total-sub onion-produced-bydate"></div>
           </div>
         </div>
 
-        <div class="onion-field">
-          <label>${ot('condition')}</label>
+        <div class="onion-section sec-condition">
+          <div class="onion-section-title">📝 ${ot('condition')}</div>
           <textarea class="modal-input onion-condition" rows="2">${block.todayCondition ?? ''}</textarea>
         </div>
       </div>`;
@@ -2079,8 +2093,8 @@
     });
     const rows = collectOnionProducedRows(root).filter(r => r.count !== '' || (r.kg ?? '') !== '');
     const { total, byDate, missingWeight } = calcOnionProducedKg(rows);
-    root.querySelector('.onion-prod-total-main').textContent = `${ot('prodTotal')}：${total} kg`;
-    root.querySelector('.onion-prod-total-sub').innerHTML =
+    root.querySelector('.onion-produced-total').textContent = `${ot('prodTotal')}：${total} kg`;
+    root.querySelector('.onion-produced-bydate').innerHTML =
       Object.keys(byDate).sort().map(d => `${ot('prodByDate')(d)}：${byDate[d]} kg`).join('<br>')
       + (missingWeight ? `<div class="onion-usedcount-note">${ot('weightNotSet')}</div>` : '');
   }
