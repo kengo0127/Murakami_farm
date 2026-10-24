@@ -3,7 +3,7 @@
 // 日報データ（onion_reports.data）は1日1件で、出荷先ごとに blocks[0..2] を持つ。
 //   blocks[i] = {
 //     sign,                                   サイン（社員リストの呼び名）
-//     sizeEntries: [{ size, packages: [{ type, count, kg?, unitKg? }] }],   使ったサイズ・荷姿
+//     sizeEntries: [{ size, packages: [{ type, count, kg? }] }],   使ったサイズ・荷姿
 //     usedCount,                              つかったかず(kg)。sizeEntries から自動計算した値
 //     timeRows: [{ start, end, people }],     時間と人数
 //     producedRows: [{ date, container, kind, count, kg? }],      できたもの（使用日ごと）
@@ -25,12 +25,11 @@ const ONION_BLOCK_TEMPLATES = [
 // sizeEditable / sizeLabels / producedLabels / producedEditable は旧形式の日報をExcel出力するためだけに残している
 
 // ── 使ったサイズ・荷姿 ──
-// DB・ネット：1個の重さを 10kg／20kg から選び、重さ = 個数 × 1個の重さ（自動）
+// DB（20kg／10kgの2種類を別の行に）・ネット（10kg）：重さ = 個数 × 1個の重さ（自動）
 // 鉄コン・フレコン：既定重量がないため、その行の合計重さ(kg)を毎回手入力
-const ONION_PACKAGES = ['DB', '鉄コン', 'フレコン', 'ネット'];
+const ONION_PACKAGES = ['DB(20kg)', 'DB(10kg)', '鉄コン', 'フレコン', 'ネット(10kg)'];
 const ONION_MANUAL_WEIGHT_PACKAGES = ['鉄コン', 'フレコン'];
-const ONION_PACKAGE_UNIT_OPTIONS = { 'DB': [10, 20], 'ネット': [10, 20] };
-const ONION_DEFAULT_PACKAGE_UNIT_KG = 20;
+const ONION_PACKAGE_UNIT_KG = { 'DB(20kg)': 20, 'DB(10kg)': 10, 'ネット(10kg)': 10 };
 
 // ── できたもの ──
 // コンテナ1個あたりの重さ(kg)。ここにないコンテナ（レインボー・その他）は重さを手入力
@@ -51,13 +50,14 @@ function roundKg(kg) {
   return Math.round(kg * 10) / 10;
 }
 
-// 荷姿1行の重さ(kg)。分からない場合（未入力・1個の重さが未選択）は null
+// 荷姿1行の重さ(kg)。分からない場合（鉄コン・フレコンの重さが未入力）は null
 function onionPackageKg(p) {
   if (ONION_MANUAL_WEIGHT_PACKAGES.includes(p.type)) {
     return p.kg === '' || p.kg == null ? null : parseFloat(p.kg);
   }
   const count = parseInt(p.count, 10) || 0;
-  return p.unitKg == null ? null : count * p.unitKg;
+  const unit = ONION_PACKAGE_UNIT_KG[p.type];
+  return unit == null ? null : count * unit;
 }
 
 // 戻り値：{ kg: 分かる分の合計kg, missingWeight: 重さが分からない荷姿が含まれるか }
