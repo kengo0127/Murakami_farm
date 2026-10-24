@@ -138,18 +138,18 @@
   // 文言はスタッフが選んだ言語（staffLang）で表示する（管理者は通常日本語）
   const REPORT_I18N = {
     ja: {
-      back: '← もどる', title: '🧅 玉ねぎ日報（たまねぎにっぽう） レポート',
-      listTitle: '日報（にっぽう）の一覧（いちらん）', loading: '読み込み中（よみこみちゅう）...',
-      empty: 'まだ日報（にっぽう）がありません',
-      effNote: '数字は作業効率（さぎょうこうりつ）（kg/人時）。緑（みどり）は目標（もくひょう）達成（たっせい）',
-      export: '選んだ日（ひ）をExcel出力（しゅつりょく）', exporting: '出力中（しゅつりょくちゅう）...',
-      delete: '削除（さくじょ）', deleting: '削除中（さくじょちゅう）...',
-      selectDate: '日付（ひづけ）を選んで（えらんで）ください', fetchFailed: 'データの取得（しゅとく）に失敗（しっぱい）しました',
-      deleteFailed: '削除（さくじょ）に失敗（しっぱい）しました',
-      deleteConfirm: n => `${n}件（けん）の日報（にっぽう）を削除（さくじょ）しますか？\nこの操作（そうさ）は取り消せません（とりけせません）。`,
+      back: '戻る', title: '玉ねぎ日報レポート',
+      listTitle: '日報の一覧', loading: '読み込み中...',
+      empty: 'まだ日報がありません',
+      effNote: '数字は作業効率（kg/人時）。緑は目標達成',
+      export: '選んだ日をExcel出力', exporting: '出力中...',
+      delete: '削除', deleting: '削除中...',
+      selectDate: '日付を選んでください', fetchFailed: 'データの取得に失敗しました',
+      deleteFailed: '削除に失敗しました',
+      deleteConfirm: n => `${n}件の日報を削除しますか？\nこの操作は取り消せません。`,
     },
     id: {
-      back: '← Kembali', title: '🧅 Laporan Bawang',
+      back: 'Kembali', title: 'Laporan Bawang',
       listTitle: 'Daftar laporan', loading: 'Memuat...', empty: 'Belum ada laporan',
       effNote: 'Angka = efisiensi kerja (kg/orang-jam). Hijau = target tercapai',
       export: 'Ekspor Excel tanggal terpilih', exporting: 'Mengekspor...',
@@ -158,7 +158,7 @@
       deleteConfirm: n => `Hapus ${n} laporan? Tindakan ini tidak dapat dibatalkan.`,
     },
     km: {
-      back: '← ត្រឡប់', title: '🧅 របាយការណ៍ខ្ទឹមបារាំង',
+      back: 'ត្រឡប់', title: 'របាយការណ៍ខ្ទឹមបារាំង',
       listTitle: 'បញ្ជីរបាយការណ៍', loading: 'កំពុងផ្ទុក...', empty: 'មិនទាន់មានរបាយការណ៍ទេ',
       effNote: 'លេខ = ប្រសិទ្ធភាពការងារ (kg/មនុស្ស-ម៉ោង)។ ពណ៌បៃតង = សម្រេចគោលដៅ',
       export: 'នាំចេញ Excel ថ្ងៃដែលបានជ្រើស', exporting: 'កំពុងនាំចេញ...',
@@ -170,10 +170,14 @@
 
   let uiLang = localStorage.getItem('staffLang') || 'ja';
 
+  // 日本語以外の言語では「その言語 / 日本語」の順で併記する（スタッフ画面の玉ねぎ日報と同じ）
   function t(key, ...args) {
-    const dict = REPORT_I18N[uiLang] ?? REPORT_I18N.ja;
-    const val = dict[key] ?? REPORT_I18N.ja[key];
-    return typeof val === 'function' ? val(...args) : val;
+    const jaRaw = REPORT_I18N.ja[key];
+    const jaVal = typeof jaRaw === 'function' ? jaRaw(...args) : jaRaw;
+    const dict = REPORT_I18N[uiLang];
+    if (uiLang === 'ja' || !dict || dict[key] == null) return jaVal;
+    const secVal = typeof dict[key] === 'function' ? dict[key](...args) : dict[key];
+    return `${secVal} / ${jaVal}`;
   }
 
   function formatDateJa(dateStr) {
@@ -183,8 +187,8 @@
   }
 
   function applyText() {
-    document.getElementById('backLink').textContent = t('back');
-    document.getElementById('pageTitle').textContent = t('title');
+    document.getElementById('backLink').textContent = '← ' + t('back');
+    document.getElementById('pageTitle').textContent = '🧅 ' + t('title');
     document.getElementById('listTitle').textContent = t('listTitle');
     document.getElementById('effNote').textContent = t('effNote');
     document.getElementById('exportBtn').textContent = t('export');
@@ -241,7 +245,7 @@
 
     ONION_BLOCK_TEMPLATES.forEach((tpl, bi) => {
       const b = state.blocks?.[bi] ?? {};
-      rows.push(['出荷先', tpl.destination, '', 'サイン', b.sign ?? '']);
+      rows.push(['出荷先', tpl.destination, '', '報告者', b.sign ?? '']);
       rows.push([]);
 
       if (b.sizeEntries) {

@@ -999,31 +999,31 @@
 </div>
 
 <div class="timeline" id="timeline">
-  <div class="loading-state" id="loadingLabel">読み込み中（よみこみちゅう）...</div>
+  <div class="loading-state" id="loadingLabel">読み込み中...</div>
 </div>
 
 <div class="modal-overlay" id="onionMenuModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title" id="onionMenuTitle">玉ねぎ作業日報（たまねぎさぎょうにっぽう）</div>
+    <div class="modal-title" id="onionMenuTitle">玉ねぎ作業日報</div>
     <div class="onion-date-row">
-      <label for="onionCreateDate" class="onion-date-label" id="onionDateLabel">日付（ひづけ）</label>
+      <label for="onionCreateDate" class="onion-date-label" id="onionDateLabel">日付</label>
       <input type="date" id="onionCreateDate" class="modal-input">
     </div>
     <div class="onion-dest-cards" id="onionDestCards"></div>
 
     <div class="modal-actions">
-      <button type="button" class="btn-modal-cancel" id="onionMenuCloseBtn" onclick="closeOnionMenuModal()">閉じる（とじる）</button>
+      <button type="button" class="btn-modal-cancel" id="onionMenuCloseBtn" onclick="closeOnionMenuModal()">閉じる</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="onionEditModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title" id="onionEditTitle">玉ねぎ作業日報（たまねぎさぎょうにっぽう）</div>
+    <div class="modal-title" id="onionEditTitle">玉ねぎ作業日報</div>
     <div id="onionEditBlocks"></div>
     <div class="modal-actions">
-      <button type="button" class="btn-modal-cancel" id="onionEditCloseBtn" onclick="closeOnionEditModal()">閉じる（とじる）</button>
-      <button type="button" class="btn-modal-submit" id="onionSaveBtn" onclick="saveOnionReport()">保存する（ほぞんする）</button>
+      <button type="button" class="btn-modal-cancel" id="onionEditCloseBtn" onclick="closeOnionEditModal()">閉じる</button>
+      <button type="button" class="btn-modal-submit" id="onionSaveBtn" onclick="saveOnionReport()">保存する</button>
     </div>
   </div>
 </div>
@@ -1049,28 +1049,28 @@
 
 <div class="modal-overlay" id="fieldMapModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title" id="fieldMapTitle">作業場所（さぎょうばしょ）（露地／ろじ）</div>
+    <div class="modal-title" id="fieldMapTitle">作業場所（露地）</div>
     <div class="field-grid-section">
-      <div class="field-grid-title" id="fieldMapNorthLabel">村上農園（むらかみのうえん）の北側（きたがわ）</div>
+      <div class="field-grid-title" id="fieldMapNorthLabel">村上農園の北側</div>
       <div id="fieldMapModalNorth" class="field-grid"></div>
     </div>
     <div class="field-grid-section">
-      <div class="field-grid-title" id="fieldMapSouthLabel">村上農園（むらかみのうえん）の南側（みなみがわ）</div>
+      <div class="field-grid-title" id="fieldMapSouthLabel">村上農園の南側</div>
       <div id="fieldMapModalSouth" class="field-grid"></div>
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn-modal-cancel" id="fieldMapCloseBtn" onclick="closeFieldMapModal()">閉じる（とじる）</button>
+      <button type="button" class="btn-modal-cancel" id="fieldMapCloseBtn" onclick="closeFieldMapModal()">閉じる</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="reportModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title" id="reportModalTitle">自発的な作業を報告（じはつてきなさぎょうをほうこく）</div>
+    <div class="modal-title" id="reportModalTitle">自発的な作業を報告</div>
     <form id="reportForm" onsubmit="handleReportSubmit(event)">
       <div class="modal-group">
-        <label id="reportCropLabel">作物（さくもつ）</label>
-        <input list="reportCropList" id="reportCrop" class="modal-input" placeholder="例（れい）：スイカ" required>
+        <label id="reportCropLabel">作物</label>
+        <input list="reportCropList" id="reportCrop" class="modal-input" placeholder="例：スイカ" required>
         <datalist id="reportCropList">
           <option value="スイカ">
           <option value="メロン">
@@ -1078,24 +1078,24 @@
       </div>
 
       <div class="modal-group">
-        <label id="reportTaskNameLabel">作業内容（さぎょうないよう）</label>
-        <input type="text" id="reportTaskName" class="modal-input" placeholder="例（れい）：除草（じょそう）" required>
+        <label id="reportTaskNameLabel">作業内容</label>
+        <input type="text" id="reportTaskName" class="modal-input" placeholder="例：除草" required>
       </div>
 
       <div class="modal-group">
-        <label id="reportLocationLabel">作業場所（さぎょうばしょ）</label>
+        <label id="reportLocationLabel">作業場所</label>
         <div class="location-type-toggle">
           <button type="button" class="loc-type-btn" data-type="house" id="reportLocHouseBtn" onclick="setReportLocationType('house')">🏠 ハウス</button>
-          <button type="button" class="loc-type-btn" data-type="field" id="reportLocFieldBtn" onclick="setReportLocationType('field')">🌾 露地（ろじ）</button>
+          <button type="button" class="loc-type-btn" data-type="field" id="reportLocFieldBtn" onclick="setReportLocationType('field')">🌾 露地</button>
         </div>
         <div id="reportHouseGrid" class="house-grid" style="display:none"></div>
         <div id="reportFieldMapWrap" style="display:none">
           <div class="field-grid-section">
-            <div class="field-grid-title" id="reportFieldNorthLabel">村上農園（むらかみのうえん）の北側（きたがわ）</div>
+            <div class="field-grid-title" id="reportFieldNorthLabel">村上農園の北側</div>
             <div id="reportFieldGridNorth" class="field-grid"></div>
           </div>
           <div class="field-grid-section">
-            <div class="field-grid-title" id="reportFieldSouthLabel">村上農園（むらかみのうえん）の南側（みなみがわ）</div>
+            <div class="field-grid-title" id="reportFieldSouthLabel">村上農園の南側</div>
             <div id="reportFieldGridSouth" class="field-grid"></div>
           </div>
         </div>
@@ -1104,29 +1104,29 @@
       <div class="modal-group">
         <div class="report-row">
           <div>
-            <label id="reportStartLabel">開始時刻（かいしじこく）</label>
+            <label id="reportStartLabel">開始時刻</label>
             <select id="reportStartTime" class="modal-input" required></select>
           </div>
           <div>
-            <label id="reportEndLabel">終了時刻（しゅうりょうじこく）</label>
+            <label id="reportEndLabel">終了時刻</label>
             <select id="reportEndTime" class="modal-input" required></select>
           </div>
         </div>
       </div>
 
       <div class="modal-group">
-        <label id="reportWorkerCountLabel">作業人数（さぎょうにんずう）</label>
+        <label id="reportWorkerCountLabel">作業人数</label>
         <input type="number" id="reportWorkerCount" class="modal-input" min="1" max="99" step="1" value="1" required>
       </div>
 
       <div class="modal-group">
-        <label id="reportNoteLabel">メモ（任意／にんい）</label>
-        <textarea id="reportNote" class="modal-input" rows="2" placeholder="補足事項（ほそくじこう）があれば"></textarea>
+        <label id="reportNoteLabel">メモ（任意）</label>
+        <textarea id="reportNote" class="modal-input" rows="2" placeholder="補足事項があれば"></textarea>
       </div>
 
       <div class="modal-actions">
         <button type="button" class="btn-modal-cancel" id="reportCancelBtn" onclick="closeReportModal()">キャンセル</button>
-        <button type="submit" class="btn-modal-submit" id="reportSubmitBtn">報告する（ほうこくする）</button>
+        <button type="submit" class="btn-modal-submit" id="reportSubmitBtn">報告する</button>
       </div>
     </form>
   </div>
@@ -1134,15 +1134,15 @@
 
 <div class="modal-overlay" id="editStartModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title" id="editStartTitle">開始時刻を修正（かいしじこくをしゅうせい）</div>
+    <div class="modal-title" id="editStartTitle">開始時刻を修正</div>
     <form id="editStartForm" onsubmit="handleEditStartSubmit(event)">
       <div class="modal-group">
-        <label id="editStartFieldLabel">実際に作業を始めた時刻（じっさいにさぎょうをはじめたじこく）</label>
+        <label id="editStartFieldLabel">実際に作業を始めた時刻</label>
         <select id="editStartTime" class="modal-input" required></select>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn-modal-cancel" id="editStartCancelBtn" onclick="closeEditStartModal()">キャンセル</button>
-        <button type="submit" class="btn-modal-submit" id="editStartSubmitBtn">保存する（ほぞんする）</button>
+        <button type="submit" class="btn-modal-submit" id="editStartSubmitBtn">保存する</button>
       </div>
     </form>
   </div>
@@ -1150,21 +1150,21 @@
 
 <div class="modal-overlay" id="completeModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title" id="completeModalTitle">完了報告（かんりょうほうこく）</div>
+    <div class="modal-title" id="completeModalTitle">完了報告</div>
     <div class="modal-group">
-      <label id="completeTimeSlotsLabel">時間帯ごとの人数（じかんたいごとのにんずう）</label>
+      <label id="completeTimeSlotsLabel">時間帯ごとの人数</label>
       <div class="onion-time-header">
-        <span id="completeStartHeader">開始（かいし）</span>
-        <span id="completeEndHeader">終了（しゅうりょう）</span>
-        <span id="completePeopleHeader">人数（にんずう）</span>
+        <span id="completeStartHeader">開始</span>
+        <span id="completeEndHeader">終了</span>
+        <span id="completePeopleHeader">人数</span>
         <span></span>
       </div>
       <div id="completeTimeRowsList"></div>
-      <button type="button" class="btn-onion-add-row" id="completeAddRowBtn" onclick="addCompleteTimeRow()">＋ 行を追加（ぎょうをついか）</button>
+      <button type="button" class="btn-onion-add-row" id="completeAddRowBtn" onclick="addCompleteTimeRow()">＋ 行を追加</button>
     </div>
     <div class="modal-actions">
       <button type="button" class="btn-modal-cancel" id="completeCancelBtn" onclick="closeCompleteModal()">キャンセル</button>
-      <button type="button" class="btn-modal-submit" id="completeSubmitBtn" onclick="submitComplete()">✓ 完了（かんりょう）</button>
+      <button type="button" class="btn-modal-submit" id="completeSubmitBtn" onclick="submitComplete()">✓ 完了</button>
     </div>
   </div>
 </div>
@@ -1177,60 +1177,60 @@
   // ── 多言語対応（日本語 / インドネシア語 / クメール語） ──
   const STAFF_I18N = {
     ja: {
-      logout: 'ログアウト', loading: '読み込み中（よみこみちゅう）...',
-      homeTasks: '今日の作業（きょうのさぎょう）', homeOnion: '玉ねぎ日報（たまねぎにっぽう）',
-      homeCarrot: 'ニンジン日報（にっぽう）', homeChestnut: '栗日報（くりにっぽう）',
-      homeOther: 'その他の報告（そのたのほうこく）',
-      comingSoonBadge: '準備中', comingSoonAlert: 'この日報（にっぽう）は まだ準備中（じゅんびちゅう）です',
-      backToMenu: '← メニュー', homeReport: 'レポート出力（しゅつりょく）',
-      loginTitle: 'あなたの 名前（なまえ）を えらんでください',
+      logout: 'ログアウト', loading: '読み込み中...',
+      homeTasks: '今日の作業', homeOnion: '玉ねぎ日報',
+      homeCarrot: 'ニンジン日報', homeChestnut: '栗日報',
+      homeOther: 'その他の報告',
+      comingSoonBadge: '準備中', comingSoonAlert: 'この日報はまだ準備中です',
+      backToMenu: '← メニュー', homeReport: 'レポート出力',
+      loginTitle: '名前を選んでください',
       confirmName: name => `${name} ですか？`,
-      loginInvalidKey: 'QRコードが 使（つか）えません。現場（げんば）のQRコードを もう一度（いちど） 読（よ）み取（と）ってください。',
-      loginNoStaff: '名前（なまえ）が 登録（とうろく）されていません。管理者（かんりしゃ）に 聞（き）いてください。',
-      fieldMapTitle: '作業場所（さぎょうばしょ）（露地／ろじ）',
-      fieldNorth: '村上農園（むらかみのうえん）の北側（きたがわ）', fieldSouth: '村上農園（むらかみのうえん）の南側（みなみがわ）',
-      close: '閉じる（とじる）', cancel: 'キャンセル',
-      reportModalTitle: '自発的な作業を報告（じはつてきなさぎょうをほうこく）',
-      cropLabel: '作物（さくもつ）', cropPlaceholder: '例（れい）：スイカ',
-      taskNameLabel: '作業内容（さぎょうないよう）', taskNamePlaceholder: '例（れい）：除草（じょそう）',
-      locationLabel: '作業場所（さぎょうばしょ）', locHouse: '🏠 ハウス', locField: '🌾 露地（ろじ）',
-      startLabel: '開始時刻（かいしじこく）', endLabel: '終了時刻（しゅうりょうじこく）',
-      workerCountLabel: '作業人数（さぎょうにんずう）',
-      noteLabel: 'メモ（任意／にんい）', notePlaceholder: '補足事項（ほそくじこう）があれば',
-      reportSubmit: '報告する（ほうこくする）',
-      editStartTitle: '開始時刻を修正（かいしじこくをしゅうせい）',
-      editStartFieldLabel: '実際に作業を始めた時刻（じっさいにさぎょうをはじめたじこく）',
-      save: '保存する（ほぞんする）',
-      completeModalTitle: '完了報告（かんりょうほうこく）',
-      completeTimeSlotsLabel: '時間帯ごとの人数（じかんたいごとのにんずう）',
-      addRow: '＋ 行を追加（ぎょうをついか）',
+      loginInvalidKey: 'QRコードが使えません。現場のQRコードをもう一度読み取ってください。',
+      loginNoStaff: '名前が登録されていません。管理者に聞いてください。',
+      fieldMapTitle: '作業場所（露地）',
+      fieldNorth: '村上農園の北側', fieldSouth: '村上農園の南側',
+      close: '閉じる', cancel: 'キャンセル',
+      reportModalTitle: '自発的な作業を報告',
+      cropLabel: '作物', cropPlaceholder: '例：スイカ',
+      taskNameLabel: '作業内容', taskNamePlaceholder: '例：除草',
+      locationLabel: '作業場所', locHouse: '🏠 ハウス', locField: '🌾 露地',
+      startLabel: '開始時刻', endLabel: '終了時刻',
+      workerCountLabel: '作業人数',
+      noteLabel: 'メモ（任意）', notePlaceholder: '補足事項があれば',
+      reportSubmit: '報告する',
+      editStartTitle: '開始時刻を修正',
+      editStartFieldLabel: '実際に作業を始めた時刻',
+      save: '保存する',
+      completeModalTitle: '完了報告',
+      completeTimeSlotsLabel: '時間帯ごとの人数',
+      addRow: '＋ 行を追加',
       completeValidationError: '時間帯（開始・終了）と人数をすべて入力してください。終了は開始より後の時刻にしてください。',
-      breakMorning: '☕ 休憩（きゅうけい）', breakLunch: '🍱 昼休憩（ひるきゅうけい）', breakAfternoon: '☕ 休憩（きゅうけい）',
+      breakMorning: '☕ 休憩', breakLunch: '🍱 昼休憩', breakAfternoon: '☕ 休憩',
       weekdays: ['日', '月', '火', '水', '木', '金', '土'],
-      badgeActive: '▶ 作業中（さぎょうちゅう）', badgeNext: '⏭ 次の作業（つぎのさぎょう）',
-      editLink: '✏️ 修正（しゅうせい）',
-      startedAt: time => `⏱ ${time} 開始（かいし）`,
-      houseBadge: nums => `🏠 ハウス ${nums}`, fieldBadge: '🌾 露地（ろじ）',
-      mapCheckBtn: '🗺 mapを確認（かくにん）',
-      completedInfo: time => `完了済み（かんりょうずみ）${time}`,
+      badgeActive: '▶ 作業中', badgeNext: '⏭ 次の作業',
+      editLink: '✏️ 修正',
+      startedAt: time => `⏱ ${time} 開始`,
+      houseBadge: nums => `🏠 ハウス ${nums}`, fieldBadge: '🌾 露地',
+      mapCheckBtn: '🗺 mapを確認',
+      completedInfo: time => `完了済み${time}`,
       completedAt: time => `（${time}完了）`,
-      cancelLink: '取消（とりけし）',
-      completeBtn: '✓ 完了（かんりょう）', cancelStartBtn: '開始（かいし）を取消（とりけし）',
-      startBtn: '▶ 開始（かいし）', startBtnSubtle: '開始する（かいしする）',
-      emptyState: '本日（ほんじつ）の作業（さぎょう）タスクは<br>まだ登録（とうろく）されていません',
-      recording: '記録中（きろくちゅう）...',
-      errorGeneral: 'エラーが発生（はっせい）しました。もう一度（いちど）お試（ため）しください。',
-      confirmCancelStart: '開始（かいし）を取り消しますか？',
-      cancelStartFailed: '取消（とりけし）に失敗（しっぱい）しました。すでに完了報告（かんりょうほうこく）されている場合（ばあい）は取り消せません。',
-      selectPlaceholder: '-- 選択（せんたく） --',
-      saving: '保存中（ほぞんちゅう）...',
-      editStartFailed: '修正（しゅうせい）に失敗（しっぱい）しました。もう一度（いちど）お試（ため）しください。',
-      confirmCancelComplete: '完了報告（かんりょうほうこく）を取り消しますか？',
-      cancelCompleteFailed: '取消（とりけし）に失敗（しっぱい）しました。',
-      selectTimeAlert: '時刻（じこく）を選択（せんたく）してください',
-      sending: '送信中（そうしんちゅう）...',
-      reportSendFailed: '報告（ほうこく）の送信（そうしん）に失敗（しっぱい）しました。もう一度（いちど）お試（ため）しください。',
-      reportSent: '作業報告（さぎょうほうこく）を送信（そうしん）しました',
+      cancelLink: '取消',
+      completeBtn: '✓ 完了', cancelStartBtn: '開始を取消',
+      startBtn: '▶ 開始', startBtnSubtle: '開始する',
+      emptyState: '本日の作業タスクは<br>まだ登録されていません',
+      recording: '記録中...',
+      errorGeneral: 'エラーが発生しました。もう一度お試しください。',
+      confirmCancelStart: '開始を取り消しますか？',
+      cancelStartFailed: '取消に失敗しました。すでに完了報告されている場合は取り消せません。',
+      selectPlaceholder: '-- 選択 --',
+      saving: '保存中...',
+      editStartFailed: '修正に失敗しました。もう一度お試しください。',
+      confirmCancelComplete: '完了報告を取り消しますか？',
+      cancelCompleteFailed: '取消に失敗しました。',
+      selectTimeAlert: '時刻を選択してください',
+      sending: '送信中...',
+      reportSendFailed: '報告の送信に失敗しました。もう一度お試しください。',
+      reportSent: '作業報告を送信しました',
     },
     id: {
       logout: 'Keluar', loading: 'Memuat...',
@@ -1645,30 +1645,30 @@
   // ── 多言語対応（日本語 / インドネシア語 / クメール語） ──
   const ONION_I18N = {
     ja: {
-      menuTitle: '玉ねぎ作業日報（たまねぎさぎょうにっぽう）',
-      close: '閉じる（とじる）', save: '保存する（ほぞんする）', saving: '保存中（ほぞんちゅう）...', saved: '保存しました（ほぞんしました）',
-      saveFailed: '保存（ほぞん）に失敗（しっぱい）しました', loadFailed: '読み込み（よみこみ）に失敗（しっぱい）しました',
-      selectDate: '日付（ひづけ）を選択（せんたく）してください', dateLabel: '日付（ひづけ）',
-      sign: 'サイン', signSelected: '選んだ人（えらんだひと）', signLoadFailed: '名前（なまえ）の一覧（いちらん）を読み込めません（よみこめません）',
-      sizeSection: '使った（つかった）サイズ・荷姿（にすがた）', sizePlaceholder: 'サイズ', sizeOther: 'その他（た）',
-      addSize: '＋ サイズを追加（ついか）', packageHeader: '荷姿（にすがた）', countHeader: '個数（こすう）', weightHeader: '重さ（おもさ）kg',
-      pkgCountRequired: '選んだ（えらんだ）荷姿（にすがた）の個数（こすう）を1以上（いじょう）で入力（にゅうりょく）してください',
-      weightNotSet: '重さ（おもさ）が入っていない荷姿（にすがた）があります', autoCalc: '自動計算（じどうけいさん）',
+      menuTitle: '玉ねぎ作業日報',
+      close: '閉じる', save: '保存する', saving: '保存中...', saved: '保存しました',
+      saveFailed: '保存に失敗しました', loadFailed: '読み込みに失敗しました',
+      selectDate: '日付を選択してください', dateLabel: '日付',
+      sign: '報告者（代表1名）', signSelected: '選んだ人', signLoadFailed: '名前の一覧を読み込めません',
+      sizeSection: '使ったサイズ・荷姿', sizePlaceholder: 'サイズ', sizeOther: 'その他',
+      addSize: '＋ サイズを追加', packageHeader: '荷姿', countHeader: '個数', weightHeader: '重さ(kg)',
+      pkgCountRequired: '選んだ荷姿の個数を1以上で入力してください',
+      weightNotSet: '重さが入っていない荷姿があります', autoCalc: '自動計算',
       usedCount: 'つかったかず',
-      timeSection: '時間（じかん）と人数（にんずう）', start: '開始（かいし）', end: '終了（しゅうりょう）', people: '人数（にんずう）',
-      addRow: '＋ 行（ぎょう）を追加（ついか）', condition: 'きょうのようす',
-      produced: 'できたもの', prodDate: '使用日（しようび）', prodContainer: 'コンテナ', usual: 'つうじょう', redo: 'やりなおし',
-      prodCount: '個数（こすう）', prodTotal: 'きょう作った（つくった）出来高（できだか）の合計（ごうけい）',
-      prodByDate: date => `${formatDateJa(date)}使用分（しようぶん）`,
-      prodCountRequired: '「できたもの」の個数（こすう）は1以上（いじょう）で入力（にゅうりょく）してください',
-      editTitle: date => `玉ねぎ作業日報（たまねぎさぎょうにっぽう）（${formatDateJa(date)}）`,
+      timeSection: '時間と人数', start: '開始', end: '終了', people: '人数',
+      addRow: '＋ 行を追加', condition: 'きょうのようす',
+      produced: 'できたもの', prodDate: '使用日', prodContainer: 'コンテナ', usual: 'つうじょう', redo: 'やりなおし',
+      prodCount: '個数', prodTotal: 'きょう作った出来高の合計',
+      prodByDate: date => `${formatDateJa(date)}使用分`,
+      prodCountRequired: '「できたもの」の個数は1以上で入力してください',
+      editTitle: date => `玉ねぎ作業日報（${formatDateJa(date)}）`,
     },
     id: {
       menuTitle: 'Laporan Kerja Bawang',
       close: 'Tutup', save: 'Simpan', saving: 'Menyimpan...', saved: 'Berhasil disimpan',
       saveFailed: 'Gagal menyimpan', loadFailed: 'Gagal memuat data',
       selectDate: 'Silakan pilih tanggal', dateLabel: 'Tanggal',
-      sign: 'Tanda tangan', signSelected: 'Dipilih', signLoadFailed: 'Gagal memuat daftar nama',
+      sign: 'Pelapor (1 orang perwakilan)', signSelected: 'Dipilih', signLoadFailed: 'Gagal memuat daftar nama',
       sizeSection: 'Ukuran & Kemasan yang digunakan', sizePlaceholder: 'Ukuran', sizeOther: 'Lainnya',
       addSize: '＋ Tambah ukuran', packageHeader: 'Kemasan', countHeader: 'Jumlah', weightHeader: 'Berat (kg)',
       pkgCountRequired: 'Isi jumlah (minimal 1) untuk kemasan yang dipilih',
@@ -1687,7 +1687,7 @@
       close: 'បិទ', save: 'រក្សាទុក', saving: 'កំពុងរក្សាទុក...', saved: 'បានរក្សាទុករួចរាល់',
       saveFailed: 'រក្សាទុកមិនជោគជ័យ', loadFailed: 'ផ្ទុកទិន្នន័យមិនជោគជ័យ',
       selectDate: 'សូមជ្រើសរើសកាលបរិច្ឆេទ', dateLabel: 'កាលបរិច្ឆេទ',
-      sign: 'ហត្ថលេខា', signSelected: 'បានជ្រើសរើស', signLoadFailed: 'មិនអាចផ្ទុកបញ្ជីឈ្មោះបានទេ',
+      sign: 'អ្នករាយការណ៍ (តំណាង 1 នាក់)', signSelected: 'បានជ្រើសរើស', signLoadFailed: 'មិនអាចផ្ទុកបញ្ជីឈ្មោះបានទេ',
       sizeSection: 'ទំហំ និងការវេចខ្ចប់ដែលបានប្រើ', sizePlaceholder: 'ទំហំ', sizeOther: 'ផ្សេងទៀត',
       addSize: '＋ បន្ថែមទំហំ', packageHeader: 'ការវេចខ្ចប់', countHeader: 'ចំនួន', weightHeader: 'ទម្ងន់ (kg)',
       pkgCountRequired: 'សូមបញ្ចូលចំនួន (យ៉ាងហោចណាស់ 1) សម្រាប់ការវេចខ្ចប់ដែលបានជ្រើសរើស',
@@ -1703,7 +1703,7 @@
     },
   };
 
-  // 日本語は常に表示し、スタート画面（またはヘッダー）で日本語以外の言語を選んでいればそれを併記する。
+  // スタート画面（またはヘッダー）で日本語以外の言語を選んでいれば「その言語 / 日本語」の順で併記する。
   function ot(key) {
     const jaVal = ONION_I18N.ja[key];
     const onionLang = uiLang;
@@ -1711,9 +1711,9 @@
 
     const secVal = ONION_I18N[onionLang][key] ?? jaVal;
     if (typeof jaVal === 'function') {
-      return (arg) => `${jaVal(arg)} / ${secVal(arg)}`;
+      return (arg) => `${secVal(arg)} / ${jaVal(arg)}`;
     }
-    return secVal === jaVal ? jaVal : `${jaVal} / ${secVal}`;
+    return secVal === jaVal ? jaVal : `${secVal} / ${jaVal}`;
   }
 
   function applyOnionStaticText() {
