@@ -667,6 +667,7 @@
     .onion-dest-status { font-size: 13px; font-weight: 800; padding: 2px 10px; border-radius: 12px; align-self: flex-start; }
     .onion-dest-status.filled { background: #2e7d32; color: #fff; }
     .onion-dest-status.empty  { background: #fff; color: #c0392b; border: 1.5px solid #e6a39b; }
+    .onion-dest-status.draft  { background: #fff3cd; color: #8a6d00; border: 1.5px solid #e0c060; }
 
     /* 最近の入力状況（7日間） */
     .onion-history { margin: 4px 0 16px; }
@@ -1694,7 +1695,7 @@
       addSize: '＋ サイズを追加', packageHeader: '荷姿', countHeader: '個数', weightHeader: '重さ(kg)',
       pkgCountRequired: '選んだ荷姿の個数（鉄コン・フレコンは重さ）を入力してください',
       prodWeightRequired: '「できたもの」の重さを入力してください', back: '戻る',
-      filled: '入力済み', notFilled: '未入力', historyTitle: '最近の入力状況（タップで開いて修正できます）',
+      filled: '入力済み', notFilled: '未入力', draft: '書きかけ（未保存）', historyTitle: '最近の入力状況（タップで開いて修正できます）',
       weightNotSet: '重さが入っていない荷姿があります', autoCalc: '自動計算',
       usedCount: 'つかったかず',
       timeSection: '時間と人数', start: '開始', end: '終了', people: '人数',
@@ -1716,7 +1717,7 @@
       addSize: '＋ Tambah ukuran', packageHeader: 'Kemasan', countHeader: 'Jumlah', weightHeader: 'Berat (kg)',
       pkgCountRequired: 'Isi jumlah kemasan yang dipilih (untuk 鉄コン・フレコン isi beratnya)',
       prodWeightRequired: 'Isi berat \"Hasil\"', back: 'Kembali',
-      filled: 'Sudah diisi', notFilled: 'Belum diisi', historyTitle: 'Status input terbaru (ketuk untuk membuka dan memperbaiki)',
+      filled: 'Sudah diisi', notFilled: 'Belum diisi', draft: 'Draf (belum disimpan)', historyTitle: 'Status input terbaru (ketuk untuk membuka dan memperbaiki)',
       weightNotSet: 'Ada kemasan yang beratnya belum diisi', autoCalc: 'otomatis',
       usedCount: 'Jumlah yang digunakan',
       timeSection: 'Waktu dan Jumlah orang', start: 'Mulai', end: 'Selesai', people: 'Orang',
@@ -1738,7 +1739,7 @@
       addSize: '＋ បន្ថែមទំហំ', packageHeader: 'ការវេចខ្ចប់', countHeader: 'ចំនួន', weightHeader: 'ទម្ងន់ (kg)',
       pkgCountRequired: 'សូមបញ្ចូលចំនួនការវេចខ្ចប់ដែលបានជ្រើសរើស (鉄コン・フレコン បញ្ចូលទម្ងន់)',
       prodWeightRequired: 'សូមបញ្ចូលទម្ងន់ \"លទ្ធផល\"', back: 'ត្រឡប់',
-      filled: 'បានបញ្ចូលរួច', notFilled: 'មិនទាន់បញ្ចូល', historyTitle: 'ស្ថានភាពបញ្ចូលថ្មីៗ (ចុចដើម្បីបើក និងកែ)',
+      filled: 'បានបញ្ចូលរួច', notFilled: 'មិនទាន់បញ្ចូល', draft: 'សេចក្តីព្រាង (មិនទាន់រក្សាទុក)', historyTitle: 'ស្ថានភាពបញ្ចូលថ្មីៗ (ចុចដើម្បីបើក និងកែ)',
       weightNotSet: 'មានការវេចខ្ចប់ដែលមិនទាន់បញ្ចូលទម្ងន់', autoCalc: 'គណនាស្វ័យប្រវត្តិ',
       usedCount: 'ចំនួនដែលបានប្រើ',
       timeSection: 'ពេលវេលា និង ចំនួនមនុស្ស', start: 'ចាប់ផ្តើម', end: 'បញ្ចប់', people: 'ចំនួនមនុស្ស',
@@ -1795,20 +1796,61 @@
 
   // 入力画面の「戻る」：日付・報告者を選んだ状態のまま出荷先カードの画面に戻る
   function backToOnionMenu() {
+    saveOnionDraft();
     closeOnionEditModal();
     openOnionMenuModal(onionCurrentDate);
   }
+
+  // ── 書きかけの保持：「保存する」を押す前の入力内容を、日付×出荷先ごとにスマホの中（localStorage）に残す ──
+  // 入力するたびに自動で残し、「戻る」で報告者や日付を選び直した後、ページを閉じた後でも、
+  // 同じ日付・出荷先を開くと続きから表示する。「保存する」で本保存したら消す。14日より前の書きかけは消す
+  const ONION_DRAFT_KEY = 'onionDrafts';
+  const ONION_DRAFT_KEEP_DAYS = 14;
+
+  const onionDraftKey = (date, bi) => `${date}|${bi}`;
+
+  function loadOnionDrafts() {
+    let drafts = {};
+    try { drafts = JSON.parse(localStorage.getItem(ONION_DRAFT_KEY)) || {}; } catch (_) {}
+    const limit = addDaysIso(getToday(), -ONION_DRAFT_KEEP_DAYS);
+    Object.keys(drafts).forEach(k => { if (k.split('|')[0] < limit) delete drafts[k]; });
+    return drafts;
+  }
+
+  function writeOnionDrafts(drafts) {
+    try { localStorage.setItem(ONION_DRAFT_KEY, JSON.stringify(drafts)); } catch (_) {}
+  }
+
+  function saveOnionDraft() {
+    if (onionCurrentBlock == null || !document.getElementById('onionEditModalOverlay').classList.contains('open')) return;
+    const drafts = loadOnionDrafts();
+    drafts[onionDraftKey(onionCurrentDate, onionCurrentBlock)] = collectOnionBlock(onionCurrentBlock);
+    writeOnionDrafts(drafts);
+  }
+
+  function clearOnionDraft(date, bi) {
+    const drafts = loadOnionDrafts();
+    delete drafts[onionDraftKey(date, bi)];
+    writeOnionDrafts(drafts);
+  }
+
+  // 入力・ボタン操作のたびに書きかけを残す（ボタン自身の処理が終わった後に読み取る）
+  ['input', 'change', 'click'].forEach(type =>
+    document.getElementById('onionEditBlocks').addEventListener(type, () => setTimeout(saveOnionDraft, 0)));
 
   // ── 入力状況（抜け漏れ防止）：選んだ日付の出荷先ごとの入力済み／未入力と、直近7日の一覧 ──
   const ONION_HISTORY_DAYS = 7;
 
   function renderOnionDestCards(dayData) {
+    const date = document.getElementById('onionCreateDate').value;
+    const drafts = loadOnionDrafts();
     document.getElementById('onionDestCards').innerHTML = ONION_DEST_CARD_ORDER.map(bi => {
       const t = ONION_BLOCK_TEMPLATES[bi];
       const b = dayData?.blocks?.[bi];
-      const status = onionBlockFilled(b)
+      const status = (onionBlockFilled(b)
         ? `<span class="onion-dest-status filled">✅ ${ot('filled')}${b.sign ? `（${escapeHtml(b.sign)}）` : ''}</span>`
-        : `<span class="onion-dest-status empty">⚠ ${ot('notFilled')}</span>`;
+        : `<span class="onion-dest-status empty">⚠ ${ot('notFilled')}</span>`)
+        + (drafts[onionDraftKey(date, bi)] ? `<span class="onion-dest-status draft">✏️ ${ot('draft')}</span>` : '');
       return `<button type="button" class="onion-dest-card ${t.colorClass}" onclick="openOnionEditModal(document.getElementById('onionCreateDate').value, ${bi})">`
         + `<span class="onion-dest-icon">🧅</span><span class="onion-dest-name">${t.destination}${status}</span></button>`;
     }).join('');
@@ -2225,7 +2267,8 @@
 
     if (error) { alert(ot('loadFailed')); console.error(error); return; }
 
-    const block = data?.data?.blocks?.[bi] ?? {};
+    // 保存前の書きかけがあれば、そちらを続きから表示する
+    const block = loadOnionDrafts()[onionDraftKey(dateStr, bi)] ?? data?.data?.blocks?.[bi] ?? {};
 
     // 報告者：この画面で選んだ人。選んでいなければ、入力済みの日報を直すときに限り元の報告者のまま
     onionEditSign = onionSelectedSign || block.sign || '';
@@ -2374,6 +2417,7 @@
     closeOnionConfirmModal();
     closeOnionEditModal();
     // 出荷先カードの画面に戻り、入力状況（✅入力済み／⚠未入力）で残りの出荷先が分かるようにする
+    clearOnionDraft(onionCurrentDate, bi);
     await openOnionMenuModal(onionCurrentDate);
     // 作業効率は今保存した出荷先の分だけ表示する
     showOnionEfficiencyFeedback({ blocks: ONION_BLOCK_TEMPLATES.map((_, i) => (i === bi ? block : {})) });
