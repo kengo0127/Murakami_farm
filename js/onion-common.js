@@ -20,16 +20,16 @@ const ONION_BLOCK_TEMPLATES = [
     producedContainers: ['619', '615'] },
   { destination: 'レインボー', colorClass: 'block-rainbow', sizeEditable: false, sizeLabels: ['M', 'L', '-'],
     producedLabels: ['村上', '', ''], producedEditable: [false, true, true],
-    producedContainers: [] },  // 決まったコンテナなし（コンテナ名と重さを手入力）
+    producedContainers: [], producedWeightOnly: true },  // できたものは使用日と重さ(kg)だけ（通常のみ・個数なし）
 ];
 // sizeEditable / sizeLabels / producedLabels / producedEditable は旧形式の日報をExcel出力するためだけに残している
 
 // ── 使ったサイズ・荷姿 ──
-// DB（20kg／10kgの2種類を別の行に）・ネット（10kg）：重さ = 個数 × 1個の重さ（自動）
-// 鉄コン・フレコン：既定重量がないため、その行の合計重さ(kg)を毎回手入力
-const ONION_PACKAGES = ['DB(20kg)', 'DB(10kg)', '鉄コン', 'フレコン', 'ネット(10kg)'];
+// DB・ネット（20kg／10kgを別の行に）：重さ = 個数 × 1個の重さ（自動）
+// 鉄コン・フレコン：既定重量がないため個数は使わず、重さ(kg)を毎回直接入力
+const ONION_PACKAGES = ['DB(20kg)', 'DB(10kg)', '鉄コン', 'フレコン', 'ネット(20kg)', 'ネット(10kg)'];
 const ONION_MANUAL_WEIGHT_PACKAGES = ['鉄コン', 'フレコン'];
-const ONION_PACKAGE_UNIT_KG = { 'DB(20kg)': 20, 'DB(10kg)': 10, 'ネット(10kg)': 10 };
+const ONION_PACKAGE_UNIT_KG = { 'DB(20kg)': 20, 'DB(10kg)': 10, 'ネット(20kg)': 20, 'ネット(10kg)': 10 };
 
 // ── できたもの ──
 // コンテナ1個あたりの重さ(kg)。ここにないコンテナ（レインボー・その他）は重さを手入力
@@ -94,6 +94,14 @@ function calcOnionProducedKg(producedRows) {
   });
   Object.keys(byDate).forEach(d => { byDate[d] = roundKg(byDate[d]); });
   return { total: roundKg(total), usual: roundKg(usual), byDate, missingWeight };
+}
+
+// その出荷先の日報が入力済みか（入力状況の一覧・抜け漏れ防止用）
+function onionBlockFilled(b) {
+  if (!b) return false;
+  return !!(b.sign || b.usedCount || b.producedRows?.length
+    || (b.timeRows ?? []).some(r => r.start || r.end || r.people)
+    || (b.producedColumns ?? []).some(c => c.usual || c.redo || c.stock));
 }
 
 function calcOnionPersonHours(block) {
