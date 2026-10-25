@@ -51,7 +51,7 @@
 
     .report-row {
       display: grid;
-      grid-template-columns: 26px 1fr 64px 64px 64px;
+      grid-template-columns: 26px 1fr 60px 60px 60px 54px;
       align-items: center;
       gap: 6px;
       background: #fff;
@@ -110,6 +110,50 @@
     .btn-export:disabled, .btn-delete:disabled { opacity: 0.6; }
 
     .empty { text-align: center; color: #999; padding: 40px 10px; }
+
+    .btn-detail {
+      background: #fff3e8;
+      border: 1.5px solid #e8a25c;
+      border-radius: 8px;
+      padding: 6px 2px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #7a3f13;
+      cursor: pointer;
+    }
+
+    /* 1日分の詳細（ベストへのFAX用に印刷できる） */
+    #detailPanel {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #fff;
+      overflow-y: auto;
+      padding: 16px 14px 40px;
+    }
+
+    #detailPanel.open { display: block; }
+    .detail-inner { max-width: 720px; margin: 0 auto; }
+    .detail-actions { display: flex; gap: 10px; margin-bottom: 14px; }
+    .detail-actions button { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer; }
+    .detail-actions .btn-close { background: #f5f5f5; border: 1.5px solid #ddd; color: #555; }
+    .detail-actions .btn-print { background: #2e5c28; border: none; color: #fff; }
+    .detail-title { font-size: 20px; font-weight: 800; margin-bottom: 12px; }
+    .detail-dest { border: 2px solid #ccc; border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; page-break-inside: avoid; }
+    .detail-dest h2 { font-size: 17px; margin-bottom: 6px; }
+    .detail-dest h3 { font-size: 13px; color: #7a3f13; margin: 10px 0 4px; }
+    .detail-dest table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .detail-dest th, .detail-dest td { border: 1px solid #ccc; padding: 4px 6px; text-align: left; }
+    .detail-dest th { background: #f4f4f4; }
+    .detail-total { font-weight: 800; margin-top: 4px; }
+    .detail-empty { color: #c0392b; font-weight: 800; }
+
+    @media print {
+      body.printing > header, body.printing > main { display: none; }
+      body.printing #detailPanel { position: static; padding: 0; }
+      body.printing .detail-actions { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -129,6 +173,16 @@
   </div>
 </main>
 
+<div id="detailPanel">
+  <div class="detail-inner">
+    <div class="detail-actions">
+      <button type="button" class="btn-close" id="detailCloseBtn" onclick="closeDetail()"></button>
+      <button type="button" class="btn-print" id="detailPrintBtn" onclick="printDetail()"></button>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="js/supabase.js"></script>
@@ -138,7 +192,7 @@
   // 文言はスタッフが選んだ言語（staffLang）で表示する（管理者は通常日本語）
   const REPORT_I18N = {
     ja: {
-      back: '戻る', title: '玉ねぎ日報レポート',
+      back: '戻る', title: '玉ねぎ日報レポート', detail: '詳細', print: '印刷する（FAX用）',
       listTitle: '日報の一覧', loading: '読み込み中...',
       empty: 'まだ日報がありません',
       effNote: '数字は作業効率（kg/人時）。緑は目標達成',
@@ -149,7 +203,7 @@
       deleteConfirm: n => `${n}件の日報を削除しますか？\nこの操作は取り消せません。`,
     },
     id: {
-      back: 'Kembali', title: 'Laporan Bawang',
+      back: 'Kembali', title: 'Laporan Bawang', detail: 'Detail', print: 'Cetak (untuk FAX)',
       listTitle: 'Daftar laporan', loading: 'Memuat...', empty: 'Belum ada laporan',
       effNote: 'Angka = efisiensi kerja (kg/orang-jam). Hijau = target tercapai',
       export: 'Ekspor Excel tanggal terpilih', exporting: 'Mengekspor...',
@@ -158,7 +212,7 @@
       deleteConfirm: n => `Hapus ${n} laporan? Tindakan ini tidak dapat dibatalkan.`,
     },
     km: {
-      back: 'ត្រឡប់', title: 'របាយការណ៍ខ្ទឹមបារាំង',
+      back: 'ត្រឡប់', title: 'របាយការណ៍ខ្ទឹមបារាំង', detail: 'លម្អិត', print: 'បោះពុម្ព (សម្រាប់ FAX)',
       listTitle: 'បញ្ជីរបាយការណ៍', loading: 'កំពុងផ្ទុក...', empty: 'មិនទាន់មានរបាយការណ៍ទេ',
       effNote: 'លេខ = ប្រសិទ្ធភាពការងារ (kg/មនុស្ស-ម៉ោង)។ ពណ៌បៃតង = សម្រេចគោលដៅ',
       export: 'នាំចេញ Excel ថ្ងៃដែលបានជ្រើស', exporting: 'កំពុងនាំចេញ...',
@@ -197,6 +251,81 @@
     if (loading) loading.textContent = t('loading');
   }
 
+  let reportCache = {}; // date -> data
+
+  // ── 1日分の詳細（3つの出荷先をまとめて表示。ベストへのFAX用に印刷できるよう日本語で出す） ──
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
+  function detailTable(headers, rows) {
+    if (!rows.length) return '<div>なし</div>';
+    return `<table><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`
+      + rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('') + '</table>';
+  }
+
+  function detailDestHtml(bi, b) {
+    const tpl = ONION_BLOCK_TEMPLATES[bi];
+    if (!onionBlockFilled(b)) return `<div class="detail-dest"><h2>${tpl.destination}</h2><div class="detail-empty">未入力</div></div>`;
+    const kg = w => (w == null || isNaN(w) ? '' : `${w} kg`);
+
+    const used = b.sizeEntries
+      ? detailTable(['サイズ', '荷姿', '個数', '重さ'],
+          b.sizeEntries.flatMap(e => (e.packages ?? []).map(p => [e.size, p.type, p.count ?? '', kg(onionPackageKg(p))])))
+      : '<div>（旧形式の日報のため、Excel出力で確認してください）</div>';
+
+    const time = detailTable(['開始', '終了', '人数'],
+      (b.timeRows ?? []).filter(r => r.start || r.end || r.people).map(r => [r.start, r.end, r.people]));
+    const personHours = calcOnionPersonHours(b);
+    const eff = calcOnionEfficiency(bi, b);
+
+    let produced;
+    if (b.producedRows) {
+      const p = calcOnionProducedKg(b.producedRows);
+      produced = (tpl.producedWeightOnly
+        ? detailTable(['使用日', '重さ'], b.producedRows.map(r => [formatDateJa(r.date), kg(onionProducedKg(r))]))
+        : detailTable(['使用日', 'コンテナ', '区分', '個数', '重さ'],
+            b.producedRows.map(r => [formatDateJa(r.date), r.container, r.kind, r.count ?? '', kg(onionProducedKg(r))])))
+        + `<div class="detail-total">出来高の合計：${p.total} kg</div>`
+        + Object.keys(p.byDate).sort().map(d => `<div>${formatDateJa(d)}使用分：${p.byDate[d]} kg</div>`).join('');
+    } else {
+      produced = '<div>（旧形式の日報のため、Excel出力で確認してください）</div>';
+    }
+
+    return `
+      <div class="detail-dest">
+        <h2>${tpl.destination}</h2>
+        <div>報告者：${esc(b.sign)}</div>
+        <h3>使ったサイズ・荷姿</h3>${used}
+        <div class="detail-total">使った数の合計：${b.usedCount || 0} kg</div>
+        <h3>時間と人数</h3>${time}
+        <div>延べ人時：${Math.round(personHours * 10) / 10} 人時${eff ? `　作業効率：${eff.efficiency.toFixed(1)} kg/人時（目標 ${eff.target}）` : ''}</div>
+        <h3>できたもの</h3>${produced}
+        <h3>きょうのようす</h3><div>${esc(b.todayCondition) || 'なし'}</div>
+      </div>`;
+  }
+
+  function openDetail(date) {
+    const data = reportCache[date] ?? {};
+    document.getElementById('detailBody').innerHTML =
+      `<div class="detail-title">玉ねぎ作業日報　${formatDateJa(date)}</div>`
+      + ONION_EXPORT_COLUMN_ORDER.map(bi => detailDestHtml(bi, data.blocks?.[bi])).join('');
+    document.getElementById('detailCloseBtn').textContent = t('back');
+    document.getElementById('detailPrintBtn').textContent = '🖨 ' + t('print');
+    document.getElementById('detailPanel').classList.add('open');
+    window.scrollTo(0, 0);
+  }
+
+  function closeDetail() {
+    document.getElementById('detailPanel').classList.remove('open');
+  }
+
+  function printDetail() {
+    document.body.classList.add('printing');
+    window.print();
+    document.body.classList.remove('printing');
+  }
+
   async function loadReportList() {
     const { data, error } = await supabaseClient
       .from('onion_reports')
@@ -224,13 +353,15 @@
           <input type="checkbox" class="report-cb" value="${r.date}">
           <span class="report-date">${formatDateJa(r.date)}</span>
           ${cells}
+          <button type="button" class="btn-detail" onclick="event.preventDefault(); openDetail('${r.date}')">${t('detail')}</button>
         </label>`;
     }).join('');
+    reportCache = Object.fromEntries(data.map(r => [r.date, r.data]));
 
     el.innerHTML = `
       <div class="table-wrap">
         <div class="report-table">
-          <div class="report-row header"><span></span><span></span>${headerCells}</div>
+          <div class="report-row header"><span></span><span></span>${headerCells}<span></span></div>
           ${rows}
         </div>
       </div>`;
