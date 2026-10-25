@@ -662,6 +662,39 @@
     .onion-dest-card.block-japan   { background: #e9f2fb; border-color: #93bde8; }
     .onion-dest-card.block-rainbow { background: #eaf7ee; border-color: #92d3a5; }
     .onion-dest-icon { font-size: 40px; line-height: 1; }
+    .onion-dest-card { padding: 18px 20px; }
+    .onion-dest-name { display: flex; flex-direction: column; gap: 4px; }
+    .onion-dest-status { font-size: 13px; font-weight: 800; padding: 2px 10px; border-radius: 12px; align-self: flex-start; }
+    .onion-dest-status.filled { background: #2e7d32; color: #fff; }
+    .onion-dest-status.empty  { background: #fff; color: #c0392b; border: 1.5px solid #e6a39b; }
+
+    /* 最近の入力状況（7日間） */
+    .onion-history { margin: 4px 0 16px; }
+    .onion-history-title { font-size: 13px; font-weight: 800; color: #555; margin-bottom: 6px; }
+    .onion-history-row {
+      display: grid;
+      grid-template-columns: 1fr 72px 72px 72px;
+      gap: 4px;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .onion-history-row.selected { background: #fff8e1; border-radius: 8px; }
+    .onion-history-head span { font-size: 11px; font-weight: 700; color: #777; text-align: center; }
+    .onion-history-date { font-size: 13px; font-weight: 700; padding-left: 6px; }
+    .onion-history-cell {
+      border-radius: 8px;
+      padding: 7px 2px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1.5px solid;
+    }
+    .onion-history-cell.filled { background: #eaf6ec; border-color: #9fd3ab; }
+    .onion-history-cell.empty  { background: #fff; border-color: #e6a39b; color: #c0392b; }
+
+    /* レインボーのできたもの：使用日と重さだけ */
+    .pr-weight-only { display: flex; gap: 8px; align-items: center; }
+    .pr-weight-only input { flex: 1; padding: 9px; font-size: 15px; border: 1.5px solid #ddd; border-radius: 6px; min-width: 0; }
 
     /* サイン（社員リストから選ぶ） */
     .sign-tabs { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
@@ -762,11 +795,12 @@
     }
 
     .onion-pkg-table td { padding: 3px 4px; }
-    .onion-pkg-table td:first-child { width: 38%; }
+    .onion-pkg-table td:first-child { width: 36%; }
+    .onion-pkg-table td:nth-child(2) { width: 28%; }
     .onion-pkg-table .onion-toggle-btn { width: 100%; padding: 10px 4px; font-size: 14px; }
     .onion-pkg-table .pkg-count, .onion-pkg-table .pkg-kg, .onion-pkg-table .pr-count { width: 100%; padding: 9px; font-size: 15px; border: 1.5px solid #ddd; border-radius: 6px; }
     .onion-pkg-table .pkg-count:disabled, .onion-pkg-table .pkg-kg:disabled, .onion-pkg-table .pr-count:disabled { background: #f3f3f3; }
-    .onion-pkg-table .pkg-kg-auto { display: block; text-align: center; font-size: 13px; font-weight: 700; color: #7a3f13; margin-top: 2px; }
+    .onion-pkg-table .pkg-kg-auto { display: block; text-align: center; font-size: 13px; font-weight: 700; color: #7a3f13; margin-top: 2px; white-space: nowrap; }
 
     /* 入力項目ごとの区切り（項目ごとに色を変えて、切れ目が分かるようにする） */
     .onion-section {
@@ -1002,13 +1036,14 @@
     <div class="modal-title" id="onionMenuTitle">玉ねぎ作業日報</div>
     <div class="onion-date-row">
       <label for="onionCreateDate" class="onion-date-label" id="onionDateLabel">日付</label>
-      <input type="date" id="onionCreateDate" class="modal-input">
+      <input type="date" id="onionCreateDate" class="modal-input" onchange="refreshOnionStatus()">
     </div>
     <div class="onion-field">
       <label id="onionSignLabel">報告者（代表1名）</label>
       <div id="onionSignPicker"></div>
     </div>
     <div class="onion-dest-cards" id="onionDestCards"></div>
+    <div class="onion-history" id="onionHistory"></div>
 
     <div class="modal-actions">
       <button type="button" class="btn-modal-cancel" id="onionMenuCloseBtn" onclick="closeOnionMenuModal()">閉じる</button>
@@ -1021,7 +1056,7 @@
     <div class="modal-title" id="onionEditTitle">玉ねぎ作業日報</div>
     <div id="onionEditBlocks"></div>
     <div class="modal-actions">
-      <button type="button" class="btn-modal-cancel" id="onionEditCloseBtn" onclick="closeOnionEditModal()">閉じる</button>
+      <button type="button" class="btn-modal-cancel" id="onionEditCloseBtn" onclick="backToOnionMenu()">戻る</button>
       <button type="button" class="btn-modal-submit" id="onionSaveBtn" onclick="openOnionConfirmModal()">保存する</button>
     </div>
   </div>
@@ -1657,7 +1692,9 @@
       confirmTitle: dest => `${dest}は、これで保存していいですか？`, confirmBack: '戻って直す', none: 'なし', countUnit: '個', peopleUnit: '人', signSelected: '選んだ人', signLoadFailed: '名前の一覧を読み込めません',
       sizeSection: '使ったサイズ・荷姿', sizePlaceholder: 'サイズ', sizeOther: 'その他',
       addSize: '＋ サイズを追加', packageHeader: '荷姿', countHeader: '個数', weightHeader: '重さ(kg)',
-      pkgCountRequired: '選んだ荷姿の個数を1以上で入力してください',
+      pkgCountRequired: '選んだ荷姿の個数（鉄コン・フレコンは重さ）を入力してください',
+      prodWeightRequired: '「できたもの」の重さを入力してください', back: '戻る',
+      filled: '入力済み', notFilled: '未入力', historyTitle: '最近の入力状況（タップで開いて修正できます）',
       weightNotSet: '重さが入っていない荷姿があります', autoCalc: '自動計算',
       usedCount: 'つかったかず',
       timeSection: '時間と人数', start: '開始', end: '終了', people: '人数',
@@ -1677,7 +1714,9 @@
       confirmTitle: dest => `Simpan ${dest} dengan isi ini?`, confirmBack: 'Kembali & perbaiki', none: 'Tidak ada', countUnit: 'buah', peopleUnit: 'orang', signSelected: 'Dipilih', signLoadFailed: 'Gagal memuat daftar nama',
       sizeSection: 'Ukuran & Kemasan yang digunakan', sizePlaceholder: 'Ukuran', sizeOther: 'Lainnya',
       addSize: '＋ Tambah ukuran', packageHeader: 'Kemasan', countHeader: 'Jumlah', weightHeader: 'Berat (kg)',
-      pkgCountRequired: 'Isi jumlah (minimal 1) untuk kemasan yang dipilih',
+      pkgCountRequired: 'Isi jumlah kemasan yang dipilih (untuk 鉄コン・フレコン isi beratnya)',
+      prodWeightRequired: 'Isi berat \"Hasil\"', back: 'Kembali',
+      filled: 'Sudah diisi', notFilled: 'Belum diisi', historyTitle: 'Status input terbaru (ketuk untuk membuka dan memperbaiki)',
       weightNotSet: 'Ada kemasan yang beratnya belum diisi', autoCalc: 'otomatis',
       usedCount: 'Jumlah yang digunakan',
       timeSection: 'Waktu dan Jumlah orang', start: 'Mulai', end: 'Selesai', people: 'Orang',
@@ -1697,7 +1736,9 @@
       confirmTitle: dest => `រក្សាទុក ${dest} ដូចនេះមែនទេ?`, confirmBack: 'ត្រឡប់ទៅកែ', none: 'គ្មាន', countUnit: 'គ្រាប់', peopleUnit: 'នាក់', signSelected: 'បានជ្រើសរើស', signLoadFailed: 'មិនអាចផ្ទុកបញ្ជីឈ្មោះបានទេ',
       sizeSection: 'ទំហំ និងការវេចខ្ចប់ដែលបានប្រើ', sizePlaceholder: 'ទំហំ', sizeOther: 'ផ្សេងទៀត',
       addSize: '＋ បន្ថែមទំហំ', packageHeader: 'ការវេចខ្ចប់', countHeader: 'ចំនួន', weightHeader: 'ទម្ងន់ (kg)',
-      pkgCountRequired: 'សូមបញ្ចូលចំនួន (យ៉ាងហោចណាស់ 1) សម្រាប់ការវេចខ្ចប់ដែលបានជ្រើសរើស',
+      pkgCountRequired: 'សូមបញ្ចូលចំនួនការវេចខ្ចប់ដែលបានជ្រើសរើស (鉄コン・フレコン បញ្ចូលទម្ងន់)',
+      prodWeightRequired: 'សូមបញ្ចូលទម្ងន់ \"លទ្ធផល\"', back: 'ត្រឡប់',
+      filled: 'បានបញ្ចូលរួច', notFilled: 'មិនទាន់បញ្ចូល', historyTitle: 'ស្ថានភាពបញ្ចូលថ្មីៗ (ចុចដើម្បីបើក និងកែ)',
       weightNotSet: 'មានការវេចខ្ចប់ដែលមិនទាន់បញ្ចូលទម្ងន់', autoCalc: 'គណនាស្វ័យប្រវត្តិ',
       usedCount: 'ចំនួនដែលបានប្រើ',
       timeSection: 'ពេលវេលា និង ចំនួនមនុស្ស', start: 'ចាប់ផ្តើម', end: 'បញ្ចប់', people: 'ចំនួនមនុស្ស',
@@ -1728,29 +1769,82 @@
     document.getElementById('onionDateLabel').textContent      = ot('dateLabel');
     document.getElementById('onionSignLabel').textContent      = ot('sign');
     document.getElementById('onionMenuCloseBtn').textContent   = ot('close');
-    document.getElementById('onionEditCloseBtn').textContent   = ot('close');
+    document.getElementById('onionEditCloseBtn').textContent   = ot('back');
   }
 
   let onionCurrentDate = null;
   let onionCurrentBlock = null; // 編集中の出荷先（ONION_BLOCK_TEMPLATESの添字）
+  let onionEditSign = '';       // 編集中の日報の報告者
 
   // 出荷先カードの表示順（ONION_BLOCK_TEMPLATESの添字）：ベスト日本・ベスト中国・レインボー
   const ONION_DEST_CARD_ORDER = [1, 0, 2];
 
   // 報告者（代表1名）はこの画面で選び、どの出荷先の日報にも同じ人が入る。
   // 選んだ人はページを閉じるまで覚えておく（続けて別の出荷先を入力するときに選び直さなくてよいように）
-  async function openOnionMenuModal() {
+  // dateStr：入力画面の「戻る」・保存後に戻ってきたときは、その日付のまま開く
+  async function openOnionMenuModal(dateStr) {
     applyOnionStaticText();
-    document.getElementById('onionCreateDate').value = getToday();
+    document.getElementById('onionCreateDate').value = dateStr || getToday();
     document.getElementById('onionSignPicker').innerHTML = '';
     if (await loadOnionSignStaff()) initOnionSignPicker(onionSelectedSign);
     else document.getElementById('onionSignPicker').textContent = ot('signLoadFailed');
+    renderOnionDestCards({});
+    document.getElementById('onionMenuModalOverlay').classList.add('open');
+    await refreshOnionStatus();
+  }
+
+  // 入力画面の「戻る」：日付・報告者を選んだ状態のまま出荷先カードの画面に戻る
+  function backToOnionMenu() {
+    closeOnionEditModal();
+    openOnionMenuModal(onionCurrentDate);
+  }
+
+  // ── 入力状況（抜け漏れ防止）：選んだ日付の出荷先ごとの入力済み／未入力と、直近7日の一覧 ──
+  const ONION_HISTORY_DAYS = 7;
+
+  function renderOnionDestCards(dayData) {
     document.getElementById('onionDestCards').innerHTML = ONION_DEST_CARD_ORDER.map(bi => {
       const t = ONION_BLOCK_TEMPLATES[bi];
+      const b = dayData?.blocks?.[bi];
+      const status = onionBlockFilled(b)
+        ? `<span class="onion-dest-status filled">✅ ${ot('filled')}${b.sign ? `（${escapeHtml(b.sign)}）` : ''}</span>`
+        : `<span class="onion-dest-status empty">⚠ ${ot('notFilled')}</span>`;
       return `<button type="button" class="onion-dest-card ${t.colorClass}" onclick="openOnionEditModal(document.getElementById('onionCreateDate').value, ${bi})">`
-        + `<span class="onion-dest-icon">🧅</span><span>${t.destination}</span></button>`;
+        + `<span class="onion-dest-icon">🧅</span><span class="onion-dest-name">${t.destination}${status}</span></button>`;
     }).join('');
-    document.getElementById('onionMenuModalOverlay').classList.add('open');
+  }
+
+  async function refreshOnionStatus() {
+    const selected = document.getElementById('onionCreateDate').value;
+    const from = addDaysIso(getToday(), -(ONION_HISTORY_DAYS - 1));
+    const { data, error } = await supabaseClient
+      .from('onion_reports')
+      .select('date, data')
+      .gte('date', selected && selected < from ? selected : from);
+    if (error) { console.error(error); return; }
+    const byDate = Object.fromEntries((data ?? []).map(r => [r.date, r.data]));
+
+    renderOnionDestCards(byDate[selected]);
+
+    const days = Array.from({ length: ONION_HISTORY_DAYS }, (_, i) => addDaysIso(getToday(), -i));
+    const head = ONION_DEST_CARD_ORDER.map(bi => `<span>${ONION_BLOCK_TEMPLATES[bi].destination}</span>`).join('');
+    const rows = days.map(d => {
+      const cells = ONION_DEST_CARD_ORDER.map(bi => {
+        const filled = onionBlockFilled(byDate[d]?.blocks?.[bi]);
+        return `<button type="button" class="onion-history-cell ${filled ? 'filled' : 'empty'}" onclick="openOnionFromHistory('${d}', ${bi})">${filled ? '✅' : ot('notFilled')}</button>`;
+      }).join('');
+      return `<div class="onion-history-row ${d === selected ? 'selected' : ''}"><span class="onion-history-date">${formatDateJa(d)}</span>${cells}</div>`;
+    }).join('');
+    document.getElementById('onionHistory').innerHTML = `
+      <div class="onion-history-title">${ot('historyTitle')}</div>
+      <div class="onion-history-row onion-history-head"><span></span>${head}</div>
+      ${rows}`;
+  }
+
+  // 一覧のマスを押すと、その日のその出荷先の日報を開く（入力済みなら修正できる）
+  function openOnionFromHistory(dateStr, bi) {
+    document.getElementById('onionCreateDate').value = dateStr;
+    openOnionEditModal(dateStr, bi);
   }
 
   function closeOnionMenuModal() {
@@ -1825,13 +1919,16 @@
             const p = pkgs[type];
             const active = !!p;
             const manual = ONION_MANUAL_WEIGHT_PACKAGES.includes(type);
-            return `<tr>
-              <td><button type="button" class="onion-toggle-btn pkg-toggle ${active ? 'active' : ''}" data-pkg="${type}" onclick="toggleOnionPackage(this)">${type}</button></td>
-              <td><input type="number" class="pkg-count" min="1" step="1" inputmode="numeric" value="${active ? (p.count ?? '') : ''}" ${active ? '' : 'disabled'} oninput="recalcOnionUsedCount()"></td>
-              <td>${manual
-                ? `<input type="number" class="pkg-kg" min="0" step="any" inputmode="decimal" value="${active ? (p.kg ?? '') : ''}" ${active ? '' : 'disabled'} oninput="recalcOnionUsedCount()">`
-                : `<span class="pkg-kg-auto"></span>`}</td>
-            </tr>`;
+            // 鉄コン・フレコンは個数を使わず、重さ(kg)だけを直接入力する
+            const toggle = `<td><button type="button" class="onion-toggle-btn pkg-toggle ${active ? 'active' : ''}" data-pkg="${type}" onclick="toggleOnionPackage(this)">${type}</button></td>`;
+            return manual
+              ? `<tr>${toggle}
+                  <td colspan="2"><input type="number" class="pkg-kg" min="0" step="any" inputmode="decimal" placeholder="kg" value="${active ? (p.kg ?? '') : ''}" ${active ? '' : 'disabled'} oninput="recalcOnionUsedCount()"></td>
+                </tr>`
+              : `<tr>${toggle}
+                  <td><input type="number" class="pkg-count" min="1" step="1" inputmode="numeric" value="${active ? (p.count ?? '') : ''}" ${active ? '' : 'disabled'} oninput="recalcOnionUsedCount()"></td>
+                  <td><span class="pkg-kg-auto"></span></td>
+                </tr>`;
           }).join('')}
         </table>
       </div>`;
@@ -1861,7 +1958,8 @@
     row.querySelectorAll('input').forEach(input => {
       input.disabled = !active;
       if (!active) input.value = '';
-    });    if (active) row.querySelector('.pkg-count').focus();
+    });
+    if (active) row.querySelector('input').focus();
     recalcOnionUsedCount();
   }
 
@@ -1873,9 +1971,10 @@
         packages: [...el.querySelectorAll('.pkg-toggle.active')].map(btn => {
           const row = btn.closest('tr');
           const kgInput = row.querySelector('.pkg-kg');
+          const countInput = row.querySelector('.pkg-count');
           return {
             type: btn.dataset.pkg,
-            count: row.querySelector('.pkg-count').value,
+            ...(countInput ? { count: countInput.value } : {}),
             ...(kgInput ? { kg: kgInput.value } : {}),
           };
         }),
@@ -1892,7 +1991,8 @@
       if (!auto) return;
       const btn = row.querySelector('.pkg-toggle');
       const w = onionPackageKg({ type: btn.dataset.pkg, count: row.querySelector('.pkg-count').value });
-      auto.textContent = btn.classList.contains('active') && w != null ? `= ${w} kg` : '';
+      const hasCount = row.querySelector('.pkg-count').value !== '';
+      auto.textContent = btn.classList.contains('active') && hasCount && w != null ? `= ${w} kg` : '';
     });
     const { kg, missingWeight } = calcOnionUsedKg(collectOnionSizeEntries(root));
     root.querySelector('.onion-usedcount-auto').textContent = `${ot('usedTotal')}：${kg} kg`;
@@ -1919,7 +2019,7 @@
     return `
       <div class="onion-block ${t.colorClass}" id="onion-block-${bi}">
         <div class="onion-block-title">🧅 ${t.destination}</div>
-        <div class="onion-block-reporter">${ot('sign')}：${onionSelectedSign}</div>
+        <div class="onion-block-reporter">${ot('sign')}：${escapeHtml(onionEditSign)}</div>
 
         <div class="onion-section sec-used">
           <div class="onion-section-title">📦 ${ot('sizeSection')}</div>
@@ -1968,9 +2068,12 @@
   // 枠＝使用日＋通常/やり直し。同じ使用日に通常とやり直しの両方がある場合は「＋ 使用日を追加」で枠を分ける。
   // 保存形式は従来どおり1行1コンテナの producedRows（[{ date, container, kind, count, kg? }]）。
   // 基本は翌日配送分を前日に作るため、使用日の初期値は日報の日付の翌日
+  // レインボーは「通常」だけで個数も使わないため、使用日と重さ(kg)だけを入力する
   function defaultOnionProducedEntry(bi) {
+    const date = addDaysIso(onionCurrentDate, 1);
+    if (ONION_BLOCK_TEMPLATES[bi].producedWeightOnly) return { date, kind: '通常', rows: [{ container: '', kg: '' }] };
     const first = ONION_BLOCK_TEMPLATES[bi].producedContainers[0] ?? '';
-    return { date: addDaysIso(onionCurrentDate, 1), kind: '通常', rows: [{ container: first, count: '' }] };
+    return { date, kind: '通常', rows: [{ container: first, count: '' }] };
   }
 
   // 保存済みの producedRows を「使用日＋区分」ごとの枠にまとめる（並びは保存順）
@@ -1985,6 +2088,26 @@
   }
 
   function onionProducedEntryHtml(bi, entry) {
+    const head = `
+        <div class="onion-size-head">
+          <span class="pr-line-label">${ot('prodDate')}</span>
+          <input type="date" class="modal-input pr-date" value="${entry.date ?? ''}" onchange="recalcOnionProduced()">
+          <button type="button" class="btn-onion-remove-row" onclick="removeOnionProducedEntry(this)">×</button>
+        </div>`;
+
+    if (ONION_BLOCK_TEMPLATES[bi].producedWeightOnly) {
+      // 以前の形式で複数行あった場合は合計して1つの重さにする
+      const kgSum = entry.rows.reduce((s, r) => s + (parseFloat(onionProducedKg(r)) || 0), 0);
+      const kg = entry.rows.some(r => (r.kg ?? '') !== '' || r.count) ? roundKg(kgSum) : '';
+      return `
+      <div class="onion-prod-entry">${head}
+        <div class="pr-weight-only">
+          <span class="pr-line-label">${ot('weightHeader')}</span>
+          <input type="number" class="pkg-kg pr-kg-only" min="0" step="any" inputmode="decimal" placeholder="kg" value="${kg}" oninput="recalcOnionProduced()">
+        </div>
+      </div>`;
+    }
+
     const presets = ONION_BLOCK_TEMPLATES[bi].producedContainers;
     const byContainer = Object.fromEntries(entry.rows.map(r => [r.container, r]));
     const other = entry.rows.find(r => !presets.includes(r.container));
@@ -2011,12 +2134,7 @@
       </tr>`;
 
     return `
-      <div class="onion-prod-entry">
-        <div class="onion-size-head">
-          <span class="pr-line-label">${ot('prodDate')}</span>
-          <input type="date" class="modal-input pr-date" value="${entry.date ?? ''}" onchange="recalcOnionProduced()">
-          <button type="button" class="btn-onion-remove-row" onclick="removeOnionProducedEntry(this)">×</button>
-        </div>
+      <div class="onion-prod-entry">${head}
         <div class="pr-kind">
           ${ONION_PRODUCED_KINDS.map(k => `<button type="button" class="onion-toggle-btn ${entry.kind === k ? 'active' : ''}" data-kind="${k}" onclick="selectOnionProducedKind(this)">${k === '通常' ? ot('usual') : ot('redo')}</button>`).join('')}
         </div>
@@ -2057,6 +2175,8 @@
   function collectOnionProducedRows(root) {
     return [...root.querySelectorAll('.onion-prod-entry')].flatMap(el => {
       const date = el.querySelector('.pr-date').value;
+      const kgOnly = el.querySelector('.pr-kg-only');
+      if (kgOnly) return [{ date, container: '', kind: '通常', count: '', kg: kgOnly.value }];
       const kind = el.querySelector('.pr-kind .onion-toggle-btn.active')?.dataset.kind ?? '通常';
       return [...el.querySelectorAll('.pr-toggle.active')].map(btn => {
         const tr = btn.closest('tr');
@@ -2083,7 +2203,7 @@
       const btn = tr.querySelector('.pr-toggle');
       const unit = ONION_PRODUCED_UNIT_KG[btn.dataset.container];
       const count = parseInt(tr.querySelector('.pr-count').value, 10) || 0;
-      auto.textContent = btn.classList.contains('active') && unit != null ? `= ${count * unit} kg` : '';
+      auto.textContent = btn.classList.contains('active') && count > 0 && unit != null ? `= ${count * unit} kg` : '';
     });
     const rows = collectOnionProducedRows(root).filter(r => r.count !== '' || (r.kg ?? '') !== '');
     const { total, byDate, missingWeight } = calcOnionProducedKg(rows);
@@ -2096,9 +2216,6 @@
   // 選んだ出荷先（bi）の欄だけを開く
   async function openOnionEditModal(dateStr, bi) {
     if (!dateStr) { alert(ot('selectDate')); return; }
-    if (!onionSelectedSign) { alert(ot('signRequired')); return; }
-    onionCurrentDate = dateStr;
-    onionCurrentBlock = bi;
 
     const { data, error } = await supabaseClient
       .from('onion_reports')
@@ -2110,8 +2227,14 @@
 
     const block = data?.data?.blocks?.[bi] ?? {};
 
+    // 報告者：この画面で選んだ人。選んでいなければ、入力済みの日報を直すときに限り元の報告者のまま
+    onionEditSign = onionSelectedSign || block.sign || '';
+    if (!onionEditSign) { alert(ot('signRequired')); return; }
+    onionCurrentDate = dateStr;
+    onionCurrentBlock = bi;
+
     document.getElementById('onionEditTitle').textContent = ot('editTitle')(dateStr);
-    document.getElementById('onionEditCloseBtn').textContent = ot('close');
+    document.getElementById('onionEditCloseBtn').textContent = ot('back');
     document.getElementById('onionSaveBtn').textContent = ot('save');
     document.getElementById('onionEditBlocks').innerHTML = renderOnionBlock(bi, block);
     recalcOnionUsedCount();
@@ -2141,7 +2264,7 @@
     const producedRows = collectOnionProducedRows(root).filter(r => r.count !== '' || (r.kg ?? '') !== '');
 
     return {
-      sign: onionSelectedSign,
+      sign: onionEditSign,
       sizeEntries,
       usedCount: usedKg > 0 ? String(usedKg) : '',
       timeRows,
@@ -2170,13 +2293,18 @@
   function openOnionConfirmModal() {
     const bi = onionCurrentBlock;
     const block = collectOnionBlock(bi);
-    const badCount = block.sizeEntries.some(e => e.packages.some(p => !(parseInt(p.count, 10) >= 1)));
+    // 鉄コン・フレコン、レインボーのできたものは重さ(kg)、それ以外は個数（1以上）が必須
+    const weightOnly = ONION_BLOCK_TEMPLATES[bi].producedWeightOnly;
+    const badCount = block.sizeEntries.some(e => e.packages.some(p =>
+      ONION_MANUAL_WEIGHT_PACKAGES.includes(p.type) ? !(parseFloat(p.kg) > 0) : !(parseInt(p.count, 10) >= 1)));
     if (badCount) { alert(ot('pkgCountRequired')); return; }
-    const badProduced = block.producedRows.some(r => !(parseInt(r.count, 10) >= 1));
-    if (badProduced) { alert(ot('prodCountRequired')); return; }
+    const badProduced = block.producedRows.some(r =>
+      weightOnly ? !(parseFloat(r.kg) > 0) : !(parseInt(r.count, 10) >= 1));
+    if (badProduced) { alert(ot(weightOnly ? 'prodWeightRequired' : 'prodCountRequired')); return; }
     onionPendingBlock = block;
 
     const kg = w => (w == null || isNaN(w) ? '?' : `${w} kg`);
+    const count = c => (c ? `${c} ${ot('countUnit')}` : '');
     const kindLabel = k => (k === 'やり直し' ? ot('redo') : ot('usual'));
     const produced = calcOnionProducedKg(block.producedRows);
 
@@ -2184,12 +2312,14 @@
       onionConfirmSection(ot('dateLabel'), onionConfirmRows([[formatDateJa(onionCurrentDate), ONION_BLOCK_TEMPLATES[bi].destination]])),
       onionConfirmSection(ot('sign'), onionConfirmRows([[block.sign]])),
       onionConfirmSection(ot('sizeSection'), onionConfirmRows(
-        block.sizeEntries.flatMap(e => e.packages.map(p => [e.size, p.type, `${p.count} ${ot('countUnit')}`, kg(onionPackageKg(p))])))),
+        block.sizeEntries.flatMap(e => e.packages.map(p => [e.size, p.type, count(p.count), kg(onionPackageKg(p))])))),
       onionConfirmSection(`${ot('usedCount')} (kg)`, onionConfirmRows([[`${block.usedCount || 0} kg`]])),
       onionConfirmSection(ot('timeSection'), onionConfirmRows(
         block.timeRows.filter(r => r.start || r.end || r.people).map(r => [`${r.start || '--'} 〜 ${r.end || '--'}`, `${r.people || 0} ${ot('peopleUnit')}`]))),
       onionConfirmSection(ot('produced'), onionConfirmRows(
-        block.producedRows.map(r => [formatDateJa(r.date), r.container, kindLabel(r.kind), `${r.count} ${ot('countUnit')}`, kg(onionProducedKg(r))]))
+        block.producedRows.map(r => weightOnly
+          ? [formatDateJa(r.date), kg(onionProducedKg(r))]
+          : [formatDateJa(r.date), r.container, kindLabel(r.kind), count(r.count), kg(onionProducedKg(r))]))
         + `<div class="onion-confirm-total">${ot('prodTotal')}：${produced.total} kg</div>`),
       onionConfirmSection(ot('condition'), onionConfirmRows(block.todayCondition ? [[block.todayCondition]] : [])),
     ].join('');
@@ -2243,6 +2373,8 @@
 
     closeOnionConfirmModal();
     closeOnionEditModal();
+    // 出荷先カードの画面に戻り、入力状況（✅入力済み／⚠未入力）で残りの出荷先が分かるようにする
+    await openOnionMenuModal(onionCurrentDate);
     // 作業効率は今保存した出荷先の分だけ表示する
     showOnionEfficiencyFeedback({ blocks: ONION_BLOCK_TEMPLATES.map((_, i) => (i === bi ? block : {})) });
   }
