@@ -1544,7 +1544,7 @@
       ? `<div class="started-info"><span>${st('startedAt', fmtHM(new Date(started.started_at)))}</span>${editStartLink}</div>` : '';
 
     const note = task.note
-      ? `<div class="task-note">${task.note}</div>` : '';
+      ? `<div class="task-note">${escapeHtml(String(task.note))}</div>` : '';
 
     const locations = task.task_locations ?? [];
     const houseLocations = locations.filter(l => l.location_type === 'house');

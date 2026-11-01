@@ -7,6 +7,8 @@ seed_customers.sql
 
 # 従業員個人情報（生年月日・在留資格等）を含むため公開リポジトリにコミットしない
 従業員R8.8.pdf
+migration_2026-08-30_kintai_staff.sql
+migration_2026-09-27b_staff_roster_data.sql
 
 # Python
 __pycache__/

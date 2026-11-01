@@ -2540,7 +2540,7 @@
     el.innerHTML = staffList.map(s => `
       <label class="staff-check-label">
         <input type="checkbox" class="staff-cb" value="${s.id}" ${checkedIds.includes(s.id) ? 'checked' : ''}>
-        ${s.name}
+        ${escHtml(s.name)}
       </label>
     `).join('');
   }
@@ -2889,7 +2889,7 @@
   function renderBreakStaffSelect() {
     const el = document.getElementById('breakStaffSelect');
     el.innerHTML = staffList.length
-      ? staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('')
+      ? staffList.map(s => `<option value="${s.id}">${escHtml(s.name)}</option>`).join('')
       : '<option value="">スタッフが登録されていません</option>';
   }
 
@@ -3082,7 +3082,7 @@
       const locationLabel = locations.length
         ? (locations[0].location_type === 'house' ? 'ハウス' : '露地') + ' ' + locations.map(l => l.location_code).join('・')
         : null;
-      const noteHtml = r.note ? `<div class="task-item-meta">${r.note}</div>` : '';
+      const noteHtml = r.note ? `<div class="task-item-meta">${escHtml(r.note)}</div>` : '';
       return `
         <div class="task-item">
           <div class="task-item-left">
