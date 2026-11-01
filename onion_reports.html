@@ -501,6 +501,9 @@
       uiLang = 'ja';
       applyText();
       document.getElementById('backLink').href = 'admin.html';
+    } else {
+      // Excel出力（ダウンロード）は管理者のみ
+      document.getElementById('exportBtn').style.display = 'none';
     }
     await loadReportList();
   })();

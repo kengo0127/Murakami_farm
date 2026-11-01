@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 - 玉ねぎ収支レポート</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f7f0;
+      min-height: 100vh;
+      padding-bottom: 40px;
+      color: #222;
+    }
+
+    header {
+      background: #2e5c28;
+      color: #fff;
+      padding: 13px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-back {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .header-title { font-size: 17px; font-weight: 800; }
+
+    main { max-width: 980px; margin: 0 auto; padding: 16px 12px; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    .section-title { font-size: 15px; font-weight: 800; color: #7a3f13; margin-bottom: 10px; }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px 14px;
+    }
+
+    .settings-grid label { display: block; font-size: 12px; font-weight: 700; color: #555; margin-bottom: 4px; }
+    .settings-grid input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid #c8e0c4;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    .settings-note { font-size: 11px; color: #888; margin-top: 3px; }
+
+    .period-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .period-row input[type="date"] {
+      padding: 8px 10px;
+      border: 1.5px solid #c8e0c4;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    .btn {
+      padding: 9px 14px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      border: 1.5px solid #c8e0c4;
+      background: #fff;
+      color: #2e5c28;
+    }
+
+    .btn-primary { background: #2e5c28; color: #fff; border-color: #2e5c28; }
+    .btn:disabled { opacity: 0.6; cursor: default; }
+
+    .summary-tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .tile { background: #f7fbf6; border-radius: 10px; padding: 10px 12px; }
+    .tile-label { font-size: 11px; font-weight: 700; color: #777; }
+    .tile-value { font-size: 20px; font-weight: 800; margin-top: 2px; }
+    .tile-value.plus { color: #2e7d32; }
+    .tile-value.minus { color: #c0392b; }
+
+    .table-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+    th, td { border-bottom: 1px solid #e6eee4; padding: 7px 8px; text-align: right; }
+    th { background: #f4f8f3; font-size: 12px; color: #555; position: sticky; top: 0; }
+    th:first-child, td:first-child, td.text { text-align: left; }
+    tr.total td { font-weight: 800; background: #fafcf9; }
+    td.plus { color: #2e7d32; font-weight: 700; }
+    td.minus { color: #c0392b; font-weight: 700; }
+    td.warn { color: #c68a00; font-size: 12px; text-align: left; white-space: normal; min-width: 160px; }
+
+    .note { font-size: 12px; color: #777; margin-top: 8px; line-height: 1.7; }
+    .empty { text-align: center; color: #999; padding: 30px 10px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="btn-back" href="admin.html">← 管理画面</a>
+  <div class="header-title">💴 玉ねぎ収支レポート</div>
+</header>
+
+<main>
+  <div class="card">
+    <div class="section-title">計算の条件</div>
+    <div class="settings-grid" id="settingsGrid"></div>
+    <div class="note">
+      変更した条件はこのパソコン（ブラウザ）に保存され、次回も同じ条件で表示されます。
+      <button type="button" class="btn" style="margin-left:6px;" onclick="resetSettings()">初期値に戻す</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">期間</div>
+    <div class="period-row">
+      <input type="date" id="fromDate" onchange="loadAndRender()">
+      <span>〜</span>
+      <input type="date" id="toDate" onchange="loadAndRender()">
+      <button type="button" class="btn" onclick="shiftMonth(-1)">◀ 前月</button>
+      <button type="button" class="btn" onclick="shiftMonth(1)">翌月 ▶</button>
+      <button type="button" class="btn btn-primary" id="exportBtn" onclick="exportExcel()" style="margin-left:auto;">📥 Excel出力</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">集計</div>
+    <div id="summaryArea"><div class="empty">読み込み中...</div></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">日別の明細</div>
+    <div id="dailyArea"></div>
+    <div class="note">
+      ・ベスト日本／ベスト中国の売上 ＝ 使ったかず(kg) × 単価<br>
+      ・レインボーの売上 ＝ できたもの（通常）の重さ(kg) × 売値、仕入 ＝ 使ったかず(kg) × 仕入値<br>
+      ・人件費 ＝ 延べ人時（時間 × 人数）× 時給<br>
+      ・損益分岐の作業効率 ＝ この作業効率(kg/人時)を上回ると黒字になる目安
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/onion-common.js"></script>
+<script>
+  // 玉ねぎ日報（onion_reports）から出荷先ごとの売上・人件費・利益を計算する管理者専用レポート。
+  // 単価の初期値は「共有済み資料など/玉ねぎ一次加工収益評価.xlsx」
+  // （レインボーの仕入値は【レインボー再計算ver.】）に合わせている。
+  const SETTINGS_KEY = 'onionProfitSettings';
+  const DEFAULT_SETTINGS = {
+    wage: 3000,          // 時給(円/人時)
+    priceJapan: 50,      // ベスト日本 加工賃(円/kg)
+    priceChina: 25,      // ベスト中国 加工賃(円/kg)
+    priceRainbow: 280,   // レインボー 売値(円/kg)
+    costRainbow: 175,    // レインボー 仕入値(円/kg)
+  };
+  const SETTING_FIELDS = [
+    { key: 'wage',         label: '時給（円/人時）',              note: '1人が1時間働いたときの人件費' },
+    { key: 'priceJapan',   label: 'ベスト日本 単価（円/kg）',      note: '使ったかず(kg)にかける' },
+    { key: 'priceChina',   label: 'ベスト中国 単価（円/kg）',      note: '使ったかず(kg)にかける' },
+    { key: 'priceRainbow', label: 'レインボー 売値（円/kg）',      note: 'できたもの（通常）の重さにかける' },
+    { key: 'costRainbow',  label: 'レインボー 仕入値（円/kg）',    note: '使ったかず(kg)にかける' },
+  ];
+
+  let settings = loadSettings();
+  let reports = [];   // [{ date, data }]
+
+  function loadSettings() {
+    try {
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') };
+    } catch {
+      return { ...DEFAULT_SETTINGS };
+    }
+  }
+
+  function renderSettings() {
+    document.getElementById('settingsGrid').innerHTML = SETTING_FIELDS.map(f => `
+      <div>
+        <label for="set_${f.key}">${f.label}</label>
+        <input type="number" id="set_${f.key}" min="0" step="1" inputmode="numeric" value="${settings[f.key]}"
+          oninput="onSettingChange('${f.key}', this.value)">
+        <div class="settings-note">${f.note}</div>
+      </div>`).join('');
+  }
+
+  function onSettingChange(key, value) {
+    const n = parseFloat(value);
+    settings[key] = isNaN(n) ? 0 : n;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    render();
+  }
+
+  function resetSettings() {
+    settings = { ...DEFAULT_SETTINGS };
+    localStorage.removeItem(SETTINGS_KEY);
+    renderSettings();
+    render();
+  }
+
+  // ── 期間 ──
+  function isoDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function setMonth(year, monthIndex) {
+    document.getElementById('fromDate').value = isoDate(new Date(year, monthIndex, 1));
+    document.getElementById('toDate').value = isoDate(new Date(year, monthIndex + 1, 0));
+  }
+
+  function shiftMonth(delta) {
+    const from = new Date(`${document.getElementById('fromDate').value}T00:00:00`);
+    setMonth(from.getFullYear(), from.getMonth() + delta);
+    loadAndRender();
+  }
+
+  // ── 計算 ──
+  function formatDateJa(dateStr) {
+    const d = new Date(`${dateStr}T00:00:00`);
+    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+    return `${d.getMonth() + 1}/${d.getDate()}（${weekdays[d.getDay()]}）`;
+  }
+
+  function yen(n) {
+    return `${Math.round(n).toLocaleString('ja-JP')}円`;
+  }
+
+  function num1(n) {
+    return (Math.round(n * 10) / 10).toLocaleString('ja-JP');
+  }
+
+  function usedKgOf(b) {
+    const v = parseOnionNumber(b.usedCount);
+    if (v > 0) return v;
+    return b.sizeEntries ? calcOnionUsedKg(b.sizeEntries).kg : 0;
+  }
+
+  // レインボーの「できたもの（通常）」の重さ。旧形式（producedColumns）にも対応
+  function producedUsualKgOf(b) {
+    if (b.producedRows) return calcOnionProducedKg(b.producedRows).usual;
+    return (b.producedColumns ?? []).reduce((sum, c) => sum + parseOnionNumber(c.usual), 0);
+  }
+
+  // 日報1日×出荷先1つ分の収支
+  function calcRow(date, bi, b) {
+    const dest = ONION_BLOCK_TEMPLATES[bi].destination;
+    const isRainbow = dest === 'レインボー';
+    const usedKg = usedKgOf(b);
+    const producedKg = isRainbow ? producedUsualKgOf(b) : null;
+    const personHours = calcOnionPersonHours(b);
+
+    const price = dest === 'ベスト日本' ? settings.priceJapan
+      : dest === 'ベスト中国' ? settings.priceChina
+      : settings.priceRainbow;
+    const revenue = (isRainbow ? producedKg : usedKg) * price;
+    const material = isRainbow ? usedKg * settings.costRainbow : 0;
+    const labor = personHours * settings.wage;
+    const profit = revenue - material - labor;
+
+    const warnings = [];
+    if (personHours <= 0) warnings.push('時間・人数が未入力');
+    else if ((b.timeRows ?? []).some(r => r.start && r.end && !r.people)) warnings.push('人数が空の時間帯あり');
+    if (usedKg <= 0) warnings.push('使ったかずが未入力');
+    if (isRainbow && b.producedRows && calcOnionProducedKg(b.producedRows).missingWeight) warnings.push('重さが空のできたものあり');
+    if (isRainbow && producedKg <= 0) warnings.push('できたものが未入力');
+
+    return {
+      date, dest, sign: b.sign ?? '', usedKg, producedKg, personHours,
+      efficiency: personHours > 0 ? (isRainbow ? producedKg : usedKg) / personHours : null,
+      revenue, material, labor, profit, warnings,
+    };
+  }
+
+  function buildRows() {
+    const rows = [];
+    reports.forEach(r => ONION_EXPORT_COLUMN_ORDER.forEach(bi => {
+      const b = r.data?.blocks?.[bi];
+      if (onionBlockFilled(b)) rows.push(calcRow(r.date, bi, b));
+    }));
+    return rows;
+  }
+
+  // 損益分岐の作業効率(kg/人時)：レインボーは1kgできるごとの粗利（売値−仕入値÷歩留まり）が必要なため、期間の実績歩留まりで計算する
+  function breakEvenEfficiency(dest, agg) {
+    if (dest === 'ベスト日本') return settings.priceJapan > 0 ? settings.wage / settings.priceJapan : null;
+    if (dest === 'ベスト中国') return settings.priceChina > 0 ? settings.wage / settings.priceChina : null;
+    if (!agg || agg.producedKg <= 0) return null;
+    const marginPerKg = settings.priceRainbow - settings.costRainbow * (agg.usedKg / agg.producedKg);
+    return marginPerKg > 0 ? settings.wage / marginPerKg : null;
+  }
+
+  function aggregate(rows) {
+    const byDest = {};
+    const destOrder = ONION_EXPORT_COLUMN_ORDER.map(bi => ONION_BLOCK_TEMPLATES[bi].destination);
+    destOrder.forEach(d => { byDest[d] = { dest: d, days: 0, usedKg: 0, producedKg: 0, personHours: 0, revenue: 0, material: 0, labor: 0, profit: 0 }; });
+    rows.forEach(r => {
+      const a = byDest[r.dest];
+      // 中身が空の日報（サインだけ等）は日数に数えない
+      if (r.usedKg > 0 || r.personHours > 0) a.days += 1;
+      a.usedKg += r.usedKg;
+      a.producedKg += r.producedKg ?? 0;
+      a.personHours += r.personHours;
+      a.revenue += r.revenue;
+      a.material += r.material;
+      a.labor += r.labor;
+      a.profit += r.profit;
+    });
+    const list = destOrder.map(d => byDest[d]);
+    const total = list.reduce((t, a) => ({
+      revenue: t.revenue + a.revenue, material: t.material + a.material,
+      labor: t.labor + a.labor, profit: t.profit + a.profit, personHours: t.personHours + a.personHours,
+    }), { revenue: 0, material: 0, labor: 0, profit: 0, personHours: 0 });
+    list.forEach(a => {
+      const base = a.dest === 'レインボー' ? a.producedKg : a.usedKg;
+      a.efficiency = a.personHours > 0 ? base / a.personHours : null;
+      a.breakEven = breakEvenEfficiency(a.dest, a);
+    });
+    return { list, total };
+  }
+
+  // ── 表示 ──
+  function plusMinusClass(n) {
+    return n > 0 ? 'plus' : n < 0 ? 'minus' : '';
+  }
+
+  function render() {
+    const rows = buildRows();
+    const summaryEl = document.getElementById('summaryArea');
+    const dailyEl = document.getElementById('dailyArea');
+
+    if (!rows.length) {
+      summaryEl.innerHTML = '<div class="empty">この期間の日報はありません</div>';
+      dailyEl.innerHTML = '';
+      return;
+    }
+
+    const { list, total } = aggregate(rows);
+    const rate = total.revenue > 0 ? total.profit / total.revenue * 100 : null;
+
+    summaryEl.innerHTML = `
+      <div class="summary-tiles">
+        <div class="tile"><div class="tile-label">売上</div><div class="tile-value">${yen(total.revenue)}</div></div>
+        <div class="tile"><div class="tile-label">人件費</div><div class="tile-value">${yen(total.labor)}</div></div>
+        <div class="tile"><div class="tile-label">仕入（レインボー）</div><div class="tile-value">${yen(total.material)}</div></div>
+        <div class="tile"><div class="tile-label">利益</div><div class="tile-value ${plusMinusClass(total.profit)}">${yen(total.profit)}</div></div>
+        <div class="tile"><div class="tile-label">利益率</div><div class="tile-value ${plusMinusClass(total.profit)}">${rate == null ? '-' : rate.toFixed(1) + '%'}</div></div>
+      </div>
+      <div class="table-wrap"><table>
+        <tr><th>出荷先</th><th>日数</th><th>使ったかず(kg)</th><th>できたもの(kg)</th><th>延べ人時</th><th>作業効率(kg/人時)</th><th>損益分岐</th><th>売上</th><th>仕入</th><th>人件費</th><th>利益</th></tr>
+        ${list.map(a => `
+          <tr>
+            <td>${a.dest}</td>
+            <td>${a.days}</td>
+            <td>${num1(a.usedKg)}</td>
+            <td>${a.dest === 'レインボー' ? num1(a.producedKg) : '-'}</td>
+            <td>${num1(a.personHours)}</td>
+            <td class="${a.efficiency != null && a.breakEven != null ? (a.efficiency >= a.breakEven ? 'plus' : 'minus') : ''}">${a.efficiency == null ? '-' : num1(a.efficiency)}</td>
+            <td>${a.breakEven == null ? '-' : num1(a.breakEven)}</td>
+            <td>${yen(a.revenue)}</td>
+            <td>${a.dest === 'レインボー' ? yen(a.material) : '-'}</td>
+            <td>${yen(a.labor)}</td>
+            <td class="${plusMinusClass(a.profit)}">${yen(a.profit)}</td>
+          </tr>`).join('')}
+        <tr class="total">
+          <td>合計</td><td></td><td></td><td></td><td>${num1(total.personHours)}</td><td></td><td></td>
+          <td>${yen(total.revenue)}</td><td>${yen(total.material)}</td><td>${yen(total.labor)}</td>
+          <td class="${plusMinusClass(total.profit)}">${yen(total.profit)}</td>
+        </tr>
+      </table></div>`;
+
+    dailyEl.innerHTML = `
+      <div class="table-wrap"><table>
+        <tr><th>日付</th><th>出荷先</th><th>報告者</th><th>使ったかず(kg)</th><th>できたもの(kg)</th><th>延べ人時</th><th>作業効率</th><th>売上</th><th>仕入</th><th>人件費</th><th>利益</th><th>確認</th></tr>
+        ${rows.map(r => `
+          <tr>
+            <td>${formatDateJa(r.date)}</td>
+            <td class="text">${r.dest}</td>
+            <td class="text">${esc(r.sign)}</td>
+            <td>${num1(r.usedKg)}</td>
+            <td>${r.producedKg == null ? '-' : num1(r.producedKg)}</td>
+            <td>${num1(r.personHours)}</td>
+            <td>${r.efficiency == null ? '-' : num1(r.efficiency)}</td>
+            <td>${yen(r.revenue)}</td>
+            <td>${r.dest === 'レインボー' ? yen(r.material) : '-'}</td>
+            <td>${yen(r.labor)}</td>
+            <td class="${plusMinusClass(r.profit)}">${yen(r.profit)}</td>
+            <td class="warn">${r.warnings.length ? '⚠ ' + r.warnings.join('／') : ''}</td>
+          </tr>`).join('')}
+      </table></div>`;
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
+  // ── データ取得 ──
+  async function loadAndRender() {
+    const from = document.getElementById('fromDate').value;
+    const to = document.getElementById('toDate').value;
+    if (!from || !to) return;
+
+    const { data, error } = await supabaseClient
+      .from('onion_reports')
+      .select('date, data')
+      .gte('date', from)
+      .lte('date', to)
+      .order('date');
+
+    if (error) {
+      console.error(error);
+      document.getElementById('summaryArea').innerHTML = '<div class="empty">データの取得に失敗しました</div>';
+      document.getElementById('dailyArea').innerHTML = '';
+      return;
+    }
+    reports = data ?? [];
+    render();
+  }
+
+  // ── Excel出力 ──
+  function exportExcel() {
+    const rows = buildRows();
+    if (!rows.length) { alert('この期間の日報はありません'); return; }
+
+    const from = document.getElementById('fromDate').value;
+    const to = document.getElementById('toDate').value;
+    const { list, total } = aggregate(rows);
+    const r1 = n => Math.round(n * 10) / 10;
+    const r0 = n => Math.round(n);
+
+    const summary = [
+      ['玉ねぎ収支レポート'],
+      ['期間', `${from} 〜 ${to}`],
+      [],
+      ['計算の条件'],
+      ...SETTING_FIELDS.map(f => [f.label, settings[f.key]]),
+      [],
+      ['出荷先', '日数', '使ったかず(kg)', 'できたもの(kg)', '延べ人時', '作業効率(kg/人時)', '損益分岐(kg/人時)', '売上(円)', '仕入(円)', '人件費(円)', '利益(円)'],
+      ...list.map(a => [
+        a.dest, a.days, r1(a.usedKg), a.dest === 'レインボー' ? r1(a.producedKg) : '',
+        r1(a.personHours), a.efficiency == null ? '' : r1(a.efficiency), a.breakEven == null ? '' : r1(a.breakEven),
+        r0(a.revenue), a.dest === 'レインボー' ? r0(a.material) : '', r0(a.labor), r0(a.profit),
+      ]),
+      ['合計', '', '', '', r1(total.personHours), '', '', r0(total.revenue), r0(total.material), r0(total.labor), r0(total.profit)],
+      [],
+      ['利益率', total.revenue > 0 ? `${(total.profit / total.revenue * 100).toFixed(1)}%` : ''],
+    ];
+
+    const daily = [
+      ['日付', '出荷先', '報告者', '使ったかず(kg)', 'できたもの(kg)', '延べ人時', '作業効率(kg/人時)', '売上(円)', '仕入(円)', '人件費(円)', '利益(円)', '確認'],
+      ...rows.map(r => [
+        r.date, r.dest, r.sign, r1(r.usedKg), r.producedKg == null ? '' : r1(r.producedKg),
+        r1(r.personHours), r.efficiency == null ? '' : r1(r.efficiency),
+        r0(r.revenue), r.dest === 'レインボー' ? r0(r.material) : '', r0(r.labor), r0(r.profit), r.warnings.join('／'),
+      ]),
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const wsSummary = XLSX.utils.aoa_to_sheet(summary);
+    wsSummary['!cols'] = [{ wch: 26 }, { wch: 8 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsSummary, '集計');
+    const wsDaily = XLSX.utils.aoa_to_sheet(daily);
+    wsDaily['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 30 }];
+    XLSX.utils.book_append_sheet(wb, wsDaily, '日別明細');
+    XLSX.writeFile(wb, `玉ねぎ収支レポート_${from}_${to}.xlsx`);
+  }
+
+  (async () => {
+    const profile = await requireAuth('admin');
+    if (!profile) return;
+
+    renderSettings();
+
+    // 初期表示は最新の日報がある月
+    const { data: latest } = await supabaseClient
+      .from('onion_reports').select('date').order('date', { ascending: false }).limit(1);
+    const base = latest?.[0]?.date ? new Date(`${latest[0].date}T00:00:00`) : new Date();
+    setMonth(base.getFullYear(), base.getMonth());
+    await loadAndRender();
+  })();
+</script>
+</body>
+</html>
