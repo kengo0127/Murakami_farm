@@ -75,4 +75,3 @@ Deno.serve(async (req) => {
 
   return json({ error: 'unknown_action' }, 400)
 })
-

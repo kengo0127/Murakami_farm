@@ -180,8 +180,9 @@
         <input
           type="email"
           id="email"
+          name="email"
           placeholder="your@email.com"
-          autocomplete="email"
+          autocomplete="username"
           inputmode="email"
           required
         >
@@ -192,6 +193,7 @@
         <input
           type="password"
           id="password"
+          name="password"
           autocomplete="current-password"
           required
         >
@@ -278,6 +280,7 @@
       try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        await offerToSavePassword(email, password);
         await redirectByRole(data.user.id);
       } catch (err) {
         const msg = errorMessage(err.message);
@@ -287,6 +290,18 @@
         btn.textContent = d.login;
       }
     });
+
+    // ログインはJSで送信してページ遷移するため、ブラウザが「ログイン成功」と判定できず
+    // パスワード保存の案内が出ないことがある。対応ブラウザ（Chrome/Edge・Android）では
+    // 明示的に保存を依頼する。非対応（iPhoneのSafari等）や失敗時は何もせずログインを続ける
+    async function offerToSavePassword(email, password) {
+      if (!window.PasswordCredential || !navigator.credentials) return;
+      try {
+        await navigator.credentials.store(new PasswordCredential({ id: email, password, name: email }));
+      } catch (err) {
+        console.warn('パスワード保存の案内に失敗', err);
+      }
+    }
 
     async function redirectByRole(userId) {
       const { data: profile } = await supabaseClient

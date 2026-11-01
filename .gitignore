@@ -9,6 +9,13 @@ seed_customers.sql
 従業員R8.8.pdf
 migration_2026-08-30_kintai_staff.sql
 migration_2026-09-27b_staff_roster_data.sql
+migration_2026-09-27_staff_roster_vehicles.sql
+
+# クライアントのメールアドレスを含むため公開リポジトリにコミットしない
+migration_2026-08-30b_attendance_backup.sql
+
+# 圃場の地図など社内資料（GitHub Pagesで公開されるため）
+*.pptx
 
 # Python
 __pycache__/
