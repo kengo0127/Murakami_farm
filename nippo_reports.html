@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 - 作業日報レポート</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f7f0;
+      min-height: 100vh;
+      padding-bottom: 40px;
+      color: #222;
+    }
+
+    header {
+      background: #2e5c28;
+      color: #fff;
+      padding: 13px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-back {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .header-title { font-size: 17px; font-weight: 800; }
+
+    main { max-width: 980px; margin: 0 auto; padding: 16px 12px; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    .section-title { font-size: 15px; font-weight: 800; color: #245b85; margin-bottom: 10px; }
+
+    .period-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .period-row + .period-row { margin-top: 10px; }
+    .period-row input[type="date"], .period-row select {
+      padding: 8px 10px;
+      border: 1.5px solid #c8e0c4;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      background: #fff;
+    }
+    .period-label { font-size: 12px; font-weight: 700; color: #555; }
+
+    .btn {
+      padding: 9px 14px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      border: 1.5px solid #c8e0c4;
+      background: #fff;
+      color: #2e5c28;
+    }
+
+    .btn-primary { background: #2e5c28; color: #fff; border-color: #2e5c28; }
+    .btn.active { background: #245b85; color: #fff; border-color: #245b85; }
+    .btn:disabled { opacity: 0.6; cursor: default; }
+
+    .summary-tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .tile { background: #f4f8fc; border-radius: 10px; padding: 10px 12px; }
+    .tile-label { font-size: 11px; font-weight: 700; color: #777; }
+    .tile-value { font-size: 20px; font-weight: 800; margin-top: 2px; color: #123a5a; }
+
+    .table-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+    th, td { border-bottom: 1px solid #e6eee4; padding: 7px 8px; text-align: right; }
+    th { background: #f4f8f3; font-size: 12px; color: #555; position: sticky; top: 0; }
+    th:first-child, td:first-child, td.text, th.text { text-align: left; }
+    td.zero { color: #ccc; }
+    td.breakdown { text-align: left; white-space: normal; min-width: 220px; color: #444; }
+    tr.total td { font-weight: 800; background: #fafcf9; }
+    tr.day-head td { background: #eef5fb; font-weight: 800; color: #245b85; text-align: left; }
+    .name-link { color: #245b85; font-weight: 700; cursor: pointer; text-decoration: underline; }
+
+    .note { font-size: 12px; color: #777; margin-top: 8px; line-height: 1.7; }
+    .empty { text-align: center; color: #999; padding: 30px 10px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="btn-back" href="admin.html">← 管理画面</a>
+  <div class="header-title">🗓️ 作業日報レポート</div>
+</header>
+
+<main>
+  <div class="card">
+    <div class="section-title">期間</div>
+    <div class="period-row">
+      <button type="button" class="btn" id="modeWeekBtn" onclick="setMode('week')">週</button>
+      <button type="button" class="btn" id="modeMonthBtn" onclick="setMode('month')">月</button>
+      <button type="button" class="btn" onclick="shiftPeriod(-1)">◀ 前</button>
+      <input type="date" id="fromDate" onchange="onDateInput()">
+      <span>〜</span>
+      <input type="date" id="toDate" onchange="onDateInput()">
+      <button type="button" class="btn" onclick="shiftPeriod(1)">次 ▶</button>
+      <button type="button" class="btn btn-primary" onclick="exportExcel()" style="margin-left:auto;">📥 Excel出力</button>
+    </div>
+    <div class="period-row">
+      <span class="period-label">スタッフ</span>
+      <select id="staffFilter" onchange="render()"></select>
+    </div>
+    <div class="note">週は月曜〜日曜で区切ります。スタッフを選ぶと、その人の分だけを表示します。</div>
+  </div>
+
+  <div class="card">
+    <div class="summary-tiles" id="tilesArea"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">スタッフ別（作物ごとの作業時間）</div>
+    <div id="staffArea"><div class="empty">読み込み中...</div></div>
+    <div class="note">単位は時間（例：1.25 ＝ 1時間15分）。名前を押すと、その人だけの表示に切り替わります。</div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">作業別（だれが何時間）</div>
+    <div id="taskArea"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">日別の明細</div>
+    <div id="detailArea"></div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="js/supabase.js"></script>
+<script>
+  // スタッフ画面の「今日の作業報告（日報）」（daily_work_entries）を、週・月ごとに
+  // 「だれが・何を・何時間したか」で集計する管理者専用レポート。
+  // 作物の並び順はスタッフ画面の NIPPO_CROPS に合わせる（リストにない作物は後ろに並べる）
+  const CROP_ORDER = ['メロン', 'スイカ', 'こかぶ', '大根', 'その他'];
+  const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+
+  let mode = 'week';     // week / month / custom（日付を直接変えたとき）
+  let entries = [];      // その期間の全員分
+  let staffOrder = [];   // 社員リストの並び順（名前）
+
+  // ── 期間 ──
+  function isoDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function parseDate(s) { return new Date(`${s}T00:00:00`); }
+
+  function todayJst() {
+    return parseDate(new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0]);
+  }
+
+  // その日を含む週（月曜〜日曜）
+  function setWeek(base) {
+    const monday = new Date(base);
+    monday.setDate(base.getDate() - (base.getDay() + 6) % 7);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    document.getElementById('fromDate').value = isoDate(monday);
+    document.getElementById('toDate').value = isoDate(sunday);
+  }
+
+  function setMonthOf(base) {
+    document.getElementById('fromDate').value = isoDate(new Date(base.getFullYear(), base.getMonth(), 1));
+    document.getElementById('toDate').value = isoDate(new Date(base.getFullYear(), base.getMonth() + 1, 0));
+  }
+
+  function renderModeButtons() {
+    document.getElementById('modeWeekBtn').classList.toggle('active', mode === 'week');
+    document.getElementById('modeMonthBtn').classList.toggle('active', mode === 'month');
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const base = parseDate(document.getElementById('fromDate').value || isoDate(todayJst()));
+    if (mode === 'week') setWeek(base); else setMonthOf(base);
+    renderModeButtons();
+    loadAndRender();
+  }
+
+  function shiftPeriod(delta) {
+    const from = parseDate(document.getElementById('fromDate').value);
+    const to = parseDate(document.getElementById('toDate').value);
+    if (mode === 'month') {
+      setMonthOf(new Date(from.getFullYear(), from.getMonth() + delta, 1));
+    } else if (mode === 'week') {
+      from.setDate(from.getDate() + 7 * delta);
+      setWeek(from);
+    } else {
+      // 日付を直接選んだときは、同じ日数だけずらす
+      const days = Math.round((to - from) / 86400000) + 1;
+      from.setDate(from.getDate() + days * delta);
+      to.setDate(to.getDate() + days * delta);
+      document.getElementById('fromDate').value = isoDate(from);
+      document.getElementById('toDate').value = isoDate(to);
+    }
+    loadAndRender();
+  }
+
+  function onDateInput() {
+    mode = 'custom';
+    renderModeButtons();
+    loadAndRender();
+  }
+
+  // ── 表示用 ──
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
+  function toMin(t) {
+    const [h, m] = t.substring(0, 5).split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  // 分 → 時間（15分刻みなので小数2桁まで）
+  function hours(min) { return Math.round(min / 60 * 100) / 100; }
+
+  function hm(min) {
+    const h = Math.floor(min / 60), m = min % 60;
+    return m ? `${h}時間${m}分` : `${h}時間`;
+  }
+
+  function formatDateJa(dateStr) {
+    const d = parseDate(dateStr);
+    return `${d.getMonth() + 1}/${d.getDate()}（${WEEKDAYS[d.getDay()]}）`;
+  }
+
+  function sortByOrder(list, order) {
+    return [...list].sort((a, b) => {
+      const ia = order.indexOf(a), ib = order.indexOf(b);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib) || a.localeCompare(b, 'ja');
+    });
+  }
+
+  // ── 集計 ──
+  function filteredEntries() {
+    const staff = document.getElementById('staffFilter').value;
+    return staff ? entries.filter(e => e.staff_name === staff) : entries;
+  }
+
+  function aggregate(rows) {
+    const staffNames = sortByOrder([...new Set(rows.map(r => r.staff_name))], staffOrder);
+    const crops = sortByOrder([...new Set(rows.map(r => r.crop))], CROP_ORDER);
+
+    // スタッフ × 作物
+    const byStaff = staffNames.map(name => {
+      const mine = rows.filter(r => r.staff_name === name);
+      const perCrop = Object.fromEntries(crops.map(c => [c, 0]));
+      mine.forEach(r => { perCrop[r.crop] += r.minutes; });
+      return {
+        name, perCrop,
+        total: mine.reduce((s, r) => s + r.minutes, 0),
+        days: new Set(mine.map(r => r.work_date)).size,
+      };
+    });
+
+    // 作物・作業 × スタッフ
+    const taskMap = new Map();
+    rows.forEach(r => {
+      const key = `${r.crop}\u0000${r.task_name}`;
+      if (!taskMap.has(key)) taskMap.set(key, { crop: r.crop, task: r.task_name, total: 0, perStaff: {} });
+      const t = taskMap.get(key);
+      t.total += r.minutes;
+      t.perStaff[r.staff_name] = (t.perStaff[r.staff_name] ?? 0) + r.minutes;
+    });
+    const byTask = [...taskMap.values()].sort((a, b) =>
+      (CROP_ORDER.indexOf(a.crop) + 1 || 999) - (CROP_ORDER.indexOf(b.crop) + 1 || 999)
+      || a.crop.localeCompare(b.crop, 'ja') || b.total - a.total);
+
+    return { staffNames, crops, byStaff, byTask, total: rows.reduce((s, r) => s + r.minutes, 0) };
+  }
+
+  // ── 描画 ──
+  function renderStaffFilter() {
+    const sel = document.getElementById('staffFilter');
+    const current = sel.value;
+    const names = sortByOrder([...new Set(entries.map(e => e.staff_name))], staffOrder);
+    sel.innerHTML = `<option value="">全員</option>` + names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+    sel.value = names.includes(current) ? current : '';
+  }
+
+  function selectStaff(name) {
+    document.getElementById('staffFilter').value = name;
+    render();
+  }
+
+  function render() {
+    const rows = filteredEntries();
+    const agg = aggregate(rows);
+
+    document.getElementById('tilesArea').innerHTML = [
+      ['合計の作業時間', hm(agg.total)],
+      ['報告した人数', `${agg.staffNames.length}人`],
+      ['報告のあった日数', `${new Set(rows.map(r => r.work_date)).size}日`],
+      ['作業の件数', `${rows.length}件`],
+    ].map(([label, value]) => `<div class="tile"><div class="tile-label">${label}</div><div class="tile-value">${value}</div></div>`).join('');
+
+    if (!rows.length) {
+      document.getElementById('staffArea').innerHTML = '<div class="empty">この期間の日報はありません</div>';
+      document.getElementById('taskArea').innerHTML = '';
+      document.getElementById('detailArea').innerHTML = '';
+      return;
+    }
+
+    const cell = min => min ? `<td>${hours(min)}</td>` : '<td class="zero">-</td>';
+
+    // スタッフ別
+    const cropTotals = agg.crops.map(c => agg.byStaff.reduce((s, st) => s + st.perCrop[c], 0));
+    document.getElementById('staffArea').innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>名前</th>${agg.crops.map(c => `<th>${escapeHtml(c)}</th>`).join('')}<th>合計</th><th>出勤日数</th></tr></thead>
+      <tbody>
+        ${agg.byStaff.map(s => `<tr>
+          <td><span class="name-link" data-name="${escapeHtml(s.name)}">${escapeHtml(s.name)}</span></td>
+          ${agg.crops.map(c => cell(s.perCrop[c])).join('')}
+          <td><b>${hours(s.total)}</b></td><td>${s.days}日</td>
+        </tr>`).join('')}
+        ${agg.byStaff.length > 1 ? `<tr class="total"><td>合計</td>${cropTotals.map(cell).join('')}<td>${hours(agg.total)}</td><td></td></tr>` : ''}
+      </tbody></table></div>`;
+    document.querySelectorAll('#staffArea .name-link').forEach(el => el.onclick = () => selectStaff(el.dataset.name));
+
+    // 作業別
+    document.getElementById('taskArea').innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>作物</th><th class="text">作業</th><th>合計（時間）</th><th>人数</th><th class="text">内訳（時間）</th></tr></thead>
+      <tbody>
+        ${agg.byTask.map(t => {
+          const names = sortByOrder(Object.keys(t.perStaff), staffOrder);
+          return `<tr>
+            <td>${escapeHtml(t.crop)}</td><td class="text">${escapeHtml(t.task)}</td>
+            <td><b>${hours(t.total)}</b></td><td>${names.length}人</td>
+            <td class="breakdown">${names.map(n => `${escapeHtml(n)} ${hours(t.perStaff[n])}`).join('、')}</td>
+          </tr>`;
+        }).join('')}
+      </tbody></table></div>`;
+
+    // 日別の明細
+    const dates = [...new Set(rows.map(r => r.work_date))].sort();
+    document.getElementById('detailArea').innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>名前</th><th class="text">作物</th><th class="text">作業</th><th class="text">時間帯</th><th>時間</th></tr></thead>
+      <tbody>
+        ${dates.map(d => {
+          const dayRows = rows.filter(r => r.work_date === d);
+          const dayTotal = dayRows.reduce((s, r) => s + r.minutes, 0);
+          return `<tr class="day-head"><td colspan="4">${formatDateJa(d)}</td><td style="text-align:right">${hours(dayTotal)}</td></tr>`
+            + dayRows.map(r => `<tr>
+              <td>${escapeHtml(r.staff_name)}</td><td class="text">${escapeHtml(r.crop)}</td><td class="text">${escapeHtml(r.task_name)}</td>
+              <td class="text">${r.start_time.substring(0, 5)}〜${r.end_time.substring(0, 5)}</td><td>${hours(r.minutes)}</td>
+            </tr>`).join('');
+        }).join('')}
+      </tbody></table></div>`;
+  }
+
+  // ── 読み込み ──
+  async function loadAndRender() {
+    const from = document.getElementById('fromDate').value;
+    const to = document.getElementById('toDate').value;
+    if (!from || !to) return;
+
+    const { data, error } = await supabaseClient
+      .from('daily_work_entries')
+      .select('work_date, staff_name, crop, task_name, start_time, end_time')
+      .gte('work_date', from)
+      .lte('work_date', to)
+      .order('work_date')
+      .order('start_time');
+
+    if (error) {
+      console.error(error);
+      document.getElementById('staffArea').innerHTML = '<div class="empty">データの取得に失敗しました</div>';
+      return;
+    }
+    entries = sortEntries((data ?? []).map(e => ({ ...e, minutes: toMin(e.end_time) - toMin(e.start_time) })));
+    renderStaffFilter();
+    render();
+  }
+
+  // 明細は「日付 → 社員リスト順 → 開始時刻」で並べる
+  function sortEntries(list) {
+    const rank = name => { const i = staffOrder.indexOf(name); return i === -1 ? 999 : i; };
+    return [...list].sort((a, b) =>
+      a.work_date.localeCompare(b.work_date)
+      || rank(a.staff_name) - rank(b.staff_name)
+      || a.staff_name.localeCompare(b.staff_name, 'ja')
+      || a.start_time.localeCompare(b.start_time));
+  }
+
+  // ── Excel出力 ──
+  function exportExcel() {
+    const rows = filteredEntries();
+    if (!rows.length) { alert('この期間の日報はありません'); return; }
+
+    const from = document.getElementById('fromDate').value;
+    const to = document.getElementById('toDate').value;
+    const staff = document.getElementById('staffFilter').value;
+    const agg = aggregate(rows);
+
+    const staffSheet = [
+      ['作業日報レポート（スタッフ別・単位：時間）'],
+      ['期間', `${from} 〜 ${to}`, staff ? `スタッフ：${staff}` : ''],
+      [],
+      ['名前', ...agg.crops, '合計', '出勤日数'],
+      ...agg.byStaff.map(s => [s.name, ...agg.crops.map(c => hours(s.perCrop[c]) || ''), hours(s.total), s.days]),
+      ['合計', ...agg.crops.map(c => hours(agg.byStaff.reduce((sum, s) => sum + s.perCrop[c], 0)) || ''), hours(agg.total), ''],
+    ];
+
+    const taskSheet = [
+      ['作業日報レポート（作業別・単位：時間）'],
+      ['期間', `${from} 〜 ${to}`, staff ? `スタッフ：${staff}` : ''],
+      [],
+      ['作物', '作業', '合計', ...agg.staffNames],
+      ...agg.byTask.map(t => [t.crop, t.task, hours(t.total), ...agg.staffNames.map(n => t.perStaff[n] ? hours(t.perStaff[n]) : '')]),
+    ];
+
+    const detailSheet = [
+      ['日付', '曜日', '名前', '作物', '作業', '開始', '終了', '時間'],
+      ...rows.map(r => [
+        r.work_date, WEEKDAYS[parseDate(r.work_date).getDay()], r.staff_name, r.crop, r.task_name,
+        r.start_time.substring(0, 5), r.end_time.substring(0, 5), hours(r.minutes),
+      ]),
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws1 = XLSX.utils.aoa_to_sheet(staffSheet);
+    ws1['!cols'] = [{ wch: 14 }, ...agg.crops.map(() => ({ wch: 10 })), { wch: 10 }, { wch: 10 }];
+    XLSX.utils.book_append_sheet(wb, ws1, 'スタッフ別');
+    const ws2 = XLSX.utils.aoa_to_sheet(taskSheet);
+    ws2['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 8 }, ...agg.staffNames.map(() => ({ wch: 10 }))];
+    XLSX.utils.book_append_sheet(wb, ws2, '作業別');
+    const ws3 = XLSX.utils.aoa_to_sheet(detailSheet);
+    ws3['!cols'] = [{ wch: 12 }, { wch: 5 }, { wch: 14 }, { wch: 10 }, { wch: 18 }, { wch: 7 }, { wch: 7 }, { wch: 7 }];
+    XLSX.utils.book_append_sheet(wb, ws3, '明細');
+    XLSX.writeFile(wb, `作業日報_${from}_${to}${staff ? `_${staff}` : ''}.xlsx`);
+  }
+
+  (async () => {
+    const profile = await requireAuth('admin');
+    if (!profile) return;
+
+    const { data: staffList } = await supabaseClient.rpc('staff_sign_names');
+    staffOrder = (staffList ?? []).map(s => s.name);
+
+    setWeek(todayJst());
+    renderModeButtons();
+    await loadAndRender();
+  })();
+</script>
+</body>
+</html>
