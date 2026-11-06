@@ -984,6 +984,11 @@
 
     .onion-time-table { margin-bottom: 12px; }
 
+    .onion-time-hint { font-size: 12px; font-weight: 700; color: #5b4a9e; margin-bottom: 8px; }
+
+    .onion-time-row .t-start, .onion-time-row .t-end { font-size: 16px; font-weight: 700; }
+    .onion-time-row .t-start::placeholder, .onion-time-row .t-end::placeholder { color: #ccc; font-weight: 400; }
+
     .onion-time-header, .onion-time-row {
       display: grid;
       grid-template-columns: 1fr 1fr 60px 28px;
@@ -1898,18 +1903,40 @@
   let onionSignTab = null;
   let onionSelectedSign = '';
 
-  // 時刻セレクト用の選択肢（6:00〜20:00、10分刻み）
-  function onionTimeOptionsHtml(selected) {
-    let html = `<option value="">--</option>`;
-    for (let h = 6; h <= 20; h++) {
-      for (let m = 0; m < 60; m += 10) {
-        const hh = String(h).padStart(2, '0');
-        const mm = String(m).padStart(2, '0');
-        const v = `${hh}:${mm}`;
-        html += `<option value="${v}" ${v === selected ? 'selected' : ''}>${v}</option>`;
-      }
-    }
-    return html;
+  // 時刻の直接入力を HH:MM に整形する（830 / 1730 / 8:30 / 8 → 08:30 / 17:30 / 08:30 / 08:00）。
+  // 時刻として読めなければ null
+  function normalizeOnionTime(text) {
+    const s = String(text ?? '').trim().replace(/[０-９：．]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+    const m = s.match(/^(\d{1,2})(?:[:.]?(\d{2}))?$/);
+    if (!m) return null;
+    const h = Number(m[1]);
+    const min = Number(m[2] ?? 0);
+    if (h > 23 || min > 59) return null;
+    return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+  }
+
+  // 入力欄を離れたら整形して見せる。読めない入力はそのまま残し、保存前のチェックで知らせる
+  function formatOnionTimeInput(input) {
+    input.value = normalizeOnionTime(input.value) ?? input.value.trim();
+  }
+
+  // 時刻が読めない行、または終了が開始より後でない行があるか
+  function hasBadOnionTimeRow(timeRows) {
+    const isTime = v => /^\d{2}:\d{2}$/.test(v);
+    return timeRows.some(r =>
+      (r.start && !isTime(r.start)) || (r.end && !isTime(r.end)) || (r.start && r.end && r.end <= r.start));
+  }
+
+  function onionTimeRowHtml(r = {}) {
+    const attr = v => escapeHtml(String(v ?? ''));
+    const timeInput = (cls, v) => `<input type="text" inputmode="numeric" autocomplete="off" class="${cls}" placeholder="830" value="${attr(v)}" onchange="formatOnionTimeInput(this)">`;
+    return `
+      <div class="onion-time-row">
+        ${timeInput('t-start', r.start)}
+        ${timeInput('t-end', r.end)}
+        <input type="number" class="t-people" min="0" max="99" value="${attr(r.people)}">
+        <button type="button" class="btn-onion-remove-row" onclick="this.closest('.onion-time-row').remove()">×</button>
+      </div>`;
   }
 
   // ── 多言語対応（日本語 / インドネシア語 / クメール語） ──
@@ -1929,6 +1956,8 @@
       weightNotSet: '重さが入っていない荷姿があります', autoCalc: '自動計算',
       usedCount: 'つかったかず',
       timeSection: '時間と人数', start: '開始', end: '終了', people: '人数',
+      timeHint: '時刻は数字だけで入力できます（例：830 → 08:30、1730 → 17:30）',
+      timeInvalid: '時刻を確認してください。午後は 1730 のように24時間で入力し、終了は開始より後の時刻にしてください',
       addRow: '＋ 行を追加', condition: 'きょうのようす',
       produced: 'できたもの', prodDate: '使用日', prodContainer: 'コンテナ', usual: 'つうじょう', redo: 'やりなおし',
       prodCount: '個数', prodTotal: 'きょう作った出来高の合計', addProdDate: '＋ 使用日を追加', usedTotal: 'きょう使った数の合計',
@@ -1951,6 +1980,8 @@
       weightNotSet: 'Ada kemasan yang beratnya belum diisi', autoCalc: 'otomatis',
       usedCount: 'Jumlah yang digunakan',
       timeSection: 'Waktu dan Jumlah orang', start: 'Mulai', end: 'Selesai', people: 'Orang',
+      timeHint: 'Waktu bisa diisi dengan angka saja (contoh: 830 → 08:30, 1730 → 17:30)',
+      timeInvalid: 'Periksa kembali waktunya. Untuk sore hari gunakan format 24 jam seperti 1730, dan waktu selesai harus setelah waktu mulai',
       addRow: '＋ Tambah baris', condition: 'Kondisi hari ini',
       produced: 'Hasil', prodDate: 'Tanggal pakai', prodContainer: 'Kontainer', usual: 'Biasa', redo: 'Diulang',
       prodCount: 'Jumlah', prodTotal: 'Total hasil yang dibuat hari ini', addProdDate: '＋ Tambah tanggal pakai', usedTotal: 'Total yang digunakan hari ini',
@@ -1973,6 +2004,8 @@
       weightNotSet: 'មានការវេចខ្ចប់ដែលមិនទាន់បញ្ចូលទម្ងន់', autoCalc: 'គណនាស្វ័យប្រវត្តិ',
       usedCount: 'ចំនួនដែលបានប្រើ',
       timeSection: 'ពេលវេលា និង ចំនួនមនុស្ស', start: 'ចាប់ផ្តើម', end: 'បញ្ចប់', people: 'ចំនួនមនុស្ស',
+      timeHint: 'អាចបញ្ចូលម៉ោងជាលេខបាន (ឧទាហរណ៍៖ 830 → 08:30, 1730 → 17:30)',
+      timeInvalid: 'សូមពិនិត្យម៉ោងឡើងវិញ។ ពេលរសៀលសូមប្រើទម្រង់ 24 ម៉ោង ដូចជា 1730 ហើយម៉ោងបញ្ចប់ត្រូវនៅក្រោយម៉ោងចាប់ផ្តើម',
       addRow: '＋ បន្ថែមជួរ', condition: 'ស្ថានភាពថ្ងៃនេះ',
       produced: 'លទ្ធផល', prodDate: 'ថ្ងៃប្រើ', prodContainer: 'កុងតឺន័រ', usual: 'ធម្មតា', redo: 'ធ្វើឡើងវិញ',
       prodCount: 'ចំនួន', prodTotal: 'លទ្ធផលសរុបដែលបានធ្វើថ្ងៃនេះ', addProdDate: '＋ បន្ថែមថ្ងៃប្រើ', usedTotal: 'សរុបដែលបានប្រើថ្ងៃនេះ',
@@ -2272,14 +2305,7 @@
   }
 
   function addOnionTimeRow(bi) {
-    const rowHtml = `
-      <div class="onion-time-row">
-        <select class="t-start">${onionTimeOptionsHtml('')}</select>
-        <select class="t-end">${onionTimeOptionsHtml('')}</select>
-        <input type="number" class="t-people" min="0" max="99">
-        <button type="button" class="btn-onion-remove-row" onclick="this.closest('.onion-time-row').remove()">×</button>
-      </div>`;
-    document.getElementById(`onion-b${bi}-timerows-list`).insertAdjacentHTML('beforeend', rowHtml);
+    document.getElementById(`onion-b${bi}-timerows-list`).insertAdjacentHTML('beforeend', onionTimeRowHtml());
   }
 
   function renderOnionBlock(bi, block) {
@@ -2305,15 +2331,10 @@
 
         <div class="onion-section sec-time">
           <div class="onion-section-title">⏰ ${ot('timeSection')}</div>
+          <div class="onion-time-hint">${ot('timeHint')}</div>
           <div class="onion-time-header"><span>${ot('start')}</span><span>${ot('end')}</span><span>${ot('people')}</span><span></span></div>
           <div id="onion-b${bi}-timerows-list">
-            ${timeRows.map(r => `
-              <div class="onion-time-row">
-                <select class="t-start">${onionTimeOptionsHtml(r.start ?? '')}</select>
-                <select class="t-end">${onionTimeOptionsHtml(r.end ?? '')}</select>
-                <input type="number" class="t-people" min="0" max="99" value="${r.people ?? ''}">
-                <button type="button" class="btn-onion-remove-row" onclick="this.closest('.onion-time-row').remove()">×</button>
-              </div>`).join('')}
+            ${timeRows.map(onionTimeRowHtml).join('')}
           </div>
           <button type="button" class="btn-onion-add-row" onclick="addOnionTimeRow(${bi})">${ot('addRow')}</button>
         </div>
@@ -2528,8 +2549,8 @@
     const { kg: usedKg } = calcOnionUsedKg(sizeEntries);
 
     const timeRows = [...root.querySelectorAll('.onion-time-row')].map(row => ({
-      start: row.querySelector('.t-start').value,
-      end: row.querySelector('.t-end').value,
+      start: normalizeOnionTime(row.querySelector('.t-start').value) ?? row.querySelector('.t-start').value.trim(),
+      end: normalizeOnionTime(row.querySelector('.t-end').value) ?? row.querySelector('.t-end').value.trim(),
       people: row.querySelector('.t-people').value,
     }));
 
@@ -2571,6 +2592,7 @@
     const badCount = block.sizeEntries.some(e => e.packages.some(p =>
       ONION_MANUAL_WEIGHT_PACKAGES.includes(p.type) ? !(parseFloat(p.kg) > 0) : !(parseInt(p.count, 10) >= 1)));
     if (badCount) { alert(ot('pkgCountRequired')); return; }
+    if (hasBadOnionTimeRow(block.timeRows)) { alert(ot('timeInvalid')); return; }
     const badProduced = block.producedRows.some(r =>
       weightOnly ? !(parseFloat(r.kg) > 0) : !(parseInt(r.count, 10) >= 1));
     if (badProduced) { alert(ot(weightOnly ? 'prodWeightRequired' : 'prodCountRequired')); return; }
