@@ -288,6 +288,24 @@
     .mini-table tr:last-child td { border-bottom: none; }
     .mini-table .amount-cell { font-weight: 800; color: #1a3d17; }
 
+    /* 出荷状況：縦横にスクロールしても、見出しと日付は固定 */
+    .daily-table-wrap { max-height: 45vh; overflow: auto; }
+    .daily-table th { position: sticky; top: 0; z-index: 2; white-space: normal; min-width: 62px; }
+    .daily-table th:first-child, .daily-table td:first-child { position: sticky; left: 0; background: #fff; z-index: 1; }
+    .daily-table th:first-child { background: #f0f7ee; z-index: 3; }
+    .daily-table th.cat-melon  { background: #fff3e0; }
+    .daily-table th.cat-suika  { background: #fdeaea; }
+    .daily-table th.cat-veggie { background: #e8f5e9; }
+    .daily-table th.cat-onion  { background: #fff8e1; }
+    .daily-table th.cat-other, .daily-table th.cat-box { background: #eef1f5; }
+    .daily-table .daily-paypay { color: #c2185b; font-weight: 800; }
+    .daily-table .daily-unpaid { color: #999; }
+    .daily-table .daily-sub { font-size: 11px; color: #777; }
+    .daily-table .daily-qty { font-weight: 800; }
+    .daily-table .daily-empty { color: #ccc; }
+    .daily-table tr.daily-total td { background: #fffde7; font-weight: 800; }
+    .daily-table tr.daily-recent td { background: #f2f9f0; }
+
     .price-cell-btn {
       background: none;
       border: 1.5px dashed #c8e0c4;
@@ -1180,16 +1198,14 @@
 
 <div class="summary-panel collapsed" id="dailyPanel">
   <div class="summary-title" onclick="toggleSummaryPanel('dailyPanel')">
-    <span>📊 当日・前日の出荷状況</span>
+    <span>📊 当日・前日の出荷状況（この月の全履歴）</span>
     <span class="toggle-arrow">▶</span>
   </div>
   <div class="summary-body">
-    <table class="mini-table">
-      <thead>
-        <tr><th></th><th>3L</th><th>4L</th><th>5L</th><th>その他</th><th>売上合計</th></tr>
-      </thead>
-      <tbody id="dailySummaryBody"></tbody>
-    </table>
+    <div class="daily-table-wrap">
+      <table class="mini-table daily-table" id="dailySummaryTable"></table>
+    </div>
+    <p class="summary-note">※ 売上合計・PayPay・品目の個数と金額は「入金」にチェックがある行だけの集計です（日付は表の日付）。チェックのない行は右端の「未入金（参考）」に分けています。品目は、この月に売れたものだけを列に出します。前の月は、その月の表を開くと確認できます。</p>
   </div>
 </div>
 
@@ -2123,34 +2139,123 @@
     return d.toISOString().split('T')[0];
   }
 
-  function summarizeByDate(dateStr) {
-    const rows = entries.filter(e => e.entry_date === dateStr);
-    return {
-      qty3l: rows.reduce((s, e) => s + (e.qty_3l || 0), 0),
-      qty4l: rows.reduce((s, e) => s + (e.qty_4l || 0), 0),
-      qty5l: rows.reduce((s, e) => s + (e.qty_5l || 0), 0),
-      qtyOther: rows.reduce((s, e) => s + (e.qty_other || 0), 0),
-      totalSales: rows.reduce((s, e) => s + (e.total_amount || 0), 0),
-    };
+  // 1行に含まれる品目を、個数と金額に分けて返す（送料は品目に含めない）。
+  // 出荷状況の表と売上Excelの個数で共用する。金額の計算は salesBreakdown と同じ
+  const SALES_BOX_ITEMS = [
+    { qtyKey: 'box_2',           priceKey: 'box_unit_price_2',           label: 'メロン箱 2玉入' },
+    { qtyKey: 'box_35',          priceKey: 'box_unit_price_35',          label: 'メロン箱 3〜5入' },
+    { qtyKey: 'box_suika_1',     priceKey: 'box_unit_price_suika_1',     label: 'スイカ箱 1入' },
+    { qtyKey: 'box_suika_2',     priceKey: 'box_unit_price_suika_2',     label: 'スイカ箱 2入' },
+    { qtyKey: 'box_suika_plain', priceKey: 'box_unit_price_suika_plain', label: 'スイカ箱 無地' },
+  ];
+  const SALES_CATEGORY_ORDER = ['melon', 'suika', 'veggie', 'onion', 'other', 'box'];
+  const SALES_CUSTOM_RANK = 1000000; // 画面から追加した商品は、従来の品種の後ろに並べる
+
+  function salesItemLines(e) {
+    const lines = [];
+    let rank = 0;
+    [['melon', MELON_GROUPS], ['suika', SUIKA_GROUPS], ['veggie', VEGGIE_GROUPS]].forEach(([category, groups]) => {
+      groups.forEach(g => g.items.forEach(it => {
+        rank++;
+        const qty = e[it.qtyKey] || 0;
+        if (qty) lines.push({ key: it.qtyKey, category, rank, label: `${g.label}${it.label ? ` ${it.label}` : ''}`, unit: it.unit || '玉', qty, amount: qty * (e[it.priceKey] || 0) });
+      }));
+    });
+    entryExtraItems(e).filter(x => x.qty > 0).forEach(x => {
+      lines.push({ key: `custom:${x.item_id}`, category: x.category, rank: SALES_CUSTOM_RANK, label: x.name, unit: x.unit, qty: Number(x.qty), amount: x.amount || 0 });
+    });
+    const onionKg = Number(e.onion_kg) || 0;
+    if (onionKg) lines.push({ key: 'onion', category: 'onion', rank: 0, label: '玉ねぎ', unit: 'kg', qty: onionKg, amount: Math.round(onionKg * (e.onion_unit_price || 0)) });
+    if (e.qty_other) {
+      const label = e.other_label || 'その他';
+      lines.push({ key: `other:${label}`, category: 'other', rank: 0, label, unit: '個', qty: e.qty_other, amount: e.qty_other * (e.unit_price_other || 0) });
+    }
+    SALES_BOX_ITEMS.forEach((b, i) => {
+      const qty = e[b.qtyKey] || 0;
+      if (qty) lines.push({ key: b.qtyKey, category: 'box', rank: i, label: b.label, unit: '箱', qty, amount: qty * (e[b.priceKey] || 0) });
+    });
+    return lines;
   }
 
+  // 複数行を品目ごとに合計し、表示順に並べる
+  function salesItemTotals(list) {
+    const map = new Map();
+    list.forEach(e => salesItemLines(e).forEach(l => {
+      const a = map.get(l.key);
+      if (a) { a.qty += l.qty; a.amount += l.amount; } else map.set(l.key, { ...l });
+    }));
+    return [...map.values()].sort((a, b) =>
+      SALES_CATEGORY_ORDER.indexOf(a.category) - SALES_CATEGORY_ORDER.indexOf(b.category) || a.rank - b.rank);
+  }
+
+  // kgの足し算で出る端数（0.30000000000000004 など）を消す
+  function roundQty(q) {
+    return Math.round(q * 10) / 10;
+  }
+
+  function dailySummaryRowHTML(label, rows, columns, rowClass) {
+    const paidRows = rows.filter(e => e.paid);
+    const unpaidRows = rows.filter(e => !e.paid);
+    const sum = (list, get) => list.reduce((s, e) => s + (get(e) || 0), 0);
+    const total = sum(paidRows, e => e.total_amount);
+    const paypay = sum(paidRows.filter(e => paymentMethodOf(e) === 'paypay'), e => e.total_amount);
+    const items = new Map(salesItemTotals(paidRows).map(x => [x.key, x]));
+    const shipFee = sum(paidRows, e => e.shipping_fee);
+    const cell = (html, cls = '') => `<td class="${cls}">${html}</td>`;
+
+    return `
+      <tr class="${rowClass}">
+        <td>${label}</td>
+        ${cell(formatYen(total), 'amount-cell')}
+        ${cell(formatYen(paypay), 'daily-paypay')}
+        ${cell(formatYen(total - paypay))}
+        ${columns.map(c => {
+          const it = items.get(c.key);
+          return it
+            ? cell(`<div class="daily-qty">${roundQty(it.qty)}${escHtml(c.unit)}</div><div class="daily-sub">${formatYen(it.amount)}</div>`)
+            : cell('-', 'daily-empty');
+        }).join('')}
+        ${shipFee ? cell(formatYen(shipFee)) : cell('-', 'daily-empty')}
+        ${unpaidRows.length
+          ? cell(`<div>${unpaidRows.length}件</div><div class="daily-sub">${formatYen(sum(unpaidRows, e => e.total_amount))}</div>`, 'daily-unpaid')
+          : cell('-', 'daily-empty')}
+      </tr>`;
+  }
+
+  // 表示中の月の分を、新しい日付から順に全部出す（当日・前日は行がなくても出す）
   function renderDailySummary() {
     const todayStr = shiftedDateStr(0);
     const yesterdayStr = shiftedDateStr(-1);
-    const t = summarizeByDate(todayStr);
-    const y = summarizeByDate(yesterdayStr);
+    const monthPrefix = `${YEAR}-${String(MONTH).padStart(2, '0')}-`;
+    const dates = new Set(entries.map(e => e.entry_date || ''));
+    [todayStr, yesterdayStr].forEach(d => { if (d.startsWith(monthPrefix)) dates.add(d); });
+    // 日付未設定（''）は一番下
+    const sortedDates = [...dates].sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
 
-    document.getElementById('dailySummaryBody').innerHTML = `
-      <tr>
-        <td>当日（${formatDateJa(todayStr)}）</td>
-        <td>${t.qty3l}</td><td>${t.qty4l}</td><td>${t.qty5l}</td><td>${t.qtyOther}</td>
-        <td class="amount-cell">${formatYen(t.totalSales)}</td>
-      </tr>
-      <tr>
-        <td>前日（${formatDateJa(yesterdayStr)}）</td>
-        <td>${y.qty3l}</td><td>${y.qty4l}</td><td>${y.qty5l}</td><td>${y.qtyOther}</td>
-        <td class="amount-cell">${formatYen(y.totalSales)}</td>
-      </tr>`;
+    const columns = salesItemTotals(entries.filter(e => e.paid));
+    const dayLabel = d => {
+      if (!d) return '日付未設定';
+      const tag = d === todayStr ? '当日 ' : d === yesterdayStr ? '前日 ' : '';
+      return `${tag}${Number(d.slice(5, 7))}/${formatDateJa(d)}`;
+    };
+
+    document.getElementById('dailySummaryTable').innerHTML = `
+      <thead>
+        <tr>
+          <th></th><th>売上合計</th><th>うちPayPay</th><th>現金・振込ほか</th>
+          ${columns.map(c => `<th class="cat-${c.category}">${escHtml(c.label)}</th>`).join('')}
+          <th>送料</th><th>未入金（参考）</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${dailySummaryRowHTML(`${MONTH}月の合計`, entries, columns, 'daily-total')}
+        ${sortedDates.map(d => dailySummaryRowHTML(
+          dayLabel(d),
+          entries.filter(e => (e.entry_date || '') === d),
+          columns,
+          d === todayStr || d === yesterdayStr ? 'daily-recent' : '',
+        )).join('')}
+      </tbody>`;
   }
 
   // ── セル保存 ────────────────────────────────────────────
@@ -2782,7 +2887,7 @@
   // 手作業で作っていた売上表（EC売上表_インスタ/出力イメージとしての現行書式例）と同じ形で、
   //   ① 現金・領収書なし ② 現金・領収書あり ③ PayPay・領収書なし ④ PayPay・領収書あり ⑤ 発送
   // を、表示中の月の分だけ別々の.xlsxに出力する。PayPayは売上に手数料がかかるため、現金とは別に集計する
-  // （書式は①②と同じ）。
+  // （書式は①②と同じ）。①〜⑤の右側に区分ごとの個数を付け、⑥で①〜⑤を品目ごとの個数・金額に集計する。
   // 分類：「発送」にチェック → ⑤（入金前の振込待ちも含む）。それ以外は「入金」済みの行を
   //       支払い方法（現金／PayPay）と「領収書」のチェックで①〜④に分ける。支払い方法が未選択の行は現金として扱う。
   //       発送以外の振込・未入金の行は、どれにも含めない。
@@ -2799,7 +2904,10 @@
       build: (wb, list, title, tab) => buildSalesReceiptSheet(wb, list, title, 'PayPay', tab) },
     { key: 'ship',           label: '⑤ 発送',               file: '5_発送分',               tab: '⑤発送',
       build: buildSalesShipSheet },
+    { key: 'items',          label: '⑥ 品目別の個数・金額', file: '6_品目別集計',           tab: '⑥品目別集計',
+      build: buildSalesItemSheet },
   ];
+  const SALES_ITEMS_KEY = 'items'; // ⑥は行の分類ではなく、①〜⑤全部の集計
 
   function salesCategoryOf(e) {
     if (e.shipped) return 'ship';
@@ -2819,12 +2927,12 @@
     document.getElementById('salesModalTitle').textContent = `📊 売上Excel出力（${monthLabel(YEAR, MONTH)}分）`;
     document.getElementById('salesModalBody').innerHTML = `
       <button type="button" class="pos-wide-btn" style="margin-bottom:6px;background:#2e5c28;color:#fff;border-color:#2e5c28;" onclick="exportSales('all')">
-        ⬇ 5つまとめて出力（1つのファイル・5つのタブ）
+        ⬇ 6つまとめて出力（1つのファイル・6つのタブ）
       </button>
       <p class="summary-note" style="font-size:12px;margin:0 0 14px;">1つずつ出力するときは下のボタン</p>
       ${SALES_PATTERNS.map(p => `
         <button type="button" class="pos-wide-btn" style="margin-bottom:10px;text-align:left;" onclick="exportSales('${p.key}')">
-          ⬇ ${p.label}<span style="float:right;color:#888;font-size:14px;">${count(p.key)}件</span>
+          ⬇ ${p.label}<span style="float:right;color:#888;font-size:14px;">${p.key === SALES_ITEMS_KEY ? '①〜⑤の集計' : `${count(p.key)}件`}</span>
         </button>`).join('')}
       <p class="summary-note" style="font-size:12px;line-height:1.7;margin-bottom:12px;">
         ・①〜④：「発送」にチェックがなく、「入金」済みの行です。支払い方法と「領収書」のチェックで分けます（支払い方法が未選択の行は現金として扱います）。<br>
@@ -2844,12 +2952,12 @@
       alert('Excel出力の部品を読み込めませんでした。通信状態を確認して、ページを再読み込みしてください。');
       return;
     }
-    // 'all' は5パターンを1つのファイルに、タブを分けて出力する
+    // 'all' は全パターンを1つのファイルに、タブを分けて出力する
     const targets = key === 'all' ? SALES_PATTERNS : SALES_PATTERNS.filter(x => x.key === key);
     const title = `R${YEAR - 2018}.${MONTH}月分`;
     const wb = new ExcelJS.Workbook();
     targets.forEach(p => p.build(wb, salesEntries(p.key), title, p.tab));
-    const fileLabel = key === 'all' ? '売上_5パターン' : targets[0].file;
+    const fileLabel = key === 'all' ? '売上_まとめ' : targets[0].file;
     const buffer = await wb.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
@@ -2954,6 +3062,44 @@
     if (toCol > 1) ws.mergeCells(r, 1, r, toCol);
   }
 
+  // ①〜⑤の右側に付ける、区分ごとの個数の列（既存の金額の列はずらさない）
+  const XL_QTY_COLS = [
+    { category: 'melon',  label: 'メロン\n（個数）' },
+    { category: 'suika',  label: 'スイカ\n（個数）' },
+    { category: 'veggie', label: '野菜\n（個数）' },
+    { category: 'onion',  label: '玉ねぎ\n（kg）' },
+    { category: 'other',  label: 'その他\n（個数）' },
+    { category: 'box',    label: '箱\n（個数）' },
+  ];
+  const XL_QTY_WIDTHS = XL_QTY_COLS.map(() => 8);
+
+  function salesCategoryQty(e) {
+    const qty = {};
+    salesItemLines(e).forEach(l => { qty[l.category] = (qty[l.category] || 0) + l.qty; });
+    return qty;
+  }
+
+  function xlQtyHeader(ws, r, startCol) {
+    xlHeader(ws, r, startCol, XL_QTY_COLS.map(c => c.label));
+  }
+
+  // 0は空欄（数字のある所が見やすいように）。合計のSUMには影響しない
+  function xlQtyRow(ws, r, startCol, qty) {
+    XL_QTY_COLS.forEach((c, i) => xl(ws, r, startCol + i, qty[c.category] ? roundQty(qty[c.category]) : null));
+  }
+
+  function xlQtyAdd(sums, qty) {
+    XL_QTY_COLS.forEach(c => { sums[c.category] = (sums[c.category] || 0) + (qty[c.category] || 0); });
+  }
+
+  function xlQtySumRow(ws, r, startCol, first, last, sums) {
+    XL_QTY_COLS.forEach((c, i) => {
+      const L = xlCol(startCol + i);
+      const result = roundQty(sums[c.category] || 0);
+      xl(ws, r, startCol + i, last >= first ? { formula: `SUM(${L}${first}:${L}${last})`, result } : 0);
+    });
+  }
+
   function xlPageSetup(ws, orientation) {
     ws.pageSetup = {
       paperSize: 9, orientation, fitToPage: true, fitToWidth: 1, fitToHeight: 0,
@@ -2965,9 +3111,11 @@
   //    表ごとの小計、中旬の後に1日からの合計、下旬の後に月の総合合計を出す（現行の手作業の表と同じ構成）
   function buildSalesCashSheet(wb, list, title, method, tab) {
     const ws = wb.addWorksheet(tab);
-    ws.columns = [10, 14, 11, 11, 11, 11, 11, 11, 12, 2, 11, 11, 11, 10, 10, 12].map(width => ({ width }));
+    ws.columns = [10, 14, 11, 11, 11, 11, 11, 11, 12, 2, 11, 11, 11, 10, 10, 12, 2, ...XL_QTY_WIDTHS].map(width => ({ width }));
     xl(ws, 1, 3, `${title}　${method}売り上げ`, { border: false, size: 12, align: 'left' });
     xl(ws, 1, 11, '箱代・送料', { fill: 'FFE2EFDA' });
+    const QTY_START = 18;
+    xl(ws, 1, QTY_START, '売上個数', { fill: 'FFE2EFDA' });
 
     const HEAD_L = ['日付', '氏名様', 'メロン\n（税込）', 'スイカ\n（税込）', '野菜\n（税込）', '玉ねぎ\n（税込）', 'その他\n（税込）', '消費税\n（8％）', '合計金額\n（税込）'];
     const HEAD_R = ['メロン箱\n2玉入', 'メロン箱\n3〜5入', 'スイカ箱\n（税込）', '送料\n（税込）', '消費税\n（10％）', '合計金額\n（税込）'];
@@ -2977,15 +3125,18 @@
     const dayOf = e => e.entry_date ? Number(e.entry_date.slice(8, 10)) : 99; // 日付なしは下旬の表の最後
     const subtotalRows = [];
     const subtotalSums = [];
+    const qtySubtotals = [];
     let r = 3;
 
     BLOCKS.forEach((blk, bi) => {
       const rows = list.filter(e => dayOf(e) >= blk.from && dayOf(e) <= blk.to);
       xlHeader(ws, r, 1, HEAD_L);
       xlHeader(ws, r, 11, HEAD_R);
+      xlQtyHeader(ws, r, QTY_START);
       r++;
       const first = r;
       const sums = {};
+      const qtySums = {};
       AMOUNT_COLS.forEach(c => { sums[c] = 0; });
       let lastDate;
       rows.forEach(e => {
@@ -3003,6 +3154,9 @@
         xl(ws, r, 16, { formula: `SUM(K${r}:N${r})`, result: vals[16] }, { yen: true });
         xl(ws, r, 15, { formula: `ROUNDDOWN(P${r}*${b.r10}/(100+${b.r10}),0)`, result: vals[15] }, { yen: true });
         AMOUNT_COLS.forEach(c => { sums[c] += vals[c]; });
+        const qty = salesCategoryQty(e);
+        xlQtyRow(ws, r, QTY_START, qty);
+        xlQtyAdd(qtySums, qty);
         r++;
       });
       const last = r - 1;
@@ -3013,8 +3167,10 @@
         const value = rows.length ? { formula: `SUM(${L}${first}:${L}${last})`, result: sums[c] } : 0;
         xl(ws, r, c, value, { yen: true, fill: c === 8 || c === 15 ? XL_FILL_TAX : c === 9 ? XL_FILL_TOTAL : undefined });
       });
+      xlQtySumRow(ws, r, QTY_START, first, last, qtySums);
       subtotalRows.push(r);
       subtotalSums.push(sums);
+      qtySubtotals.push(qtySums);
       r++;
 
       // 中旬の後：1日からの合計、下旬の後：月の総合合計
@@ -3026,30 +3182,39 @@
           const fill = c === 8 || c === 15 ? XL_FILL_TAX : (c === 9 || (bi === 2 && c === 16)) ? XL_FILL_GRAND : undefined;
           xl(ws, r, c, { formula: subtotalRows.map(sr => `${L}${sr}`).join('+'), result }, { yen: true, fill });
         });
+        XL_QTY_COLS.forEach((qc, i) => {
+          const L = xlCol(QTY_START + i);
+          const result = roundQty(qtySubtotals.reduce((s, x) => s + (x[qc.category] || 0), 0));
+          xl(ws, r, QTY_START + i, { formula: subtotalRows.map(sr => `${L}${sr}`).join('+'), result });
+        });
         r++;
       }
       r += 2;
     });
-    xlPageSetup(ws, 'portrait');
+    xlPageSetup(ws, 'landscape');
   }
 
   // ② 現金・領収書あり：1行に「品名・税抜・消費税・税込」。箱代・送料は10%のため別の行にし、赤字で「10%」と書く
   function buildSalesReceiptSheet(wb, list, title, method, tab) {
     const ws = wb.addWorksheet(tab);
-    ws.columns = [10, 24, 18, 13, 12, 13, 6].map(width => ({ width }));
+    ws.columns = [10, 24, 18, 13, 12, 13, 6, 2, ...XL_QTY_WIDTHS].map(width => ({ width }));
     xl(ws, 1, 2, `${title}　${method}売上（領収書）`, { border: false, size: 12, align: 'left' });
     xlHeader(ws, 3, 1, ['日付', '氏名様', '品名', '金額\n（税抜）', '消費税\n（8％）', '合計金額\n（税込）']);
+    const QTY_START = 9;
+    xlQtyHeader(ws, 3, QTY_START);
 
     let r = 4;
     const sums = { ex: 0, tax: 0, inc: 0 };
+    const qtySums = {};
     let lastDate;
     list.forEach(e => {
       const b = salesBreakdown(e);
+      const { box: boxQty, ...productQty } = salesCategoryQty(e);
       const lines = [];
-      if (b.product > 0) lines.push({ name: salesItemName(e), inc: b.product, rate: b.r8, red: false });
+      if (b.product > 0) lines.push({ name: salesItemName(e), inc: b.product, rate: b.r8, red: false, qty: productQty });
       if (b.box + b.ship > 0) {
         const name = b.box && b.ship ? '箱代・送料' : b.box ? '箱代' : '送料';
-        lines.push({ name, inc: b.box + b.ship, rate: b.r10, red: true });
+        lines.push({ name, inc: b.box + b.ship, rate: b.r10, red: true, qty: { box: boxQty } });
       }
       lines.forEach(l => {
         const tax = salesTax(l.inc, l.rate);
@@ -3064,6 +3229,8 @@
         sums.ex += l.inc - tax;
         sums.tax += tax;
         sums.inc += l.inc;
+        xlQtyRow(ws, r, QTY_START, l.qty);
+        xlQtyAdd(qtySums, l.qty);
         r++;
       });
     });
@@ -3074,18 +3241,22 @@
       const L = xlCol(c);
       xl(ws, r, c, hasRows ? { formula: `SUM(${L}4:${L}${r - 1})`, result } : 0, { yen: true });
     });
-    xlPageSetup(ws, 'portrait');
+    xlQtySumRow(ws, r, QTY_START, 4, r - 1, qtySums);
+    xlPageSetup(ws, 'landscape');
   }
 
   // ⑤ 発送：依頼主・支払い方法・届け先・商品金額・箱代・送料・税・合計。右端に備考
   function buildSalesShipSheet(wb, list, title, tab) {
     const ws = wb.addWorksheet(tab);
-    ws.columns = [10, 16, 12, 12, 12, 10, 10, 10, 11, 10, 12, 30].map(width => ({ width }));
+    ws.columns = [10, 16, 12, 12, 12, 10, 10, 10, 11, 10, 12, 30, 2, ...XL_QTY_WIDTHS].map(width => ({ width }));
     xl(ws, 1, 4, `${title}売り上げ発送分`, { border: false, size: 12, align: 'left' });
     xlHeader(ws, 3, 1, ['日付', '依頼主様', '支払い', '届け先', '商品金額\n（税込）', '消費税\n8%', '箱代\n（税込）', '送料\n（税込）', '箱代+送料', '消費税\n（10％）', '合計', '備考']);
+    const QTY_START = 14;
+    xlQtyHeader(ws, 3, QTY_START);
 
     let r = 4;
     const sums = { 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0 };
+    const qtySums = {};
     let lastDate;
     list.forEach(e => {
       const b = salesBreakdown(e);
@@ -3108,6 +3279,9 @@
       xl(ws, r, 11, { formula: `E${r}+I${r}`, result: vals[11] }, { yen: true, color: payColor === XL_BLUE ? XL_BLUE : undefined });
       xl(ws, r, 12, e.note || '', { align: 'left', size: 9 });
       Object.keys(sums).forEach(c => { sums[c] += vals[c]; });
+      const qty = salesCategoryQty(e);
+      xlQtyRow(ws, r, QTY_START, qty);
+      xlQtyAdd(qtySums, qty);
       r++;
     });
 
@@ -3117,6 +3291,69 @@
       const L = xlCol(c);
       xl(ws, r, c, hasRows ? { formula: `SUM(${L}4:${L}${r - 1})`, result: sums[c] } : 0, { yen: true });
     });
+    xlQtySumRow(ws, r, QTY_START, 4, r - 1, qtySums);
+    xlPageSetup(ws, 'landscape');
+  }
+
+  // ⑥ 品目別の個数・金額：品目（アンデス 3L など）を行に、①〜⑤と合計を列にして集計する。
+  //    品目ごとに単位が違う（玉・kgなど）ため、個数の縦の合計は出さず、金額だけ合計する。
+  //    送料は品目ではないが、合計を①〜⑤と合わせるため最後の行に入れる
+  function buildSalesItemSheet(wb, _list, title, tab) {
+    const ws = wb.addWorksheet(tab);
+    const patterns = SALES_PATTERNS.filter(p => p.key !== SALES_ITEMS_KEY);
+    const lists = patterns.map(p => salesEntries(p.key));
+    const marks = patterns.map(p => p.label.charAt(0));
+    const firstQtyCol = 3;
+    const totalQtyCol = firstQtyCol + patterns.length * 2;
+    const totalAmountCol = totalQtyCol + 1;
+
+    ws.columns = [24, 6, ...patterns.flatMap(() => [8, 11]), 9, 12].map(width => ({ width }));
+    xl(ws, 1, 1, `${title}　品目別の個数・金額（税込）`, { border: false, size: 12, align: 'left' });
+    xl(ws, 2, 1, '①〜④は入金済みの行、⑤は発送の行すべて（入金前の振込待ちも含む）', { border: false, align: 'left' });
+    xlHeader(ws, 3, 1, ['品目', '単位', ...marks.flatMap(m => [`${m}個数`, `${m}金額`]), '合計\n個数', '合計\n金額']);
+
+    const perPattern = lists.map(list => new Map(salesItemTotals(list).map(x => [x.key, x])));
+    const items = salesItemTotals(lists.flat());
+    const amountCols = [...patterns.map((_, i) => firstQtyCol + i * 2 + 1), totalAmountCol];
+    const amountFormula = r => patterns.map((_, i) => `${xlCol(firstQtyCol + i * 2 + 1)}${r}`).join('+');
+    let r = 4;
+
+    items.forEach(item => {
+      xl(ws, r, 1, item.label, { align: 'left' });
+      xl(ws, r, 2, item.unit);
+      perPattern.forEach((map, i) => {
+        const x = map.get(item.key);
+        xl(ws, r, firstQtyCol + i * 2, x ? roundQty(x.qty) : null);
+        xl(ws, r, firstQtyCol + i * 2 + 1, x ? x.amount : null, { yen: true });
+      });
+      const qtyFormula = patterns.map((_, i) => `${xlCol(firstQtyCol + i * 2)}${r}`).join('+');
+      xl(ws, r, totalQtyCol, { formula: qtyFormula, result: roundQty(item.qty) }, { bold: true });
+      xl(ws, r, totalAmountCol, { formula: amountFormula(r), result: item.amount }, { yen: true, bold: true });
+      r++;
+    });
+
+    const shipFees = lists.map(list => list.reduce((s, e) => s + (e.shipping_fee || 0), 0));
+    xl(ws, r, 1, '送料', { align: 'left' });
+    xl(ws, r, 2, '');
+    shipFees.forEach((fee, i) => {
+      xl(ws, r, firstQtyCol + i * 2, null);
+      xl(ws, r, firstQtyCol + i * 2 + 1, fee || null, { yen: true });
+    });
+    xl(ws, r, totalQtyCol, null);
+    xl(ws, r, totalAmountCol, { formula: amountFormula(r), result: shipFees.reduce((s, x) => s + x, 0) }, { yen: true, bold: true });
+    const lastItemRow = r;
+    r++;
+
+    xlTotalLabel(ws, r, 2, '合計金額');
+    for (let c = firstQtyCol; c <= totalAmountCol; c++) {
+      if (!amountCols.includes(c)) { xl(ws, r, c, ''); continue; }
+      const L = xlCol(c);
+      const colIndex = (c - firstQtyCol - 1) / 2;
+      const result = c === totalAmountCol
+        ? items.reduce((s, x) => s + x.amount, 0) + shipFees.reduce((s, x) => s + x, 0)
+        : salesItemTotals(lists[colIndex]).reduce((s, x) => s + x.amount, 0) + shipFees[colIndex];
+      xl(ws, r, c, { formula: `SUM(${L}4:${L}${lastItemRow})`, result }, { yen: true, bold: true, fill: XL_FILL_GRAND });
+    }
     xlPageSetup(ws, 'landscape');
   }
 
