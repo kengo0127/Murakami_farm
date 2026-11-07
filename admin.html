@@ -82,6 +82,59 @@
       border-bottom-color: #81c784;
     }
 
+    /* ── メニュー（ログイン直後のカード画面） ── */
+    .tabs.hidden { display: none; }
+    .btn-home.hidden { display: none; }
+
+    .home-heading {
+      font-size: 15px;
+      font-weight: 800;
+      color: #1a3d17;
+      margin: 4px 2px 14px;
+    }
+
+    .home-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+
+    .home-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid #dce9dc;
+      border-radius: 14px;
+      padding: 18px 18px 16px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      color: #1a3d17;
+      text-decoration: none;
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+    }
+
+    .home-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(26,61,23,0.14);
+      border-color: #81c784;
+    }
+
+    .home-card-icon { font-size: 30px; line-height: 1; }
+    .home-card-title { font-size: 16px; font-weight: 800; }
+    .home-card-desc { font-size: 12px; color: #667; line-height: 1.5; }
+
+    @media (max-width: 540px) {
+      .home-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .home-card { padding: 14px 12px; }
+      .home-card-icon { font-size: 26px; }
+      .home-card-title { font-size: 14px; }
+      .home-card-desc { display: none; }
+    }
+
     /* ── Layout ── */
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -800,25 +853,65 @@
     <div class="header-right">
       <span id="userName"></span>
       <span class="admin-badge">管理者</span>
-      <a class="btn-logout" href="onion_reports.html" style="text-decoration:none">🧅 玉ねぎ日報</a>
-      <a class="btn-logout" href="onion_profit.html" style="text-decoration:none">💴 玉ねぎ収支</a>
-      <a class="btn-logout" href="nippo_reports.html" style="text-decoration:none">🗓️ 作業日報</a>
-      <a class="btn-logout" href="staff_qr.html" style="text-decoration:none">📱 スタッフ用QR</a>
+      <button class="btn-logout btn-home hidden" id="btnHome" onclick="showTab('home')">🏠 メニュー</button>
       <button class="btn-logout" onclick="logout()">ログアウト</button>
     </div>
   </div>
-  <div class="tabs">
+  <!-- 「タスクの指示」内のタブ（メニュー・勤怠の画面では非表示） -->
+  <div class="tabs hidden" id="taskTabs">
     <button class="tab-btn active" data-tab="register" onclick="showTab('register')">📝 タスク登録</button>
     <button class="tab-btn" data-tab="progress" onclick="showTab('progress')">📊 進捗確認</button>
     <button class="tab-btn" data-tab="reports" onclick="showTab('reports')">📋 自発報告</button>
     <button class="tab-btn" data-tab="export" onclick="showTab('export')">📥 データ出力</button>
-    <button class="tab-btn" data-tab="kintai" onclick="showTab('kintai')">⏰ 勤怠</button>
-    <a class="tab-btn" href="melon.html" style="text-decoration:none;text-align:center;">🍈 インスタ・EC</a>
   </div>
 </header>
 
+<!-- ── メニュー（ログイン直後の画面） ── -->
+<div id="tab-home" class="tab-content active">
+  <div class="container">
+    <div class="home-heading">メニュー</div>
+    <div class="home-grid">
+      <a class="home-card" href="nippo_reports.html">
+        <span class="home-card-icon">🗓️</span>
+        <span class="home-card-title">作業日報</span>
+        <span class="home-card-desc">スタッフの作業日報を確認</span>
+      </a>
+      <a class="home-card" href="onion_reports.html">
+        <span class="home-card-icon">🧅</span>
+        <span class="home-card-title">玉ねぎ日報</span>
+        <span class="home-card-desc">玉ねぎの日報を確認</span>
+      </a>
+      <a class="home-card" href="onion_profit.html">
+        <span class="home-card-icon">💴</span>
+        <span class="home-card-title">玉ねぎ収支</span>
+        <span class="home-card-desc">玉ねぎの収支を確認</span>
+      </a>
+      <a class="home-card" href="melon.html">
+        <span class="home-card-icon">🍈</span>
+        <span class="home-card-title">インスタ・EC</span>
+        <span class="home-card-desc">注文・出荷の管理</span>
+      </a>
+      <button type="button" class="home-card" onclick="showTab('kintai')">
+        <span class="home-card-icon">⏰</span>
+        <span class="home-card-title">勤怠</span>
+        <span class="home-card-desc">出退勤の記録・出勤簿</span>
+      </button>
+      <a class="home-card" href="staff_qr.html">
+        <span class="home-card-icon">📱</span>
+        <span class="home-card-title">スタッフ用QR</span>
+        <span class="home-card-desc">スタッフのログイン用QRコード</span>
+      </a>
+      <button type="button" class="home-card" onclick="showTab('register')">
+        <span class="home-card-icon">📝</span>
+        <span class="home-card-title">タスクの指示</span>
+        <span class="home-card-desc">タスク登録・進捗確認・自発報告・データ出力</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ── タスク登録タブ ── -->
-<div id="tab-register" class="tab-content active">
+<div id="tab-register" class="tab-content">
   <div class="container">
 
     <div class="date-bar">
@@ -1237,7 +1330,7 @@
   let currentProfile = null;
   let staffList = [];
   let editingTaskId = null;
-  let currentTab = 'register';
+  let currentTab = 'home';
 
   // 作業場所
   let locationType = 'house';       // 'house' | 'field'
@@ -1308,12 +1401,28 @@
   }
 
   // ── タブ切り替え ─────────────────────────────────────────
-  function showTab(tab) {
+  // home: メニュー / register〜export: 「タスクの指示」内のタブ / kintai: 勤怠
+  const TASK_TABS = ['register', 'progress', 'reports', 'export'];
+  const ALL_TABS  = ['home', ...TASK_TABS, 'kintai'];
+
+  function showTab(tab, { fromHistory = false } = {}) {
+    if (!ALL_TABS.includes(tab)) tab = 'home';
     currentTab = tab;
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(`tab-${tab}`).classList.add('active');
-    document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+    document.querySelector(`.tab-btn[data-tab="${tab}"]`)?.classList.add('active');
+    document.getElementById('taskTabs').classList.toggle('hidden', !TASK_TABS.includes(tab));
+    document.getElementById('btnHome').classList.toggle('hidden', tab === 'home');
+    window.scrollTo(0, 0);
+
+    // ブラウザの「戻る」でメニューに戻れるよう、URLの#に今の画面を記録
+    if (!fromHistory) {
+      const hash = tab === 'home' ? '' : `#${tab}`;
+      if (location.hash !== hash) {
+        history.pushState(null, '', location.pathname + location.search + hash);
+      }
+    }
 
     if (tab === 'progress') {
       updateNowDisplay();
@@ -3153,6 +3262,13 @@
     await loadTasks();
 
     scheduleAutoReload();
+
+    // リロード時はURLの#の画面を復元。ブラウザの戻る/進むでも切り替える
+    const initialTab = location.hash.slice(1);
+    if (initialTab && initialTab !== 'home') showTab(initialTab, { fromHistory: true });
+    window.addEventListener('popstate', () => {
+      showTab(location.hash.slice(1) || 'home', { fromHistory: true });
+    });
 
     // 進捗タブの時計
     setInterval(() => {
