@@ -1527,10 +1527,11 @@
     return unit === 'kg';
   }
 
-  // グラム単位（「100g」「g」など）：価格は「100gあたり」、数量はその何倍か（例：250g → 2.5）で保存する。
-  // 画面ではグラムで表示・入力する（250g）。グラム単位でなければ null
+  // グラム単位（「100g」「×100g」「100ｇ」「100グラム」「/100g」「g」など）：価格は「100gあたり」、
+  // 数量はその何倍か（例：250g → 2.5）で保存する。画面ではグラムで表示・入力する（250g）。グラム単位でなければ null
   function gramBase(unit) {
-    const m = String(unit || '').trim().match(/^(\d+(?:\.\d+)?)?\s*(g|ｇ|グラム)$/i);
+    const u = String(unit || '').normalize('NFKC').replace(/\s/g, '').replace(/^[×xX*/／]/, '');
+    const m = u.match(/^(\d+(?:\.\d+)?)?(g|グラム)$/i);
     if (!m) return null;
     return m[1] ? Number(m[1]) : 1;
   }
@@ -1549,7 +1550,8 @@
 
   // 価格の「/〇〇」の部分（グラム単位は「/100g」、それ以外は「/1玉」）
   function perUnitLabel(unit) {
-    return gramBase(unit) !== null ? unit : `1${unit}`;
+    const base = gramBase(unit);
+    return base !== null ? `${base}g` : `1${unit}`;
   }
 
   // 指定日時点の価格（適用日が指定日以前で最も新しいもの）。まだ販売開始前なら null
@@ -1577,7 +1579,7 @@
 
   function customPriceLabel(price, bundles, unit) {
     const b = bundleLabel(bundles, unit);
-    return `${formatYen(price)}/${unit}${b ? `（${b}）` : ''}`;
+    return `${formatYen(price)}/${gramBase(unit) !== null ? perUnitLabel(unit) : unit}${b ? `（${b}）` : ''}`;
   }
 
   function entryExtraItems(entry) {
@@ -1837,7 +1839,7 @@
         const price = entry[it.priceKey] ?? defaultPrice;
         const priceNote = price !== defaultPrice ? ` <span class="cell-sub-inline">@${price}円</span>` : '';
         const itemLabel = it.label ? ` ${it.label}` : '';
-        lines.push(`<div class="melon-size-line">${g.label}${itemLabel} ${qty}${it.unit || '玉'}${priceNote}</div>`);
+        lines.push(`<div class="melon-size-line">${g.label}${itemLabel} ${formatQtyUnit(qty, it.unit || '玉')}${priceNote}</div>`);
       });
     });
     entryExtraItems(entry).filter(x => x.category === colKey && x.qty > 0).forEach(x => {
@@ -3955,6 +3957,8 @@
       unit: item.unit || '玉',
       price: pos.prices[item.priceDefaultKey],
       isKg: false,
+      gramBase: gramBase(item.unit),
+      wholeUnits: true, // 表の列が整数のため、100g単位でしか数えられない
     };
   }
 
@@ -4066,7 +4070,7 @@
         </div>`;
       }).join('');
       posShowStep(`${item.name}：重さを選ぶ`, `
-        <p class="pos-step-note" style="margin:0 0 10px;">単価 ${formatYen(item.price)}/${escHtml(item.unit)}</p>
+        <p class="pos-step-note" style="margin:0 0 10px;">単価 ${formatYen(item.price)}/${base}g</p>
         <div class="pos-tile-grid cols-5">${tiles}</div>
         <div class="pos-direct-row">
           <input type="number" id="posDirectQty" inputmode="numeric" min="0" step="1" placeholder="それ以外は直接入力（g）">
@@ -4082,7 +4086,12 @@
 
   function posAddPendingDirect() {
     const raw = document.getElementById('posDirectQty').value;
-    const n = posPendingItem.gramBase ? Math.round(parseFloat(raw) / posPendingItem.gramBase * 1000) / 1000
+    const base = posPendingItem.gramBase;
+    if (base && posPendingItem.wholeUnits && parseFloat(raw) % base !== 0) {
+      alert(`${posPendingItem.name}は${base}g単位で入力してください`);
+      return;
+    }
+    const n = base ? Math.round(parseFloat(raw) / base * 1000) / 1000
       : posPendingItem.isKg ? Math.round(parseFloat(raw) * 10) / 10 : parseInt(raw, 10);
     if (!(n > 0)) { alert('数量を入力してください'); return; }
     posAddToCart(posPendingItem, n);
