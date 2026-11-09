@@ -34,6 +34,14 @@ function roundUpToHalfHour(d: Date): Date {
   return rounded
 }
 
+// その日の始業時間。始業時間が決まっているお手伝い先に外出した日はその時刻（JST）、それ以外は出勤打刻の30分切り上げ
+// admin.htmlのattendanceStartTime()と同じロジック
+function attendanceStartTime(r: { date: string; clock_in: string | null; fixed_start_time: string | null }): Date | null {
+  if (!r.clock_in) return null
+  if (r.fixed_start_time) return new Date(`${r.date}T${r.fixed_start_time.substring(0, 5)}:00+09:00`)
+  return roundUpToHalfHour(new Date(r.clock_in))
+}
+
 // 退勤打刻を15分単位で切り下げ、終業時間を求める（例: 17:14→17:00、17:29→17:15）
 // admin.htmlのroundDownToQuarterHour()と同じロジック
 function roundDownToQuarterHour(d: Date): Date {
@@ -54,7 +62,7 @@ Deno.serve(async () => {
 
   const { data, error } = await supabase
     .from('attendance_records')
-    .select('date, clock_in, clock_out, break_minutes, staff_id, kintai_staff(name, status, monthly_wage)')
+    .select('date, clock_in, clock_out, break_minutes, staff_id, help_destination_name, fixed_start_time, returned_at, kintai_staff(name, status, monthly_wage)')
     .eq('date', today)
 
   if (error) {
@@ -83,7 +91,7 @@ Deno.serve(async () => {
   }
 
   const MIN_WAGE = 1112
-  const dailyRows: (string | number)[][] = [['日付', 'スタッフ名', '出勤打刻', '始業時間(30分切上)', '退勤打刻', '終業時間(15分切下)', '休憩時間(分)', '労働時間(分)', '労働時間', '時給(円)', '賃金(円)']]
+  const dailyRows: (string | number)[][] = [['日付', 'スタッフ名', '出勤打刻', 'お手伝い先', '始業時間(30分切上／お手伝い先の始業)', '帰社打刻', '退勤打刻', '終業時間(15分切下)', '休憩時間(分)', '労働時間(分)', '労働時間', '時給(円)', '賃金(円)']]
   const staffTotals: Record<string, { status: string; days: number; totalMins: number; totalPay: number; hasPay: boolean; monthlyWage: number | null }> = {}
 
   for (const r of (data as any[]).slice().sort((a, b) => (a.kintai_staff?.name ?? '').localeCompare(b.kintai_staff?.name ?? '', 'ja'))) {
@@ -91,7 +99,7 @@ Deno.serve(async () => {
     const status = r.kintai_staff?.status ?? ''
     const clockInDate = r.clock_in ? new Date(r.clock_in) : null
     const clockOutDate = r.clock_out ? new Date(r.clock_out) : null
-    const startTime = clockInDate ? roundUpToHalfHour(clockInDate) : null
+    const startTime = attendanceStartTime(r)
     const endTime = clockOutDate ? roundDownToQuarterHour(clockOutDate) : null
     const breakMinutes = r.break_minutes ?? 0
 
@@ -105,7 +113,7 @@ Deno.serve(async () => {
       if (wage != null) pay = Math.round(wage * mins / 60)
     }
 
-    dailyRows.push([r.date, name, fmtHM(clockInDate), fmtHM(startTime), fmtHM(clockOutDate), fmtHM(endTime), r.break_minutes ?? '', mins, mins !== '' ? formatMinutesHM(mins as number) : '', wage ?? '', pay])
+    dailyRows.push([r.date, name, fmtHM(clockInDate), r.help_destination_name ?? '', fmtHM(startTime), fmtHM(r.returned_at ? new Date(r.returned_at) : null), fmtHM(clockOutDate), fmtHM(endTime), r.break_minutes ?? '', mins, mins !== '' ? formatMinutesHM(mins as number) : '', wage ?? '', pay])
 
     if (!staffTotals[name]) staffTotals[name] = { status, days: 0, totalMins: 0, totalPay: 0, hasPay: false, monthlyWage: r.kintai_staff?.monthly_wage ?? null }
     if (mins !== '') {
@@ -135,7 +143,7 @@ Deno.serve(async () => {
   const wb = XLSX.utils.book_new()
 
   const wsDaily = XLSX.utils.aoa_to_sheet(dailyRows)
-  wsDaily['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }]
+  wsDaily['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 18 }, { wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }]
   XLSX.utils.book_append_sheet(wb, wsDaily, '日別勤怠記録')
 
   const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows)

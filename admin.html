@@ -665,6 +665,31 @@
 
     .btn-delete:hover { background: #ffcdd2; }
 
+    /* ── お手伝い先の管理 ── */
+    .help-dest-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .help-dest-table th { font-size: 12px; color: #777; font-weight: 700; text-align: left; padding: 6px 6px; border-bottom: 1.5px solid #dde8dd; }
+    .help-dest-table td { padding: 8px 6px; border-bottom: 1px solid #eef3ee; vertical-align: middle; }
+    .help-dest-table tr.inactive td { opacity: 0.5; }
+    .help-dest-table input[type="text"], .help-dest-table select, .help-dest-add input[type="text"], .help-dest-add select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid #dde8dd;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fafffe;
+    }
+    .help-dest-order { display: flex; gap: 4px; }
+    .help-dest-order button {
+      width: 30px; height: 30px; border: 1.5px solid #dde8dd; border-radius: 6px;
+      background: #fff; cursor: pointer; font-size: 13px; color: #1a3d17;
+    }
+    .help-dest-order button:disabled { opacity: 0.3; cursor: default; }
+    .help-dest-add { display: grid; grid-template-columns: 2fr 1.4fr auto; gap: 8px; margin-top: 14px; align-items: center; }
+    .help-dest-note { font-size: 13px; color: #888; margin-bottom: 14px; line-height: 1.7; }
+    .staff-badge.out { background: #245b85; color: #fff; }
+    .staff-badge.out:hover { background: #1f4e79; }
+
     /* ── 社員リスト／バイクなど ── */
     .roster-switch {
       display: flex;
@@ -1119,7 +1144,7 @@
       <h2>📥 勤怠管理のエクスポート</h2>
       <p style="font-size:13px;color:#888;margin-bottom:16px;">
         指定した期間で、紙の出勤簿と同じフォーマットのExcelを出力します。従業員ごと・月ごとに1タブ（例：R8.2アリフ）で、1日1マスずつ出社・退社・休憩が埋まります。
-        始業は30分単位で切り上げ、終業は15分単位で切り下げた時刻を記載します。末尾に「日別勤怠記録」（打刻そのままの一覧・時給・賃金）と「スタッフ別集計」のタブも付きます。
+        始業は30分単位で切り上げ（始業時間が決まっているお手伝い先に外出した日はその時刻）、終業は15分単位で切り下げた時刻を記載します。末尾に「日別勤怠記録」（打刻そのままの一覧・時給・賃金）と「スタッフ別集計」のタブも付きます。
       </p>
       <div class="date-bar" style="margin-bottom:16px;">
         <label>開始日</label>
@@ -1164,6 +1189,22 @@
       </div>
     </div>
 
+    <!-- ── お手伝い先の管理 ── -->
+    <div class="form-card">
+      <h2>🚗 お手伝い先の管理</h2>
+      <div class="help-dest-note">
+        勤怠入力画面で「外出（お手伝い先）で出勤する」を押したときに選ぶお手伝い先です。<br>
+        始業時間を決めたお手伝い先は、打刻した時刻にかかわらず<b>その時刻を始業</b>とします。「決まっていない」は通常どおり打刻時刻から始業を求めます（30分切り上げ）。<br>
+        外出した人は「帰社」→「休憩」→「退勤」の順に押します。変更はすぐに保存されます（すでに記録された日の始業時間は変わりません）。
+      </div>
+      <div style="overflow-x:auto;"><div id="helpDestList"><div style="color:#999;">読み込み中...</div></div></div>
+      <div class="help-dest-add">
+        <input type="text" id="helpDestNewName" maxlength="30" placeholder="追加するお手伝い先の名前">
+        <select id="helpDestNewStart"></select>
+        <button type="button" class="btn-edit" style="padding:10px 16px;font-size:13px;" onclick="addHelpDestination()">＋ 追加</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1173,6 +1214,14 @@
     <div class="form-group">
       <label>出勤時刻</label>
       <select id="kintaiEditClockIn"></select>
+    </div>
+    <div class="form-group">
+      <label>お手伝い先（外出）</label>
+      <select id="kintaiEditHelpDest"></select>
+    </div>
+    <div class="form-group">
+      <label>帰社時刻</label>
+      <select id="kintaiEditReturned"></select>
     </div>
     <div class="form-group">
       <label>退勤時刻</label>
@@ -1419,6 +1468,14 @@
     return rounded;
   }
 
+  // その日の始業時間。始業時間が決まっているお手伝い先に外出した日はその時刻（打刻時刻と関係なく確定）、
+  // それ以外は出勤打刻を30分単位で切り上げる
+  function attendanceStartTime(r) {
+    if (!r.clock_in) return null;
+    if (r.fixed_start_time) return new Date(`${r.date}T${r.fixed_start_time.substring(0, 5)}:00`);
+    return roundUpToHalfHour(new Date(r.clock_in));
+  }
+
   // 退勤打刻を15分単位で切り下げ、終業時間を求める（例: 17:14→17:00、17:29→17:15）
   function roundDownToQuarterHour(date) {
     const rounded = new Date(date);
@@ -1475,6 +1532,7 @@
       loadNippoStatus();
     }
     if (tab === 'kintai') {
+      loadHelpDestinations();
       loadKintaiMissingList();
       loadKintaiStaffList();
       loadKintaiRecords();
@@ -1550,6 +1608,103 @@
       </div>` : ''}`;
     document.getElementById('nippoStatusUpdated').textContent =
       `${new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} 更新`;
+  }
+
+  // ── お手伝い先の管理 ──────────────────────────────────────
+  // 勤怠入力画面の「外出（お手伝い先）で出勤する」で選ぶお手伝い先（help_destinations）。変更はすぐ保存。
+  // 勤怠記録にはお手伝い先の名前・始業時間を写して保存しているため、ここを変えても記録済みの日は変わらない
+  let helpDestCache = [];
+
+  function helpStartOptionsHtml(selected) {
+    let html = `<option value="" ${!selected ? 'selected' : ''}>決まっていない（打刻時刻）</option>`;
+    for (let m = 5 * 60; m <= 12 * 60; m += 15) {
+      const v = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+      html += `<option value="${v}" ${v === selected ? 'selected' : ''}>${v} 始業</option>`;
+    }
+    return html;
+  }
+
+  async function loadHelpDestinations() {
+    const { data, error } = await supabaseClient
+      .from('help_destinations')
+      .select('id, name, start_time, active, sort_order')
+      .order('sort_order');
+    const el = document.getElementById('helpDestList');
+    if (error) {
+      console.error(error);
+      el.innerHTML = '<div style="color:#c62828;">お手伝い先の取得に失敗しました（migration_2026-11-09d_help_destinations.sql を実行済みか確認してください）</div>';
+      return;
+    }
+    helpDestCache = data ?? [];
+    renderHelpDestinations();
+  }
+
+  function renderHelpDestinations() {
+    const el = document.getElementById('helpDestList');
+    const newStart = document.getElementById('helpDestNewStart');
+    if (!newStart.options.length) newStart.innerHTML = helpStartOptionsHtml('08:00');
+    if (!helpDestCache.length) {
+      el.innerHTML = '<div style="color:#999;">お手伝い先はまだありません</div>';
+      return;
+    }
+    el.innerHTML = `<table class="help-dest-table">
+      <thead><tr><th>順番</th><th>お手伝い先</th><th>始業時間</th><th>使う</th><th></th></tr></thead>
+      <tbody>${helpDestCache.map((d, i) => `
+        <tr class="${d.active ? '' : 'inactive'}">
+          <td><div class="help-dest-order">
+            <button type="button" onclick="moveHelpDestination(${i}, -1)" ${i === 0 ? 'disabled' : ''}>↑</button>
+            <button type="button" onclick="moveHelpDestination(${i}, 1)" ${i === helpDestCache.length - 1 ? 'disabled' : ''}>↓</button>
+          </div></td>
+          <td style="min-width:150px;"><input type="text" maxlength="30" value="${escHtml(d.name)}" onchange="updateHelpDestination('${d.id}', { name: this.value.trim() }, this)"></td>
+          <td style="min-width:170px;"><select onchange="updateHelpDestination('${d.id}', { start_time: this.value || null })">${helpStartOptionsHtml(d.start_time ? d.start_time.substring(0, 5) : '')}</select></td>
+          <td><input type="checkbox" ${d.active ? 'checked' : ''} title="外したお手伝い先は勤怠入力画面に出ません" onchange="updateHelpDestination('${d.id}', { active: this.checked })" style="width:18px;height:18px;"></td>
+          <td><button type="button" class="btn-delete" onclick="deleteHelpDestination('${d.id}')">削除</button></td>
+        </tr>`).join('')}</tbody></table>`;
+  }
+
+  async function updateHelpDestination(id, fields, input) {
+    if ('name' in fields) {
+      if (!fields.name) { alert('名前を入力してください'); input.value = helpDestCache.find(d => d.id === id)?.name ?? ''; return; }
+      if (helpDestCache.some(d => d.id !== id && d.name === fields.name)) { alert(`「${fields.name}」はすでにあります`); input.value = helpDestCache.find(d => d.id === id)?.name ?? ''; return; }
+    }
+    const { error } = await supabaseClient.from('help_destinations').update(fields).eq('id', id);
+    if (error) { console.error(error); alert('保存に失敗しました'); }
+    await loadHelpDestinations();
+  }
+
+  async function addHelpDestination() {
+    const nameEl = document.getElementById('helpDestNewName');
+    const name = nameEl.value.trim();
+    if (!name) { alert('お手伝い先の名前を入力してください'); return; }
+    if (helpDestCache.some(d => d.name === name)) { alert(`「${name}」はすでにあります`); return; }
+    const startTime = document.getElementById('helpDestNewStart').value || null;
+    const sortOrder = Math.max(0, ...helpDestCache.map(d => d.sort_order)) + 1;
+    const { error } = await supabaseClient.from('help_destinations').insert({ name, start_time: startTime, sort_order: sortOrder });
+    if (error) { console.error(error); alert('追加に失敗しました'); return; }
+    nameEl.value = '';
+    await loadHelpDestinations();
+  }
+
+  async function deleteHelpDestination(id) {
+    const d = helpDestCache.find(x => x.id === id);
+    if (!d) return;
+    if (!confirm(`お手伝い先「${d.name}」を削除しますか？\n（これまでの勤怠記録のお手伝い先・始業時間はそのまま残ります。一時的に使わないだけなら「使う」のチェックを外してください）`)) return;
+    const { error } = await supabaseClient.from('help_destinations').delete().eq('id', id);
+    if (error) { console.error(error); alert('削除に失敗しました'); return; }
+    await loadHelpDestinations();
+  }
+
+  async function moveHelpDestination(index, delta) {
+    const to = index + delta;
+    if (to < 0 || to >= helpDestCache.length) return;
+    const list = [...helpDestCache];
+    [list[index], list[to]] = [list[to], list[index]];
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].sort_order === i + 1) continue;
+      const { error } = await supabaseClient.from('help_destinations').update({ sort_order: i + 1 }).eq('id', list[i].id);
+      if (error) { console.error(error); alert('並べ替えに失敗しました'); break; }
+    }
+    await loadHelpDestinations();
   }
 
   // ── 未出勤メンバー一覧（本日、出勤ボタンの押し忘れフォロー用） ──
@@ -2038,7 +2193,7 @@
 
     const { data, error } = await supabaseClient
       .from('attendance_records')
-      .select('id, staff_id, date, clock_in, clock_out, kintai_staff(name)')
+      .select('id, staff_id, date, clock_in, clock_out, help_destination_id, help_destination_name, fixed_start_time, returned_at, kintai_staff(name)')
       .eq('date', today);
 
     if (error) { console.error(error); return; }
@@ -2071,11 +2226,16 @@
           const name = r.kintai_staff?.name ?? '—';
           const clockInStr  = r.clock_in  ? fmtHM(new Date(r.clock_in))  : '—';
           const clockOutStr = r.clock_out ? fmtHM(new Date(r.clock_out)) : '—';
-          // 退勤がまだの人は色を分けて、出勤中だと一目で分かるようにする
+          // 退勤がまだの人は色を分けて、出勤中だと一目で分かるようにする（お手伝い先に外出中は青）
           const working = r.clock_in && !r.clock_out;
-          return `<button type="button" class="staff-badge${working ? ' working' : ''}"
-            title="出勤 ${clockInStr}　退勤 ${clockOutStr}"
-            onclick="openKintaiEditModal('${r.id}')">${escHtml(name)}</button>`;
+          const out = working && r.help_destination_name && !r.returned_at;
+          const helpStr = r.help_destination_name
+            ? `　外出 ${r.help_destination_name}${r.fixed_start_time ? `（始業 ${r.fixed_start_time.substring(0, 5)}）` : ''}`
+              + `　帰社 ${r.returned_at ? fmtHM(new Date(r.returned_at)) : '—'}`
+            : '';
+          return `<button type="button" class="staff-badge${out ? ' out' : working ? ' working' : ''}"
+            title="出勤 ${clockInStr}${escHtml(helpStr)}　退勤 ${clockOutStr}"
+            onclick="openKintaiEditModal('${r.id}')">${out ? '🚗 ' : ''}${escHtml(name)}</button>`;
         }).join('')}
       </div>`;
   }
@@ -2088,6 +2248,15 @@
     document.getElementById('kintaiEditTitle').textContent = `${r.kintai_staff?.name ?? ''}さん（${r.date}）の勤怠を修正`;
     document.getElementById('kintaiEditClockIn').innerHTML  = kintaiTimeOptionsHtml(r.clock_in  ? fmtHM(new Date(r.clock_in))  : '');
     document.getElementById('kintaiEditClockOut').innerHTML = kintaiTimeOptionsHtml(r.clock_out ? fmtHM(new Date(r.clock_out)) : '');
+    document.getElementById('kintaiEditReturned').innerHTML = kintaiTimeOptionsHtml(r.returned_at ? fmtHM(new Date(r.returned_at)) : '');
+    // お手伝い先：一覧から削除・停止されたお手伝い先の記録も、そのまま残せるようにする
+    const destOptions = [`<option value="">なし（村上農園で出勤）</option>`];
+    if (r.help_destination_name && !helpDestCache.some(d => d.id === r.help_destination_id && d.active)) {
+      destOptions.push(`<option value="__keep" selected>${escHtml(r.help_destination_name)}（そのまま）</option>`);
+    }
+    helpDestCache.filter(d => d.active).forEach(d => destOptions.push(
+      `<option value="${d.id}" ${d.id === r.help_destination_id ? 'selected' : ''}>${escHtml(d.name)}（${d.start_time ? `始業 ${d.start_time.substring(0, 5)}` : '打刻時刻で始業'}）</option>`));
+    document.getElementById('kintaiEditHelpDest').innerHTML = destOptions.join('');
     document.getElementById('kintaiEditMsg').textContent = '';
     document.getElementById('kintaiEditModalOverlay').classList.add('open');
   }
@@ -2103,11 +2272,27 @@
 
     const inVal  = document.getElementById('kintaiEditClockIn').value;
     const outVal = document.getElementById('kintaiEditClockOut').value;
+    const retVal = document.getElementById('kintaiEditReturned').value;
+    const destVal = document.getElementById('kintaiEditHelpDest').value;
     const msg = document.getElementById('kintaiEditMsg');
     msg.textContent = '';
 
     if (outVal && !inVal) { msg.textContent = '出勤時刻を入力してください'; return; }
     if (inVal && outVal && outVal <= inVal) { msg.textContent = '退勤時刻は出勤時刻より後にしてください'; return; }
+    if (retVal && !destVal) { msg.textContent = '帰社時刻はお手伝い先を選んだときだけ入力できます'; return; }
+    if (retVal && inVal && retVal < inVal) { msg.textContent = '帰社時刻は出勤時刻より後にしてください'; return; }
+    if (retVal && outVal && retVal > outVal) { msg.textContent = '帰社時刻は退勤時刻より前にしてください'; return; }
+
+    // お手伝い先：変えていなければ記録済みの名前・始業時間のまま。変えたら一覧の設定を写す
+    let help;
+    if (!destVal) {
+      help = { help_destination_id: null, help_destination_name: null, fixed_start_time: null };
+    } else if (destVal === '__keep' || destVal === r.help_destination_id) {
+      help = {};
+    } else {
+      const d = helpDestCache.find(x => x.id === destVal);
+      help = { help_destination_id: d.id, help_destination_name: d.name, fixed_start_time: d.start_time };
+    }
 
     const btn = document.getElementById('kintaiEditSaveBtn');
     btn.disabled = true;
@@ -2118,7 +2303,11 @@
 
     const { error } = await supabaseClient
       .from('attendance_records')
-      .update({ clock_in: clockIn, clock_out: clockOut, updated_at: new Date().toISOString() })
+      .update({
+        clock_in: clockIn, clock_out: clockOut, ...help,
+        returned_at: retVal ? new Date(`${r.date}T${retVal}:00`).toISOString() : null,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', r.id);
 
     btn.disabled = false;
@@ -2157,7 +2346,7 @@
 
     const { data, error } = await supabaseClient
       .from('attendance_records')
-      .select('date, clock_in, clock_out, break_minutes, staff_id, kintai_staff(name, status, monthly_wage, sort_order)')
+      .select('date, clock_in, clock_out, break_minutes, staff_id, help_destination_name, fixed_start_time, returned_at, kintai_staff(name, status, monthly_wage, sort_order)')
       .gte('date', from)
       .lte('date', to)
       .order('date')
@@ -2188,7 +2377,7 @@
       return applicable.reduce((latest, w) => (w.start_date > latest.start_date ? w : latest)).wage;
     }
 
-    const dailyRows = [['日付', 'スタッフ名', '出勤打刻', '始業時間(30分切上)', '退勤打刻', '終業時間(15分切下)', '休憩時間(分)', '労働時間(分)', '労働時間', '時給(円)', '賃金(円)']];
+    const dailyRows = [['日付', 'スタッフ名', '出勤打刻', 'お手伝い先', '始業時間(30分切上／お手伝い先の始業)', '帰社打刻', '退勤打刻', '終業時間(15分切下)', '休憩時間(分)', '労働時間(分)', '労働時間', '時給(円)', '賃金(円)']];
     const staffTotals = {}; // name -> { status, days, totalMins, totalPay }
     // 出勤簿シート用。key: スタッフ名 + 年月 → { name, sortOrder, year, month, days }
     const timesheets = new Map();
@@ -2204,7 +2393,7 @@
         const status = r.kintai_staff?.status ?? '';
         const clockInDate = r.clock_in ? new Date(r.clock_in) : null;
         const clockInStr  = clockInDate ? fmtHM(clockInDate) : '';
-        const startTime    = clockInDate ? roundUpToHalfHour(clockInDate) : null;
+        const startTime    = attendanceStartTime(r);
         const startTimeStr = startTime ? fmtHM(startTime) : '';
         const clockOutDate = r.clock_out ? new Date(r.clock_out) : null;
         const clockOutStr  = clockOutDate ? fmtHM(clockOutDate) : '';
@@ -2220,7 +2409,8 @@
           wage = getWageForDate(r.staff_id, r.date);
           if (wage != null) pay = Math.round(wage * mins / 60);
         }
-        dailyRows.push([r.date, name, clockInStr, startTimeStr, clockOutStr, endTimeStr, r.break_minutes ?? '', mins, mins !== '' ? formatMinutesHM(mins) : '', wage ?? '', pay]);
+        const returnedStr = r.returned_at ? fmtHM(new Date(r.returned_at)) : '';
+        dailyRows.push([r.date, name, clockInStr, r.help_destination_name ?? '', startTimeStr, returnedStr, clockOutStr, endTimeStr, r.break_minutes ?? '', mins, mins !== '' ? formatMinutesHM(mins) : '', wage ?? '', pay]);
 
         if (!staffTotals[name]) staffTotals[name] = { status, days: 0, totalMins: 0, totalPay: 0, hasPay: false, monthlyWage: r.kintai_staff?.monthly_wage ?? null };
         if (mins !== '') {
@@ -2274,7 +2464,7 @@
         buildTimesheetSheet(wb, uniqueSheetName(usedSheetNames, timesheetSheetName(ts)), ts);
       });
 
-    appendPlainSheet(wb, '日別勤怠記録', dailyRows, [12, 14, 10, 18, 10, 18, 12, 12, 12, 10, 12]);
+    appendPlainSheet(wb, '日別勤怠記録', dailyRows, [12, 14, 10, 18, 22, 10, 10, 18, 12, 12, 12, 10, 12]);
     appendPlainSheet(wb, 'スタッフ別集計', summaryRows, [14, 14, 10, 14, 14, 14, 12, 20]);
 
     await downloadWorkbook(wb, `村上農園_出勤簿_${from}_${to}.xlsx`);

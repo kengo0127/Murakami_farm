@@ -92,6 +92,9 @@
     .staff-btn.done { background: #e0e0e0; border-color: #bdbdbd; }
     .staff-btn.done .status-dot { color: #616161; }
 
+    .staff-btn.out { background: #dcebf7; border-color: #7fb0d8; }
+    .staff-btn.out .status-dot { color: #1f4e79; }
+
     .empty-state {
       text-align: center;
       padding: 60px 20px;
@@ -122,6 +125,7 @@
       color: #777;
       margin-bottom: 26px;
       line-height: 1.7;
+      white-space: pre-line;
     }
 
     .btn-clock {
@@ -142,6 +146,30 @@
     .btn-clock-in    { background: #2e5c28; color: #fff; }
     .btn-clock-out   { background: #c0392b; color: #fff; }
     .btn-clock-break { background: #e67e22; color: #fff; }
+    .btn-clock-help   { background: #245b85; color: #fff; font-size: 20px; padding: 20px; }
+    .btn-clock-return { background: #245b85; color: #fff; }
+
+    /* お手伝い先の選択 */
+    .help-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; max-height: 60vh; overflow-y: auto; }
+    .help-btn {
+      width: 100%;
+      padding: 16px;
+      background: #f4f8fc;
+      border: 2px solid #c9dcec;
+      border-radius: 14px;
+      font-size: 19px;
+      font-weight: 800;
+      color: #1f4e79;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .help-btn:active { background: #dcebf7; }
+    .help-btn:disabled { opacity: 0.5; cursor: default; }
+    .help-btn-start { font-size: 13px; font-weight: 700; color: #555; white-space: nowrap; }
     .btn-clock:disabled { background: #bbb; cursor: not-allowed; }
 
     .btn-time-select {
@@ -214,6 +242,7 @@
       font-weight: 800;
       color: #1a3d17;
       line-height: 1.6;
+      white-space: pre-line;
     }
 
     .loading-state {
@@ -360,6 +389,16 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="helpSelectModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title">お手伝い先をえらぶ（おてつだいさきをえらぶ）</div>
+    <div class="help-list" id="helpList"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-modal-cancel" onclick="closeHelpSelectModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="breakSelectModalOverlay">
   <div class="modal-sheet">
     <div class="modal-title">休憩時間をえらぶ（きゅうけいじかんをえらぶ）</div>
@@ -389,7 +428,8 @@
 
   let staffList = [];
   let currentStaff = null;
-  let currentRecord = null; // { id, clock_in, clock_out }
+  let currentRecord = null; // { id, clock_in, clock_out, break_minutes, help_destination_name, fixed_start_time, returned_at }
+  let helpDestinations = []; // お手伝い先（管理画面「お手伝い先の管理」で編集）
   let actionIdleTimer = null;
 
   function getToday() {
@@ -428,7 +468,7 @@
     // 本日の全員分の記録をまとめて取得し、状態表示に使う
     const { data: records } = await supabaseClient
       .from('attendance_records')
-      .select('staff_id, clock_in, clock_out')
+      .select('staff_id, clock_in, clock_out, help_destination_name, returned_at')
       .eq('date', getToday());
 
     const recordMap = {};
@@ -448,7 +488,8 @@
       const r = recordMap[s.id];
       let statusClass = '';
       let statusText = '未出勤（みしゅっきん）';
-      if (r?.clock_in && !r?.clock_out) { statusClass = 'working'; statusText = `出勤中（しゅっきんちゅう） ${fmtHM(r.clock_in)}〜`; }
+      if (r?.clock_in && !r?.clock_out && isOut(r)) { statusClass = 'out'; statusText = `外出中（がいしゅつちゅう） ${escapeHtml(r.help_destination_name)}`; }
+      else if (r?.clock_in && !r?.clock_out) { statusClass = 'working'; statusText = `出勤中（しゅっきんちゅう） ${fmtHM(r.clock_in)}〜`; }
       else if (r?.clock_in && r?.clock_out) { statusClass = 'done'; statusText = `退勤済み（たいきんずみ） ${fmtHM(r.clock_out)}`; }
 
       return `
@@ -478,11 +519,31 @@
   async function refreshCurrentRecord() {
     const { data } = await supabaseClient
       .from('attendance_records')
-      .select('id, clock_in, clock_out, break_minutes')
+      .select('id, clock_in, clock_out, break_minutes, help_destination_name, fixed_start_time, returned_at')
       .eq('staff_id', currentStaff.id)
       .eq('date', getToday())
       .maybeSingle();
     currentRecord = data ?? null;
+  }
+
+  // 外出（お手伝い先）中＝お手伝い先を選んで出勤し、まだ帰社していない
+  function isOut(r) { return !!r?.help_destination_name && !r?.returned_at; }
+
+  function escapeHtml(v) {
+    return String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
+  // 出勤・お手伝い先・帰社・休憩の状態を1つの文にまとめる
+  function recordStatusText(r) {
+    let text = `出勤（しゅっきん）：${fmtHM(r.clock_in)}`;
+    if (r.help_destination_name) {
+      text += `\n外出（がいしゅつ）：${r.help_destination_name}`
+        + (r.fixed_start_time ? `（始業 ${r.fixed_start_time.substring(0, 5)}）` : '');
+    }
+    if (r.returned_at) text += `\n帰社（きしゃ）：${fmtHM(r.returned_at)}`;
+    if (r.clock_out) text += `\n退勤（たいきん）：${fmtHM(r.clock_out)}`;
+    if (r.break_minutes) text += `\n休憩（きゅうけい）：${r.break_minutes}分`;
+    return text;
   }
 
   function renderActionView() {
@@ -493,26 +554,33 @@
       statusEl.textContent = 'まだ本日の記録（きろく）はありません';
       btnsEl.innerHTML = `
         <button type="button" class="btn-clock btn-clock-in" id="clockInBtn" onclick="handleClockIn()">🟢 出勤する（しゅっきんする）</button>
+        ${helpDestinations.length ? `<button type="button" class="btn-clock btn-clock-help" onclick="openHelpSelectModal()">🚗 外出（お手伝い先）で出勤する<br><span style="font-size:14px;">（がいしゅつ・おてつだいさきで しゅっきんする）</span></button>` : ''}
         <div class="clock-in-note">出勤は押した時刻で記録されます。押し忘れたときは管理者に伝えてください<br>（しゅっきんは おした じこくで きろくされます。おしわすれたときは かんりしゃに つたえてください）</div>`;
+    } else if (currentRecord.clock_in && !currentRecord.clock_out && isOut(currentRecord)) {
+      // 外出中：次は「帰社」
+      statusEl.textContent = recordStatusText(currentRecord);
+      btnsEl.innerHTML = `
+        <button type="button" class="btn-clock btn-clock-return" id="returnBtn" onclick="handleReturn()">🏠 帰社する（きしゃする）</button>
+        <button type="button" class="action-cancel-link" onclick="handleCancelClockIn()">出勤の記録を取り消す（とりけす）</button>`;
     } else if (currentRecord.clock_in && !currentRecord.clock_out) {
-      const breakMinutes = currentRecord.break_minutes;
-      statusEl.textContent = `出勤（しゅっきん）：${fmtHM(currentRecord.clock_in)}` +
-        (breakMinutes ? `　休憩（きゅうけい）：${breakMinutes}分` : '');
-      if (breakMinutes) {
+      statusEl.textContent = recordStatusText(currentRecord);
+      // 帰社した人は「帰社の取消」、それ以外は「出勤の取消」
+      const cancelLink = currentRecord.returned_at
+        ? `<button type="button" class="action-cancel-link" onclick="handleCancelReturn()">帰社の記録を取り消す（とりけす）</button>`
+        : `<button type="button" class="action-cancel-link" onclick="handleCancelClockIn()">出勤の記録を取り消す（とりけす）</button>`;
+      if (currentRecord.break_minutes) {
         btnsEl.innerHTML = `
           <button type="button" class="btn-clock btn-clock-out" id="clockOutBtn" onclick="handleClockOut()">🔴 退勤する（たいきんする）</button>
           <button type="button" class="btn-time-select" onclick="openBreakSelectModal()">☕ 休憩時間を変更する（へんこうする）</button>
           <button type="button" class="btn-time-select" onclick="openTimeSelectModal('clockOut')">🕐 退勤時間を選択する（せんたくする）</button>
-          <button type="button" class="action-cancel-link" onclick="handleCancelClockIn()">出勤の記録を取り消す（とりけす）</button>`;
+          ${cancelLink}`;
       } else {
         btnsEl.innerHTML = `
           <button type="button" class="btn-clock btn-clock-break" id="breakSelectBtn" onclick="openBreakSelectModal()">☕ 休憩時間をえらぶ（えらぶ）</button>
-          <button type="button" class="action-cancel-link" onclick="handleCancelClockIn()">出勤の記録を取り消す（とりけす）</button>`;
+          ${cancelLink}`;
       }
     } else {
-      statusEl.textContent = `出勤（しゅっきん）：${fmtHM(currentRecord.clock_in)}　退勤（たいきん）：${fmtHM(currentRecord.clock_out)}` +
-        (currentRecord.break_minutes ? `　休憩（きゅうけい）：${currentRecord.break_minutes}分` : '') +
-        `\n本日の記録は完了しています`;
+      statusEl.textContent = recordStatusText(currentRecord) + `\n本日の記録は完了しています`;
       btnsEl.innerHTML = `<button type="button" class="action-cancel-link" onclick="handleCancelClockOut()">退勤の記録を取り消す（とりけす）</button>`;
     }
   }
@@ -679,6 +747,95 @@
     resetActionIdleTimer();
   }
 
+  // ── お手伝い先（外出）・帰社 ─────────────────────────────
+  async function loadHelpDestinations() {
+    const { data, error } = await supabaseClient
+      .from('help_destinations')
+      .select('id, name, start_time')
+      .eq('active', true)
+      .order('sort_order');
+    if (error) { console.error(error); return; }
+    helpDestinations = data ?? [];
+  }
+
+  function openHelpSelectModal() {
+    clearActionIdleTimer(); // モーダル操作中に名前一覧へ戻されないようにする
+    document.getElementById('helpList').innerHTML = helpDestinations.map(d => `
+      <button type="button" class="help-btn" onclick="handleClockInHelp('${d.id}')">
+        <span>${escapeHtml(d.name)}</span>
+        <span class="help-btn-start">${d.start_time ? `始業 ${d.start_time.substring(0, 5)}` : '押した時刻で始業'}</span>
+      </button>`).join('');
+    document.getElementById('helpSelectModalOverlay').classList.add('open');
+  }
+
+  function closeHelpSelectModal() {
+    document.getElementById('helpSelectModalOverlay').classList.remove('open');
+    resetActionIdleTimer();
+  }
+
+  // お手伝い先を選んで出勤。出勤時刻は押した時刻、始業時間はお手伝い先の設定で確定する
+  // （名前・始業時間はデータベース側でお手伝い先の一覧から写す）
+  async function handleClockInHelp(destId) {
+    const dest = helpDestinations.find(d => d.id === destId);
+    if (!dest) return;
+    document.querySelectorAll('.help-btn').forEach(b => b.disabled = true);
+
+    const now = new Date();
+    const { error } = await supabaseClient
+      .from('attendance_records')
+      .insert({ staff_id: currentStaff.id, date: getToday(), clock_in: now.toISOString(), help_destination_id: dest.id });
+
+    document.querySelectorAll('.help-btn').forEach(b => b.disabled = false);
+    if (error) {
+      alert('記録に失敗しました。もう一度お試しください。');
+      console.error(error);
+      return;
+    }
+
+    document.getElementById('helpSelectModalOverlay').classList.remove('open');
+    showFeedback('🚗', `${currentStaff.name}さん\n外出（${dest.name}）で出勤を記録しました（${fmtHM(now)}）`
+      + (dest.start_time ? `\n始業 ${dest.start_time.substring(0, 5)}` : ''));
+  }
+
+  async function handleReturn() {
+    const btn = document.getElementById('returnBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '記録中（きろくちゅう）...'; }
+
+    const now = new Date();
+    const { error } = await supabaseClient
+      .from('attendance_records')
+      .update({ returned_at: now.toISOString(), updated_at: now.toISOString() })
+      .eq('id', currentRecord.id);
+
+    if (error) {
+      alert('記録に失敗しました。もう一度お試しください。');
+      console.error(error);
+      if (btn) { btn.disabled = false; btn.textContent = '🏠 帰社する（きしゃする）'; }
+      return;
+    }
+
+    showFeedback('🏠', `${currentStaff.name}さん\nおかえりなさい。帰社を記録しました（${fmtHM(now)}）`);
+  }
+
+  async function handleCancelReturn() {
+    if (!confirm('帰社の記録を取り消しますか？')) { resetActionIdleTimer(); return; }
+
+    const { error } = await supabaseClient
+      .from('attendance_records')
+      .update({ returned_at: null })
+      .eq('id', currentRecord.id);
+
+    if (error) {
+      alert('取消に失敗しました。');
+      console.error(error);
+      return;
+    }
+
+    await refreshCurrentRecord();
+    renderActionView();
+    resetActionIdleTimer();
+  }
+
   // ── 出勤・退勤処理 ──────────────────────────────────────
   async function handleClockIn() {
     const btn = document.getElementById('clockInBtn');
@@ -765,9 +922,9 @@
     updateClock();
     setInterval(updateClock, 30000);
 
-    await loadStaffList();
+    await Promise.all([loadStaffList(), loadHelpDestinations()]);
     // 他のタブレット操作や日付をまたいだ変化に追従するため定期的に一覧を再取得
-    setInterval(() => { if (!currentStaff) loadStaffList(); }, 30000);
+    setInterval(() => { if (!currentStaff) { loadStaffList(); loadHelpDestinations(); } }, 30000);
 
     // アクション画面での操作でアイドルタイマーをリセット
     document.getElementById('actionView').addEventListener('click', () => {
