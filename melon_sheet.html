@@ -678,6 +678,50 @@
     .pos-cat-btn:active { background: #f1f8ef; border-color: #43a047; }
     .pos-cat-icon { font-size: 44px; line-height: 1.1; display: block; }
     .pos-cat-label { font-size: 15px; font-weight: 800; color: #1a3d17; display: block; margin-top: 4px; }
+    /* 絵文字がない品物は、品名の1文字目を丸の中に出す */
+    .pos-letter-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 50px; height: 50px; border-radius: 50%;
+      background: #ef6c00; color: #fff; font-size: 26px; font-weight: 900; line-height: 1;
+    }
+    .pos-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .pos-tile-edit-link {
+      background: none; border: none; color: #888; font-size: 13px; font-weight: 700;
+      text-decoration: underline; cursor: pointer; font-family: inherit; padding: 4px;
+    }
+    .pos-tile-edit-note { font-size: 13px; color: #a84600; background: #fff3e0; border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; line-height: 1.6; }
+    .pos-cat-btn { position: relative; }
+    .pos-cat-btn.is-hidden { opacity: 0.4; border-style: dashed; }
+    .pos-cat-state {
+      position: absolute; top: 4px; left: 4px; font-size: 11px; font-weight: 800;
+      background: #1a3d17; color: #fff; border-radius: 8px; padding: 1px 6px;
+    }
+    .pos-cat-btn.is-hidden .pos-cat-state { background: #999; }
+    .pos-cat-icon-edit {
+      position: absolute; top: 2px; right: 2px; width: 30px; height: 30px; border-radius: 50%;
+      border: 1.5px solid #e0e8de; background: #fff; font-size: 14px; cursor: pointer;
+    }
+    .pos-emoji-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+    .pos-emoji-grid button {
+      font-size: 30px; padding: 8px 0; border: 2px solid #e0e8de; border-radius: 12px;
+      background: #fff; cursor: pointer;
+    }
+    .pos-emoji-grid button.selected { border-color: #ef6c00; background: #fff3e0; }
+    .pos-gram-suffix { color: #aaa; font-weight: 700; align-self: center; }
+
+    /* 直接入力した名前の行を選ぶ小窓（予約管理表・店頭会計の両方から使う） */
+    .kana-ask-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      z-index: 700; align-items: center; justify-content: center; padding: 16px;
+    }
+    .kana-ask-overlay.open { display: flex; }
+    .kana-ask-sheet { background: #fff; border-radius: 16px; padding: 20px; width: 100%; max-width: 440px; }
+    .kana-ask-title { font-size: 16px; font-weight: 800; color: #1a3d17; margin-bottom: 6px; }
+    .kana-ask-note { font-size: 13px; color: #777; margin-bottom: 12px; line-height: 1.6; }
+    .kana-ask-skip {
+      width: 100%; margin-top: 12px; padding: 12px; border: 1.5px solid #ddd; border-radius: 10px;
+      background: #fff; color: #777; font-weight: 700; font-family: inherit; cursor: pointer;
+    }
 
     .pos-wide-btn {
       width: 100%;
@@ -1303,6 +1347,16 @@
 
 <div class="pos-thanks" id="posThanks">ありがとうございました！</div>
 
+<!-- 直接入力した名前を、次回から「名前を探す」で出せるよう、何行に登録するかを選ぶ -->
+<div class="kana-ask-overlay" id="kanaAskOverlay">
+  <div class="kana-ask-sheet">
+    <div class="kana-ask-title" id="kanaAskTitle"></div>
+    <div class="kana-ask-note">次回から「名前を探す」で出てくるように、読みの最初の文字の行を選んでください。</div>
+    <div class="tile-grid" id="kanaAskGrid"></div>
+    <button type="button" class="kana-ask-skip" onclick="kanaAskAnswer(null)">登録しないで使う</button>
+  </div>
+</div>
+
 <!-- 商品・価格の設定（対話形式） -->
 <div class="pos-overlay set-overlay" id="setOverlay">
   <div class="pos-header">
@@ -1466,6 +1520,31 @@
     return unit === 'kg';
   }
 
+  // グラム単位（「100g」「g」など）：価格は「100gあたり」、数量はその何倍か（例：250g → 2.5）で保存する。
+  // 画面ではグラムで表示・入力する（250g）。グラム単位でなければ null
+  function gramBase(unit) {
+    const m = String(unit || '').trim().match(/^(\d+(?:\.\d+)?)?\s*(g|ｇ|グラム)$/i);
+    if (!m) return null;
+    return m[1] ? Number(m[1]) : 1;
+  }
+
+  // kg・グラムのように、数量に比例して金額が決まる（まとめ買いなし・小数あり）単位
+  function isMeasuredUnit(unit) {
+    return isKgUnit(unit) || gramBase(unit) !== null;
+  }
+
+  // 数量＋単位の表示（グラム単位は「250g」、それ以外は「3玉」）
+  function formatQtyUnit(qty, unit) {
+    const base = gramBase(unit);
+    if (base !== null) return `${Math.round(Number(qty) * base)}g`;
+    return `${qty}${unit}`;
+  }
+
+  // 価格の「/〇〇」の部分（グラム単位は「/100g」、それ以外は「/1玉」）
+  function perUnitLabel(unit) {
+    return gramBase(unit) !== null ? unit : `1${unit}`;
+  }
+
   // 指定日時点の価格（適用日が指定日以前で最も新しいもの）。まだ販売開始前なら null
   function customPriceAt(it, dateStr) {
     const pool = it.prices.filter(p => p.start_date <= dateStr);
@@ -1474,7 +1553,7 @@
 
   // まとめ買い価格（例：1玉300円・2玉500円）を組み合わせて、qty個の一番安い合計金額を返す
   function customAmount(unitPrice, bundles, qty, unit) {
-    if (isKgUnit(unit)) return Math.round(qty * unitPrice);
+    if (isMeasuredUnit(unit)) return Math.round(qty * unitPrice);
     const n = Math.round(qty);
     const tiers = [{ qty: 1, price: unitPrice }, ...(bundles || []).filter(b => b.qty >= 2)];
     const best = [0];
@@ -1755,7 +1834,7 @@
       });
     });
     entryExtraItems(entry).filter(x => x.category === colKey && x.qty > 0).forEach(x => {
-      lines.push(`<div class="melon-size-line">${escHtml(x.name)} ${x.qty}${escHtml(x.unit)} <span class="cell-sub-inline">${formatYen(x.amount)}</span></div>`);
+      lines.push(`<div class="melon-size-line">${escHtml(x.name)} ${escHtml(formatQtyUnit(x.qty, x.unit))} <span class="cell-sub-inline">${formatYen(x.amount)}</span></div>`);
     });
     if (!lines.length) return cellBtn('-', colKey, entry.id, { empty: true });
     return cellBtn(lines.join(''), colKey, entry.id, {});
@@ -2212,7 +2291,7 @@
         ${columns.map(c => {
           const it = items.get(c.key);
           return it
-            ? cell(`<div class="daily-qty">${roundQty(it.qty)}${escHtml(c.unit)}</div><div class="daily-sub">${formatYen(it.amount)}</div>`)
+            ? cell(`<div class="daily-qty">${escHtml(gramBase(c.unit) !== null ? formatQtyUnit(it.qty, c.unit) : `${roundQty(it.qty)}${c.unit}`)}</div><div class="daily-sub">${formatYen(it.amount)}</div>`)
             : cell('-', 'daily-empty');
         }).join('')}
         ${shipFee ? cell(formatYen(shipFee)) : cell('-', 'daily-empty')}
@@ -2447,9 +2526,8 @@
       if (selectedKanaRow && !freeInput) {
         // マスタから選んだのでそのまま
       } else if (freeInput) {
-        // 自由入力 → 顧客マスタに存在しなければ追加
-        const row = selectedKanaRow || guessKanaRow(freeInput);
-        if (row) await ensureCustomer(row, freeInput);
+        // 自由入力 → 顧客マスタに存在しなければ追加（行が分からなければ選んでもらう）
+        await registerFreeName(freeInput, selectedKanaRow);
       }
       return { customer_name: name };
     };
@@ -2493,6 +2571,33 @@
     return null;
   }
 
+  // 直接入力した名前を顧客リストに登録する。読みの行が推測できない（漢字・外国の名前など）ときは、何行かを選んでもらう
+  let kanaAskResolve = null;
+
+  function askKanaRow(name) {
+    document.getElementById('kanaAskTitle').textContent = `「${name}」さんは何行ですか？`;
+    document.getElementById('kanaAskGrid').innerHTML =
+      KANA_ROWS.map(r => `<div class="tile-option" onclick="kanaAskAnswer('${r}')">${r}行</div>`).join('');
+    document.getElementById('kanaAskOverlay').classList.add('open');
+    return new Promise(resolve => { kanaAskResolve = resolve; });
+  }
+
+  function kanaAskAnswer(row) {
+    document.getElementById('kanaAskOverlay').classList.remove('open');
+    if (kanaAskResolve) kanaAskResolve(row);
+    kanaAskResolve = null;
+  }
+
+  function isKnownCustomer(name) {
+    return Object.values(customersByRow).some(list => list.some(c => c.name === name));
+  }
+
+  async function registerFreeName(name, row) {
+    if (isKnownCustomer(name)) return;
+    const kanaRow = row || guessKanaRow(name) || await askKanaRow(name);
+    if (kanaRow) await ensureCustomer(kanaRow, name);
+  }
+
   async function ensureCustomer(kanaRow, name) {
     const { error } = await supabaseClient.from('customers').insert({ kana_row: kanaRow, name });
     if (error && error.code !== '23505') { console.error(error); return; }
@@ -2525,10 +2630,12 @@
         if (!line && (!ci.active || !p)) return '';
         renderedCustoms.push({ ci, line, price: p });
         const kg = isKgUnit(ci.unit);
+        const base = gramBase(ci.unit);
+        const value = line ? (base !== null ? Math.round(line.qty * base) : line.qty) : 0;
         return `
           <div class="modal-group">
-            <label>${escHtml(ci.size_label || ci.group_label)}<span class="custom-tag">追加商品</span> 数量（${escHtml(customPriceLabel(p.unit_price, p.bundles, ci.unit))}）</label>
-            <input type="number" id="mCustomQty_${ci.id}" min="0" step="${kg ? '0.1' : '1'}" value="${line ? line.qty : 0}">
+            <label>${escHtml(ci.size_label || ci.group_label)}<span class="custom-tag">追加商品</span> ${base !== null ? '重さ（g）' : '数量'}（${escHtml(customPriceLabel(p.unit_price, p.bundles, ci.unit))}）</label>
+            <input type="number" id="mCustomQty_${ci.id}" min="0" step="${kg ? '0.1' : '1'}" value="${value}" ${base !== null ? 'placeholder="（g）"' : ''}>
           </div>`;
       }).join('');
     }
@@ -2614,7 +2721,9 @@
         const kept = entryLines.filter(x => !renderedIds.includes(x.item_id));
         const updated = renderedCustoms.map(({ ci, line, price }) => {
           const raw = parseFloat(document.getElementById(`mCustomQty_${ci.id}`).value || '0');
-          const qty = isKgUnit(ci.unit) ? Math.max(0, Math.round(raw * 10) / 10) : Math.max(0, Math.round(raw));
+          const base = gramBase(ci.unit);
+          const qty = base !== null ? Math.max(0, Math.round(raw / base * 1000) / 1000)
+            : isKgUnit(ci.unit) ? Math.max(0, Math.round(raw * 10) / 10) : Math.max(0, Math.round(raw));
           if (!qty) return null;
           return {
             item_id: ci.id,
@@ -2859,7 +2968,7 @@
       e.entry_date || '', e.customer_name || '',
       ...ALL_ITEM_GROUPS.flatMap(g => g.items.map(it => e[it.qtyKey] || 0)),
       e.qty_other || 0, e.unit_price_other || 0, e.other_label || '',
-      entryExtraItems(e).map(x => `${x.name} ${x.qty}${x.unit}`).join(' / '), e.extra_items_amount || 0,
+      entryExtraItems(e).map(x => `${x.name} ${formatQtyUnit(x.qty, x.unit)}`).join(' / '), e.extra_items_amount || 0,
       e.onion_kg || 0, e.shipped ? '○' : '', e.ship_to || '',
       e.box_2 || 0, e.box_35 || 0, e.box_suika_1 || 0, e.box_suika_2 || 0, e.box_suika_plain || 0,
       e.shipping_fee || 0,
@@ -3368,9 +3477,122 @@
     { key: 'onion',  label: '玉ねぎ', icon: '🧅', groups: null },
   ];
 
+  // 品名からアイコンを推測する（設定で変えたアイコンが優先。どれにも当たらなければ品名の1文字目を丸で出す）
   const POS_GROUP_ICONS = {
-    'こかぶ': '⚪', '大根': '🥬', 'かぼちゃ': '🎃', 'にんじん': '🥕',
+    'こかぶ': '⚪', 'かぶ': '⚪', '大根': '🥬', 'かぼちゃ': '🎃', 'にんじん': '🥕', '人参': '🥕', 'ニンジン': '🥕',
+    'トマト': '🍅', 'ミニトマト': '🍅', 'きゅうり': '🥒', 'キュウリ': '🥒', 'なす': '🍆', 'ナス': '🍆',
+    'ピーマン': '🫑', 'とうもろこし': '🌽', 'トウモロコシ': '🌽', 'じゃがいも': '🥔', 'ジャガイモ': '🥔',
+    'さつまいも': '🍠', 'サツマイモ': '🍠', 'ブロッコリー': '🥦', '玉ねぎ': '🧅', 'たまねぎ': '🧅', 'タマネギ': '🧅',
+    'にんにく': '🧄', 'しょうが': '🫚', 'きのこ': '🍄', 'しいたけ': '🍄', 'いちご': '🍓', 'イチゴ': '🍓',
+    'ぶどう': '🍇', 'りんご': '🍎', 'もも': '🍑', '桃': '🍑', 'なし': '🍐', '梨': '🍐', 'みかん': '🍊',
+    'レモン': '🍋', 'さくらんぼ': '🍒', 'ブルーベリー': '🫐', 'キウイ': '🥝', '栗': '🌰', 'くり': '🌰',
+    '落花生': '🥜', 'ピーナッツ': '🥜', '枝豆': '🫛', 'えだまめ': '🫛', 'キャベツ': '🥬', '白菜': '🥬', 'レタス': '🥬',
   };
+  const POS_EMOJI_CHOICES = [
+    '🍈', '🍉', '🧅', '🍅', '🥒', '🍆', '🫑', '🌽', '🥔', '🍠', '🥦', '🥬', '🥕', '🎃', '⚪', '🧄', '🫚', '🍄',
+    '🍓', '🍇', '🍎', '🍑', '🍐', '🍊', '🍋', '🍒', '🫐', '🥝', '🌰', '🥜', '🫛', '🌿', '🌱', '📦',
+  ];
+
+  // ── 品物のアイコン（タイル）：メロン・スイカ・野菜の各品名・玉ねぎを並べ、表示/非表示とアイコンを設定できる ──
+  let posTileSettings = {};    // tile_key -> { hidden, icon }（pos_tile_settings。全端末共通）
+  let posTileEditMode = false; // 「表示する品物を選ぶ」中
+
+  async function loadPosTileSettings() {
+    const { data, error } = await supabaseClient.from('pos_tile_settings').select('tile_key, hidden, icon');
+    if (error) { console.error(error); return; }
+    posTileSettings = Object.fromEntries((data || []).map(r => [r.tile_key, { hidden: r.hidden, icon: r.icon }]));
+  }
+
+  async function savePosTileSetting(key, fields) {
+    const current = posTileSettings[key] || { hidden: false, icon: null };
+    const next = { ...current, ...fields };
+    posTileSettings[key] = next;
+    const { error } = await supabaseClient.from('pos_tile_settings')
+      .upsert({ tile_key: key, hidden: next.hidden, icon: next.icon, updated_at: new Date().toISOString() });
+    if (error) {
+      console.error(error);
+      posTileSettings[key] = current;
+      alert('設定の保存に失敗しました（migration_2026-11-09e_pos_tile_settings.sql を実行済みか確認してください）');
+    }
+  }
+
+  // 店頭会計の「品物」に並べるタイル。野菜は品名ごとに1つずつ出す。
+  // 野菜に「玉ねぎ」があるときは、そちらのほうが種類が多いため、従来の玉ねぎ（kg）のタイルは出さない
+  function posTiles() {
+    const veggieGroups = mergedGroups('veggie', pos.date);
+    const tiles = [
+      { key: 'melon', label: 'メロン', defaultIcon: '🍈', open: () => posOpenCategory('melon') },
+      { key: 'suika', label: 'スイカ', defaultIcon: '🍉', open: () => posOpenCategory('suika') },
+      ...veggieGroups.map(g => ({
+        key: `veggie:${g.label}`, label: g.label, defaultIcon: POS_GROUP_ICONS[g.label] || null,
+        open: () => posOpenVeggieGroup(g.label),
+      })),
+    ];
+    if (!veggieGroups.some(g => ['玉ねぎ', 'たまねぎ', 'タマネギ', '玉葱'].includes(g.label))) {
+      tiles.push({ key: 'onion', label: '玉ねぎ', defaultIcon: '🧅', open: () => posOpenCategory('onion') });
+    }
+    return tiles;
+  }
+
+  function posTileIconHtml(tile) {
+    const icon = posTileSettings[tile.key]?.icon || tile.defaultIcon;
+    if (icon) return escHtml(icon);
+    return `<span class="pos-letter-icon">${escHtml(tile.label.charAt(0))}</span>`;
+  }
+
+  // 品名のタイルを押したら、その野菜のサイズ選択（サイズが1つなら数量）から始める
+  function posOpenVeggieGroup(label) {
+    posCloseStep();
+    posCurrentGroups = mergedGroups('veggie', pos.date);
+    const gi = posCurrentGroups.findIndex(g => g.label === label);
+    if (gi === -1) return;
+    posSelectGroup('veggie', gi);
+  }
+
+  function posTapTile(index) {
+    const tile = posTiles()[index];
+    if (!tile) return;
+    if (posTileEditMode) {
+      const hidden = !!posTileSettings[tile.key]?.hidden;
+      savePosTileSetting(tile.key, { hidden: !hidden }).then(renderPos);
+      renderPos();
+      return;
+    }
+    tile.open();
+  }
+
+  function posToggleTileEditMode() {
+    posTileEditMode = !posTileEditMode;
+    renderPos();
+  }
+
+  // アイコンを変える：絵文字から選ぶか、文字（例：柿）を入力する
+  function posOpenTileIcon(index) {
+    const tile = posTiles()[index];
+    if (!tile) return;
+    posCloseStep();
+    const current = posTileSettings[tile.key]?.icon || tile.defaultIcon || '';
+    posPushStep(isFirst => {
+      posShowStep(`${tile.label}：アイコンを選ぶ`, `
+        <div class="pos-emoji-grid">
+          ${POS_EMOJI_CHOICES.map(e => `<button type="button" class="${e === current ? 'selected' : ''}" onclick="posSetTileIcon(${index}, '${e}')">${e}</button>`).join('')}
+        </div>
+        <div class="pos-direct-row">
+          <input type="text" id="posTileIconText" maxlength="2" placeholder="文字で出す（例：柿）" style="text-align:left;">
+          <button type="button" onclick="posSetTileIcon(${index}, document.getElementById('posTileIconText').value.trim())">決定</button>
+        </div>
+        <button type="button" class="pos-tile-edit-link" style="margin-top:12px;" onclick="posSetTileIcon(${index}, null)">自動に戻す</button>`, isFirst);
+    });
+  }
+
+  async function posSetTileIcon(index, icon) {
+    const tile = posTiles()[index];
+    if (!tile) return;
+    if (icon === '') { alert('絵文字を選ぶか、文字を入力してください'); return; }
+    await savePosTileSetting(tile.key, { icon: icon || null });
+    posCloseStep();
+    renderPos();
+  }
 
   const POS_BOXES = [
     { field: 'box_2',           priceField: 'box_unit_price_2',           priceKey: 'box2',          label: 'メロン 2玉入',   icon: '🍈' },
@@ -3421,6 +3643,7 @@
       return;
     }
     pos = posNewState();
+    posTileEditMode = false;
     document.getElementById('posDate').textContent = `${tm}月${formatDateJa(today)}`;
     document.getElementById('posOverlay').classList.add('open');
     renderPos();
@@ -3449,7 +3672,7 @@
   }
 
   function posQtyLabel(line) {
-    return `${line.qty}${line.unit}`;
+    return formatQtyUnit(line.qty, line.unit);
   }
 
   function renderPos() {
@@ -3508,13 +3731,23 @@
       </div>
 
       <div class="pos-section">
-        <div class="pos-section-label">品物</div>
+        <div class="pos-section-head">
+          <div class="pos-section-label">品物</div>
+          <button type="button" class="pos-tile-edit-link" onclick="posToggleTileEditMode()">${posTileEditMode ? '✓ 選び終わる' : '👁 表示する品物を選ぶ'}</button>
+        </div>
+        ${posTileEditMode ? '<div class="pos-tile-edit-note">押すと「表示」「非表示」が切り替わります。✏️でアイコンを変えられます。終わったら「✓ 選び終わる」を押してください。</div>' : ''}
         <div class="pos-cat-grid">
-          ${POS_CATEGORIES.map(c => `
-            <button type="button" class="pos-cat-btn" onclick="posOpenCategory('${c.key}')">
-              <span class="pos-cat-icon">${c.icon}</span>
-              <span class="pos-cat-label">${c.label}</span>
-            </button>`).join('')}
+          ${posTiles().map((t, i) => {
+            const hidden = !!posTileSettings[t.key]?.hidden;
+            if (hidden && !posTileEditMode) return '';
+            return `
+            <button type="button" class="pos-cat-btn ${hidden ? 'is-hidden' : ''}" onclick="posTapTile(${i})">
+              ${posTileEditMode ? `<span class="pos-cat-state">${hidden ? '非表示' : '表示'}</span>
+                <span class="pos-cat-icon-edit" onclick="event.stopPropagation(); posOpenTileIcon(${i})">✏️</span>` : ''}
+              <span class="pos-cat-icon">${posTileIconHtml(t)}</span>
+              <span class="pos-cat-label">${escHtml(t.label)}</span>
+            </button>`;
+          }).join('')}
         </div>
       </div>
 
@@ -3626,14 +3859,14 @@
 
   function posChangeQty(index, delta) {
     const line = pos.cart[index];
-    line.qty = Math.round((line.qty + delta) * 10) / 10;
+    line.qty = Math.round((line.qty + delta) * 1000) / 1000;
     if (line.qty <= 0) pos.cart.splice(index, 1);
     renderPos();
   }
 
   function posAddToCart(item, qty) {
     const existing = pos.cart.find(l => l.key === item.key);
-    if (existing) existing.qty = Math.round((existing.qty + qty) * 10) / 10;
+    if (existing) existing.qty = Math.round((existing.qty + qty) * 1000) / 1000;
     else pos.cart.push({ ...item, qty });
     posCloseStep();
     renderPos();
@@ -3695,6 +3928,7 @@
         price: p.unit_price,
         bundles: p.bundles || [],
         isKg: isKgUnit(ci.unit),
+        gramBase: gramBase(ci.unit),
       };
     }
     const item = sku.it;
@@ -3786,6 +4020,7 @@
   function posStartQty(item, fresh) {
     if (fresh) posCloseStep();
     posPendingItem = item;
+    if (item.gramBase) { posStartGramQty(item); return; }
     posPushStep(isFirst => {
       const choices = item.isKg ? POS_KG_CHOICES : POS_QTY_CHOICES;
       const tiles = choices.map(n => `
@@ -3803,13 +4038,37 @@
     });
   }
 
+  // グラム単位（例：100円/100g）：100g・200g…を同じ大きさの文字で並べ、直接入力もグラムで入れる（×100しない）
+  function posStartGramQty(item) {
+    const base = item.gramBase;
+    posPushStep(isFirst => {
+      const tiles = POS_QTY_CHOICES.map(n => {
+        const g = Math.round(n * base);
+        return `
+        <div class="pos-tile" onclick="posAddPending(${n})">
+          <span class="pos-tile-big" style="${String(g).length >= 4 ? 'font-size:20px;' : 'font-size:24px;'}">${g}g</span>
+          <span class="pos-tile-sub">${formatYen(Math.round(n * item.price))}</span>
+        </div>`;
+      }).join('');
+      posShowStep(`${item.name}：重さを選ぶ`, `
+        <p class="pos-step-note" style="margin:0 0 10px;">単価 ${formatYen(item.price)}/${escHtml(item.unit)}</p>
+        <div class="pos-tile-grid cols-5">${tiles}</div>
+        <div class="pos-direct-row">
+          <input type="number" id="posDirectQty" inputmode="numeric" min="0" step="1" placeholder="それ以外は直接入力（g）">
+          <span class="pos-gram-suffix">g</span>
+          <button type="button" onclick="posAddPendingDirect()">追加</button>
+        </div>`, isFirst);
+    });
+  }
+
   function posAddPending(n) {
     if (posPendingItem) posAddToCart(posPendingItem, n);
   }
 
   function posAddPendingDirect() {
     const raw = document.getElementById('posDirectQty').value;
-    const n = posPendingItem.isKg ? Math.round(parseFloat(raw) * 10) / 10 : parseInt(raw, 10);
+    const n = posPendingItem.gramBase ? Math.round(parseFloat(raw) / posPendingItem.gramBase * 1000) / 1000
+      : posPendingItem.isKg ? Math.round(parseFloat(raw) * 10) / 10 : parseInt(raw, 10);
     if (!(n > 0)) { alert('数量を入力してください'); return; }
     posAddToCart(posPendingItem, n);
   }
@@ -3857,9 +4116,8 @@
   async function posUseFreeName() {
     const name = document.getElementById('posNameFree').value.trim();
     if (!name) { alert('お名前を入力してください'); return; }
-    // 予約管理表の「お名前」と同様、顧客マスタになければ追加しておく
-    const row = guessKanaRow(name);
-    if (row) await ensureCustomer(row, name);
+    // 予約管理表の「お名前」と同様、顧客マスタになければ追加しておく（次回から「名前を探す」で出る）
+    await registerFreeName(name);
     posSetCustomer(name);
   }
 
@@ -4140,7 +4398,7 @@
     { key: 'box',   label: '箱',       icon: '📦' },
     { key: 'tax',   label: '消費税率', icon: '💰' },
   ];
-  const SET_UNIT_CHOICES = ['玉', '本', '個', '袋', 'パック', 'セット', '箱', 'kg'];
+  const SET_UNIT_CHOICES = ['玉', '本', '個', '袋', 'パック', 'セット', '箱', 'kg', '100g'];
   const SET_SIZE_SUGGESTIONS = ['規格外', 'S', 'M', 'L', '2L', '小玉', '大玉', '1袋'];
 
   let setStack = [];  // 「戻る」用：描画関数の履歴
@@ -4313,12 +4571,12 @@
       return `<div class="set-current">いまの価格：<b>${p ? escHtml(customPriceLabel(p.unit_price, p.bundles, t.unit)) : 'まだ販売前'}</b></div>`;
     }
     const v = getPricesForDate()[t.key];
-    return `<div class="set-current">いまの${t.isRate ? '税率' : '価格'}：<b>${t.isRate ? formatRate(v) : formatYen(v)}</b>${t.isRate || !t.unit ? '' : ` / 1${escHtml(t.unit)}`}</div>`;
+    return `<div class="set-current">いまの${t.isRate ? '税率' : '価格'}：<b>${t.isRate ? formatRate(v) : formatYen(v)}</b>${t.isRate || !t.unit ? '' : ` / ${escHtml(perUnitLabel(t.unit))}`}</div>`;
   }
 
   function setPriceForm() {
     const t = setDraft.target;
-    const allowBundles = t.type !== 'builtin' && !isKgUnit(t.unit);
+    const allowBundles = t.type !== 'builtin' && !isMeasuredUnit(t.unit);
     const bundleHtml = allowBundles ? `
       <div class="set-field">
         <label>まとめ買い価格（なければ空のままでOK）</label>
@@ -4337,7 +4595,7 @@
     setShow(`${t.name}：新しい${t.isRate ? '税率' : '価格'}`, `
       ${setCurrentPriceHtml(t)}
       <div class="set-field">
-        <label>${t.isRate ? '新しい税率' : `新しい価格（税込み）${t.unit ? ` 1${escHtml(t.unit)}あたり` : ''}`}</label>
+        <label>${t.isRate ? '新しい税率' : `新しい価格（税込み）${t.unit ? ` ${escHtml(perUnitLabel(t.unit))}あたり` : ''}`}</label>
         <div class="set-input-row">
           <input type="number" id="setNewPrice" inputmode="${t.isRate ? 'decimal' : 'numeric'}" min="0" step="${t.isRate ? '0.1' : '1'}" value="${escHtml(setDraft.newPrice)}" placeholder="${t.isRate ? '8' : '300'}">
           <span>${t.isRate ? '%' : '円'}</span>
@@ -4421,7 +4679,7 @@
     setShow('この内容でよろしいですか？', `
       <div class="set-confirm">
         <div class="set-confirm-name">${isNew ? `${CUSTOM_CATEGORIES.find(c => c.key === setDraft.cat).icon} ` : ''}${escHtml(t.name)}</div>
-        <div class="set-confirm-price">${oldLabel ? `<s>${oldLabel}</s> → ` : ''}${fmt(setDraft.value)}${t.isRate || !t.unit ? '' : `<span style="font-size:16px;"> / 1${escHtml(t.unit)}</span>`}</div>
+        <div class="set-confirm-price">${oldLabel ? `<s>${oldLabel}</s> → ` : ''}${fmt(setDraft.value)}${t.isRate || !t.unit ? '' : `<span style="font-size:16px;"> / ${escHtml(perUnitLabel(t.unit))}</span>`}</div>
         ${b ? `<div class="set-confirm-sub">まとめ買い：${escHtml(b)}</div>` : ''}
         <div class="set-confirm-sub"><b>${fullDateJa(setDraft.date)}</b> から${isNew ? '販売' : '適用'}</div>
       </div>
@@ -4534,7 +4792,7 @@
 
   function setAddUnit() {
     setShow('何で数えますか？（単位）', `
-      ${setTiles(SET_UNIT_CHOICES.map(u => ({ big: true, label: u, sub: u === 'kg' ? '量り売り' : '', onclick: `setPickUnit('${u}')` })))}
+      ${setTiles(SET_UNIT_CHOICES.map(u => ({ big: true, label: u, sub: isMeasuredUnit(u) ? '量り売り' : '', onclick: `setPickUnit('${u}')` })))}
       <div class="set-field" style="margin-top:18px;">
         <label>それ以外の単位</label>
         <div class="pos-direct-row" style="margin-top:0;">
@@ -4625,6 +4883,7 @@
     await loadProductVisibility();
     renderProductToggles();
     await loadCustomItems();
+    await loadPosTileSettings();
     await loadPricePeriods();
     await loadEntries();
 
