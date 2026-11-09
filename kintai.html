@@ -302,6 +302,14 @@
     }
 
     .btn-modal-submit:disabled { background: #bbb; cursor: not-allowed; }
+
+    .clock-in-note {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.7;
+      text-align: center;
+      margin-top: 4px;
+    }
   </style>
 </head>
 <body>
@@ -485,7 +493,7 @@
       statusEl.textContent = 'まだ本日の記録（きろく）はありません';
       btnsEl.innerHTML = `
         <button type="button" class="btn-clock btn-clock-in" id="clockInBtn" onclick="handleClockIn()">🟢 出勤する（しゅっきんする）</button>
-        <button type="button" class="btn-time-select" onclick="openTimeSelectModal('clockIn')">🕐 出勤時間を選択する（せんたくする）</button>`;
+        <div class="clock-in-note">出勤は押した時刻で記録されます。押し忘れたときは管理者に伝えてください<br>（しゅっきんは おした じこくで きろくされます。おしわすれたときは かんりしゃに つたえてください）</div>`;
     } else if (currentRecord.clock_in && !currentRecord.clock_out) {
       const breakMinutes = currentRecord.break_minutes;
       statusEl.textContent = `出勤（しゅっきん）：${fmtHM(currentRecord.clock_in)}` +
@@ -538,8 +546,10 @@
     }, 1600);
   }
 
-  // ── 時刻選択（押し忘れ対応） ─────────────────────────────
-  let timeSelectMode = null; // 'clockIn' | 'clockOut'
+  // ── 時刻選択（退勤の押し忘れ対応） ─────────────────────────
+  // 出勤時刻はさかのぼって選べない（始業を前倒しして長く働いたことにできないよう、出勤は押した時刻のみ。
+  // 押し忘れは管理者が管理画面の勤怠で修正する）。退勤は現在時刻までの過去の時刻から選べる
+  let timeSelectMode = null; // 'clockOut'
 
   // 現在時刻を15分単位に切り捨て（例：12:39 → 12:30）
   function floorTo15(date) {
@@ -565,9 +575,9 @@
 
   function openTimeSelectModal(mode) {
     clearActionIdleTimer(); // モーダル操作中に名前一覧へ戻されないようにする
+    if (mode !== 'clockOut') return;
     timeSelectMode = mode;
-    document.getElementById('timeSelectTitle').textContent =
-      mode === 'clockIn' ? '出勤時間を選択（せんたく）する' : '退勤時間を選択（せんたく）する';
+    document.getElementById('timeSelectTitle').textContent = '退勤時間を選択（せんたく）する';
     document.getElementById('timeSelectInput').innerHTML = pastTimeOptionsHtml(floorTo15(new Date()));
     document.getElementById('timeSelectModalOverlay').classList.add('open');
   }
@@ -587,18 +597,10 @@
     btn.textContent = '記録中（きろくちゅう）...';
 
     const recordedAt = new Date(`${getToday()}T${timeVal}:00`);
-    let error;
-
-    if (timeSelectMode === 'clockIn') {
-      ({ error } = await supabaseClient
-        .from('attendance_records')
-        .insert({ staff_id: currentStaff.id, date: getToday(), clock_in: recordedAt.toISOString() }));
-    } else {
-      ({ error } = await supabaseClient
-        .from('attendance_records')
-        .update({ clock_out: recordedAt.toISOString(), updated_at: new Date().toISOString() })
-        .eq('id', currentRecord.id));
-    }
+    const { error } = await supabaseClient
+      .from('attendance_records')
+      .update({ clock_out: recordedAt.toISOString(), updated_at: new Date().toISOString() })
+      .eq('id', currentRecord.id);
 
     btn.disabled = false;
     btn.textContent = '記録する';
@@ -609,14 +611,10 @@
       return;
     }
 
-    const mode = timeSelectMode;
     document.getElementById('timeSelectModalOverlay').classList.remove('open');
     timeSelectMode = null;
 
-    showFeedback(
-      mode === 'clockIn' ? '🟢' : '🔴',
-      `${currentStaff.name}さん\n${mode === 'clockIn' ? '出勤' : '退勤'}を記録しました（${timeVal}）`
-    );
+    showFeedback('🔴', `${currentStaff.name}さん\n退勤を記録しました（${timeVal}）`);
   }
 
   // ── 休憩時間選択 ────────────────────────────────────────
