@@ -658,6 +658,8 @@
 
     .nippo-choice-btn.selected { background: #245b85; border-color: #245b85; color: #fff; }
 
+    .nippo-place-no { margin-top: 8px; }
+    .nippo-place-no.hidden { display: none; }
     .nippo-task-free-label { font-size: 12px; color: #777; margin: 10px 0 4px; }
 
     .btn-nippo-delete {
@@ -1388,6 +1390,13 @@
       <input type="text" id="nippoTaskInput" class="modal-input" maxlength="100" placeholder="例：草取り" oninput="onNippoTaskInput()">
     </div>
     <div class="modal-group">
+      <label id="nippoPlaceLabel">場所</label>
+      <div class="nippo-crop-grid" id="nippoPlaceGrid"></div>
+      <div class="nippo-place-no" id="nippoPlaceNoWrap">
+        <input type="text" id="nippoPlaceNo" class="modal-input" maxlength="20" placeholder="番号">
+      </div>
+    </div>
+    <div class="modal-group">
       <div class="report-row">
         <div>
           <label id="nippoStartLabel">開始時刻</label>
@@ -1429,6 +1438,9 @@
       nippoTaskFree: 'リストにない作業はここに書いてください', nippoTaskPlaceholder: '例：草取り',
       nippoDelete: '削除', nippoConfirmDelete: 'この作業を削除しますか？',
       nippoCropRequired: '作物を選んでください', nippoTaskRequired: '作業を選ぶか、書いてください',
+      nippoPlaceLabel: '場所', nippoPlaceHouse: 'ハウス', nippoPlaceField: '露地', nippoPlaceNo: '番号',
+      nippoPlaceTypeRequired: '場所を選んでください', nippoPlaceNoRequired: '番号を書いてください',
+      nippoPlaceNoFor: name => `${name}の番号`,
       nippoTimeInvalid: '終了時刻は開始時刻より後にしてください',
       nippoOverlap: 'ほかの作業と時間が重なっています。このまま保存しますか？',
       nippoSaveFailed: '保存に失敗しました。もう一度お試しください。',
@@ -1497,6 +1509,9 @@
       nippoTaskFree: 'Jika tidak ada di daftar, tulis di sini', nippoTaskPlaceholder: 'Contoh: menyiangi',
       nippoDelete: 'Hapus', nippoConfirmDelete: 'Hapus pekerjaan ini?',
       nippoCropRequired: 'Silakan pilih tanaman', nippoTaskRequired: 'Pilih atau tulis pekerjaan',
+      nippoPlaceLabel: 'Tempat', nippoPlaceHouse: 'Rumah kaca', nippoPlaceField: 'Lahan terbuka', nippoPlaceNo: 'Nomor',
+      nippoPlaceTypeRequired: 'Silakan pilih tempat', nippoPlaceNoRequired: 'Silakan tulis nomornya',
+      nippoPlaceNoFor: name => `Nomor ${name}`,
       nippoTimeInvalid: 'Waktu selesai harus setelah waktu mulai',
       nippoOverlap: 'Waktunya bertabrakan dengan pekerjaan lain. Tetap simpan?',
       nippoSaveFailed: 'Gagal menyimpan. Silakan coba lagi.',
@@ -1565,6 +1580,9 @@
       nippoTaskFree: 'បើមិនមានក្នុងបញ្ជី សូមសរសេរនៅទីនេះ', nippoTaskPlaceholder: 'ឧទាហរណ៍៖ ដកស្មៅ',
       nippoDelete: 'លុប', nippoConfirmDelete: 'លុបការងារនេះឬ？',
       nippoCropRequired: 'សូមជ្រើសរើសដំណាំ', nippoTaskRequired: 'សូមជ្រើសរើស ឬសរសេរការងារ',
+      nippoPlaceLabel: 'ទីកន្លែង', nippoPlaceHouse: 'ផ្ទះកញ្ចក់', nippoPlaceField: 'វាលចំហ', nippoPlaceNo: 'លេខ',
+      nippoPlaceTypeRequired: 'សូមជ្រើសរើសទីកន្លែង', nippoPlaceNoRequired: 'សូមសរសេរលេខ',
+      nippoPlaceNoFor: name => `លេខ${name}`,
       nippoTimeInvalid: 'ម៉ោងបញ្ចប់ត្រូវនៅក្រោយម៉ោងចាប់ផ្តើម',
       nippoOverlap: 'ម៉ោងជាន់គ្នាជាមួយការងារផ្សេង។ រក្សាទុកដដែលឬ？',
       nippoSaveFailed: 'រក្សាទុកមិនជោគជ័យទេ។ សូមព្យាយាមម្ដងទៀត។',
@@ -3332,14 +3350,23 @@
   // ── 今日の作業報告（日報） ───────────────────────────────
   // 7:00〜20:00 の時間割（Outlookのスケジューラ風）。タップした時刻から「作物 → 作業 → 開始・終了」を選んで保存する。
   // スタッフは共用アカウントでログインしているため、社員リストから選んだ名前ごとに保存する（名前はそのスマホに記憶）。
-  // 作業リストは仮のもの。お客様から正式なリストをいただいたら差し替える（作物・作業名は日本語のまま保存する）
-  const NIPPO_CROPS = [
+  // 作物・作業の選択肢は管理画面「作業日報 → 日報を編集する」で編集する（nippo_crops / nippo_tasks）。
+  // 下はテーブルを読めなかったとき用の初期リスト（作物・作業名は日本語のまま保存する）
+  let NIPPO_CROPS = [
     { name: 'メロン', icon: '🍈', tasks: ['定植', '誘引', '整枝・摘心', '交配', '摘果', '玉吊り', '水やり', '消毒', '収穫', '選果・箱詰め', '片付け'] },
     { name: 'スイカ', icon: '🍉', tasks: ['定植', '整枝・つる引き', '交配', '摘果', '玉直し', '水やり', '消毒', '収穫', '選果・出荷', '片付け'] },
     { name: 'こかぶ', icon: '🌱', tasks: ['畑の準備', '種まき', '間引き', '除草', '水やり', '消毒', '収穫', '洗い・袋詰め', '出荷'] },
     { name: '大根',   icon: '🥬', tasks: ['畑の準備', '種まき', '間引き', '除草', '追肥', '消毒', '収穫', '洗い・選別', '出荷'] },
     { name: 'その他', icon: '📦', labelKey: 'nippoCropOther', tasks: ['草刈り', '掃除・片付け', '機械の整備', '資材の運搬'] },
   ];
+  // 場所の選択肢は管理画面で編集する（nippo_places）。needsNumber の場所は番号の記入が必須。下は読めなかったとき用
+  let NIPPO_PLACES = [
+    { name: 'ハウス', icon: '🏠', needsNumber: true },
+    { name: '露地',   icon: '🌾', needsNumber: true },
+    { name: 'その他', icon: '📍', needsNumber: false },
+  ];
+  // 初期の場所名はスタッフの言語で表示する（保存は日本語のまま）
+  const NIPPO_PLACE_LABEL_KEYS = { 'ハウス': 'nippoPlaceHouse', '露地': 'nippoPlaceField', 'その他': 'nippoCropOther' };
   const NIPPO_DAY_START = 7 * 60;
   const NIPPO_DAY_END   = 20 * 60;
   const NIPPO_SLOT_PX   = 18; // 15分あたりの高さ（1時間 = 72px。CSSの --nippo-hour-px と合わせる）
@@ -3351,6 +3378,7 @@
   let nippoNameTab = '';
   let nippoEditingId = null; // null＝新規追加
   let nippoSelectedCrop = '';
+  let nippoSelectedPlace = ''; // 'ハウス' / '露地' / ''（日本語のまま保存）
   let nippoLoadSeq = 0;      // 日付・名前を続けて切り替えたとき、古い読み込み結果で上書きしないため
 
   function minToHM(min) {
@@ -3369,6 +3397,8 @@
     document.getElementById('nippoTaskLabel').textContent    = st('nippoTaskLabel');
     document.getElementById('nippoTaskFreeLabel').textContent = st('nippoTaskFree');
     document.getElementById('nippoTaskInput').placeholder    = st('nippoTaskPlaceholder');
+    document.getElementById('nippoPlaceLabel').textContent   = st('nippoPlaceLabel');
+    renderNippoPlace();
     document.getElementById('nippoStartLabel').textContent   = st('startLabel');
     document.getElementById('nippoEndLabel').textContent     = st('endLabel');
     document.getElementById('nippoDeleteBtn').textContent    = st('nippoDelete');
@@ -3397,7 +3427,32 @@
     document.getElementById('nippoDate').value = getToday();
     renderNippoNamePicker();
     loadNippoEntries();
+    loadNippoOptions();
     if (await loadOnionSignStaff()) renderNippoNamePicker();
+  }
+
+  // 管理者が編集した作物・作業の選択肢を読み込む（失敗・未登録のときは初期リストのまま）
+  async function loadNippoOptions() {
+    const places = await supabaseClient.from('nippo_places').select('name, icon, needs_number').order('sort_order');
+    if (places.error) console.error(places.error);
+    else if (places.data?.length) {
+      NIPPO_PLACES = places.data.map(p => ({ name: p.name, icon: p.icon || '📍', needsNumber: p.needs_number }));
+      renderNippoPlace();
+    }
+    const { data, error } = await supabaseClient
+      .from('nippo_crops')
+      .select('name, icon, sort_order, nippo_tasks(name, sort_order)')
+      .order('sort_order');
+    if (error) { console.error(error); return; }
+    if (!data?.length) return;
+    NIPPO_CROPS = data.map(c => ({
+      name: c.name,
+      icon: c.icon || '📦',
+      labelKey: c.name === 'その他' ? 'nippoCropOther' : undefined,
+      tasks: (c.nippo_tasks ?? []).sort((a, b) => a.sort_order - b.sort_order).map(t => t.name),
+    }));
+    renderNippoCropGrid();
+    renderNippoCalendar();
   }
 
   // ── 名前の選択（玉ねぎ日報のサイン欄と同じ社員リスト・見た目） ──
@@ -3452,7 +3507,7 @@
     }
     const { data, error } = await supabaseClient
       .from('daily_work_entries')
-      .select('id, crop, task_name, start_time, end_time')
+      .select('id, crop, task_name, location_type, location_no, start_time, end_time')
       .eq('work_date', date)
       .eq('staff_name', nippoStaffName)
       .order('start_time');
@@ -3507,8 +3562,9 @@
       block.style.height = `${blockHeight}px`;
       block.style.left   = `calc(${it.lane / it.cols * 100}% + 3px)`;
       block.style.width  = `calc(${100 / it.cols}% - 6px)`;
-      const icon = nippoCropInfo(entry.crop)?.icon ?? '📦';
-      const time = `${fmt(entry.start_time)}–${fmt(entry.end_time)}`;
+      const icon = escapeHtml(nippoCropInfo(entry.crop)?.icon ?? '📦');
+      const place = nippoPlaceText(entry);
+      const time = `${fmt(entry.start_time)}–${fmt(entry.end_time)}` + (place ? `　${escapeHtml(place)}` : '');
       block.innerHTML = blockHeight < 32
         ? `<div class="nippo-block-task">${icon} ${escapeHtml(entry.task_name)} <span class="nippo-block-time">${time}</span></div>`
         : `<div class="nippo-block-task">${icon} ${escapeHtml(entry.task_name)}</div>`
@@ -3539,6 +3595,9 @@
     nippoSelectedCrop = entry?.crop ?? '';
     document.getElementById('nippoEntryTitle').textContent = st(entry ? 'nippoEditTitle' : 'nippoAddTitle');
     document.getElementById('nippoTaskInput').value = entry?.task_name ?? '';
+    nippoSelectedPlace = entry?.location_type ?? '';
+    document.getElementById('nippoPlaceNo').value = entry?.location_no ?? '';
+    renderNippoPlace();
     document.getElementById('nippoStartTime').value = entry ? fmt(entry.start_time) : minToHM(startMin);
     document.getElementById('nippoEndTime').value   = entry ? fmt(entry.end_time) : minToHM(Math.min(startMin + 60, NIPPO_DAY_END));
     document.getElementById('nippoDeleteBtn').style.display = entry ? '' : 'none';
@@ -3553,8 +3612,8 @@
   function renderNippoCropGrid() {
     const el = document.getElementById('nippoCropGrid');
     el.innerHTML = NIPPO_CROPS.map(c =>
-      `<button type="button" class="nippo-choice-btn ${c.name === nippoSelectedCrop ? 'selected' : ''}" data-crop="${c.name}">`
-      + `${c.icon} ${c.labelKey ? st(c.labelKey) : c.name}</button>`).join('');
+      `<button type="button" class="nippo-choice-btn ${c.name === nippoSelectedCrop ? 'selected' : ''}" data-crop="${escapeHtml(c.name)}">`
+      + `${escapeHtml(c.icon)} ${c.labelKey ? st(c.labelKey) : escapeHtml(c.name)}</button>`).join('');
     el.querySelectorAll('.nippo-choice-btn').forEach(btn => btn.onclick = () => {
       // 前の作物のリストから選んでいた作業は、作物を変えたら消す（自由に書いた作業は残す）
       const input = document.getElementById('nippoTaskInput');
@@ -3570,7 +3629,7 @@
     const value = document.getElementById('nippoTaskInput').value.trim();
     const tasks = nippoCropInfo(nippoSelectedCrop)?.tasks ?? [];
     el.innerHTML = tasks.map(t =>
-      `<button type="button" class="nippo-choice-btn ${t === value ? 'selected' : ''}" data-task="${t}">${t}</button>`).join('');
+      `<button type="button" class="nippo-choice-btn ${t === value ? 'selected' : ''}" data-task="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('');
     el.querySelectorAll('.nippo-choice-btn').forEach(btn => btn.onclick = () => {
       document.getElementById('nippoTaskInput').value = btn.dataset.task;
       renderNippoTaskGrid();
@@ -3579,12 +3638,47 @@
 
   function onNippoTaskInput() { renderNippoTaskGrid(); }
 
+  // ── 場所（管理者が編集した場所から選ぶ。番号が必要な場所は番号を直接記入） ──
+  function nippoPlaceInfo(name) { return NIPPO_PLACES.find(p => p.name === name); }
+  function nippoPlaceLabel(name) { return NIPPO_PLACE_LABEL_KEYS[name] ? st(NIPPO_PLACE_LABEL_KEYS[name]) : name; }
+  // 選択肢から消された場所の日報を開いたときも、番号欄は出しておく
+  function nippoPlaceNeedsNumber(name) { return nippoPlaceInfo(name)?.needsNumber ?? !!name; }
+
+  function selectNippoPlace(name) {
+    nippoSelectedPlace = name;
+    renderNippoPlace();
+    if (nippoPlaceNeedsNumber(name)) document.getElementById('nippoPlaceNo').focus();
+  }
+
+  function renderNippoPlace() {
+    const el = document.getElementById('nippoPlaceGrid');
+    const places = [...NIPPO_PLACES];
+    if (nippoSelectedPlace && !nippoPlaceInfo(nippoSelectedPlace)) places.push({ name: nippoSelectedPlace, icon: '📍' });
+    el.innerHTML = places.map(p =>
+      `<button type="button" class="nippo-choice-btn ${p.name === nippoSelectedPlace ? 'selected' : ''}" data-place="${escapeHtml(p.name)}">`
+      + `${escapeHtml(p.icon)} ${escapeHtml(nippoPlaceLabel(p.name))}</button>`).join('');
+    el.querySelectorAll('.nippo-choice-btn').forEach(btn => btn.onclick = () => selectNippoPlace(btn.dataset.place));
+    const needsNumber = nippoPlaceNeedsNumber(nippoSelectedPlace);
+    document.getElementById('nippoPlaceNoWrap').classList.toggle('hidden', !needsNumber);
+    document.getElementById('nippoPlaceNo').placeholder = nippoSelectedPlace
+      ? st('nippoPlaceNoFor', nippoPlaceLabel(nippoSelectedPlace)) : st('nippoPlaceNo');
+  }
+
+  function nippoPlaceText(entry) {
+    if (!entry.location_type) return '';
+    return `${nippoPlaceLabel(entry.location_type)}${entry.location_no ?? ''}`;
+  }
+
   async function saveNippoEntry() {
     const taskName = document.getElementById('nippoTaskInput').value.trim();
     const start = document.getElementById('nippoStartTime').value;
     const end   = document.getElementById('nippoEndTime').value;
     if (!nippoSelectedCrop) { alert(st('nippoCropRequired')); return; }
     if (!taskName) { alert(st('nippoTaskRequired')); return; }
+    const placeNeedsNumber = nippoPlaceNeedsNumber(nippoSelectedPlace);
+    const placeNo = placeNeedsNumber ? document.getElementById('nippoPlaceNo').value.trim() : '';
+    if (!nippoSelectedPlace) { alert(st('nippoPlaceTypeRequired')); return; }
+    if (placeNeedsNumber && !placeNo) { alert(st('nippoPlaceNoRequired')); document.getElementById('nippoPlaceNo').focus(); return; }
     if (toMin(end) <= toMin(start)) { alert(st('nippoTimeInvalid')); return; }
 
     const overlaps = nippoEntries.some(e => e.id !== nippoEditingId
@@ -3594,6 +3688,8 @@
     const row = {
       crop: nippoSelectedCrop,
       task_name: taskName,
+      location_type: nippoSelectedPlace,
+      location_no: placeNo || null,
       start_time: start + ':00',
       end_time: end + ':00',
     };

@@ -576,6 +576,23 @@
       border-radius: 20px;
     }
 
+    /* 作業日報：今日の入力状況 */
+    .nippo-status-updated { font-size: 12px; font-weight: 600; color: #888; margin-left: 6px; }
+    .nippo-status-group + .nippo-status-group { margin-top: 14px; }
+    .nippo-status-label { font-size: 13px; font-weight: 800; color: #555; margin-bottom: 6px; }
+    .nippo-status-label.warn { color: #b25e00; }
+    .nippo-status-label.ok { color: #2e7d32; }
+    .nippo-status-sub { font-size: 11px; font-weight: 600; opacity: 0.7; margin-left: 4px; }
+    .done-badge, .off-badge {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+    .done-badge { background: #e8f5e9; color: #1a3d17; }
+    .off-badge { background: #f2f2f2; color: #999; font-weight: 600; }
+
     .missing-badge-wrap {
       display: flex;
       flex-wrap: wrap;
@@ -871,11 +888,11 @@
   <div class="container">
     <div class="home-heading">メニュー</div>
     <div class="home-grid">
-      <a class="home-card" href="nippo_reports.html">
+      <button type="button" class="home-card" onclick="showTab('nippo')">
         <span class="home-card-icon">🗓️</span>
         <span class="home-card-title">作業日報</span>
-        <span class="home-card-desc">スタッフの作業日報を確認</span>
-      </a>
+        <span class="home-card-desc">日報の確認・選択肢の編集</span>
+      </button>
       <a class="home-card" href="onion_reports.html">
         <span class="home-card-icon">🧅</span>
         <span class="home-card-title">玉ねぎ日報</span>
@@ -1057,6 +1074,29 @@
       </p>
       <button class="btn-submit" id="exportReportsBtn" onclick="exportReportsCSV()">CSVダウンロード（Excel対応）</button>
       <div id="exportReportsMsg" style="margin-top:12px;font-size:13px;color:#888;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 作業日報（レポート／選択肢の編集） ── -->
+<div id="tab-nippo" class="tab-content">
+  <div class="container">
+    <div class="home-heading">🗓️ 作業日報</div>
+    <div class="form-card">
+      <h2>📝 今日の日報の入力状況 <span class="nippo-status-updated" id="nippoStatusUpdated"></span></h2>
+      <div id="nippoStatusArea"><div style="color:#999;">読み込み中...</div></div>
+    </div>
+    <div class="home-grid">
+      <a class="home-card" href="nippo_reports.html">
+        <span class="home-card-icon">📊</span>
+        <span class="home-card-title">レポートを見る</span>
+        <span class="home-card-desc">だれが・何を・何時間したかを週・月ごとに確認</span>
+      </a>
+      <a class="home-card" href="nippo_options.html">
+        <span class="home-card-icon">✏️</span>
+        <span class="home-card-title">日報を編集する</span>
+        <span class="home-card-desc">スタッフが選ぶ作物・作業・場所の追加・削除</span>
+      </a>
     </div>
   </div>
 </div>
@@ -1403,7 +1443,7 @@
   // ── タブ切り替え ─────────────────────────────────────────
   // home: メニュー / register〜export: 「タスクの指示」内のタブ / kintai: 勤怠
   const TASK_TABS = ['register', 'progress', 'reports', 'export'];
-  const ALL_TABS  = ['home', ...TASK_TABS, 'kintai'];
+  const ALL_TABS  = ['home', ...TASK_TABS, 'nippo', 'kintai'];
 
   function showTab(tab, { fromHistory = false } = {}) {
     if (!ALL_TABS.includes(tab)) tab = 'home';
@@ -1431,11 +1471,85 @@
     if (tab === 'reports') {
       loadReports();
     }
+    if (tab === 'nippo') {
+      loadNippoStatus();
+    }
     if (tab === 'kintai') {
       loadKintaiMissingList();
       loadKintaiStaffList();
       loadKintaiRecords();
     }
+  }
+
+  // ── 作業日報：今日の入力状況（だれが日報を書いていないか） ──
+  // 在籍中の社員リスト × 今日の出勤記録 × 今日の日報（daily_work_entries）を突き合わせる。
+  // 日報・出退勤が登録されるとRealtimeで即時更新、念のため1分ごとにも読み直す
+  let nippoStatusSeq = 0;
+
+  async function loadNippoStatus() {
+    const seq = ++nippoStatusSeq;
+    const today = getToday();
+    const [staffRes, attRes, entryRes] = await Promise.all([
+      supabaseClient.from('kintai_staff').select('id, name').eq('active', true).order('sort_order'),
+      supabaseClient.from('attendance_records').select('staff_id, clock_in, clock_out').eq('date', today).not('clock_in', 'is', null),
+      supabaseClient.from('daily_work_entries').select('staff_id, staff_name, start_time, end_time').eq('work_date', today),
+    ]);
+    if (seq !== nippoStatusSeq) return;
+    const el = document.getElementById('nippoStatusArea');
+    const err = staffRes.error || attRes.error || entryRes.error;
+    if (err) {
+      console.error(err);
+      el.innerHTML = '<div style="color:#c62828;">入力状況の取得に失敗しました</div>';
+      return;
+    }
+
+    const attendance = new Map((attRes.data ?? []).map(r => [r.staff_id, r]));
+    const toMinutes = t => { const [h, m] = t.substring(0, 5).split(':').map(Number); return h * 60 + m; };
+    const minutesOf = list => list.reduce((sum, e) => sum + toMinutes(e.end_time) - toMinutes(e.start_time), 0);
+    const hmText = min => `${Math.floor(min / 60)}時間${min % 60 ? `${min % 60}分` : ''}`;
+    const timeOf = iso => new Date(iso).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' });
+    const entries = entryRes.data ?? [];
+
+    const missing = [], done = [], off = [];
+    const usedEntries = new Set();
+    (staffRes.data ?? []).forEach(s => {
+      const mine = entries.filter(e => e.staff_id === s.id || (!e.staff_id && e.staff_name === s.name));
+      mine.forEach(e => usedEntries.add(e));
+      const att = attendance.get(s.id);
+      if (mine.length) done.push({ name: s.name, min: minutesOf(mine), att });
+      else if (att) missing.push({ name: s.name, att });
+      else off.push({ name: s.name });
+    });
+    // 社員リストにいない名前（退職者・名前変更など）で書かれた日報も入力済みに含める
+    const others = new Map();
+    entries.filter(e => !usedEntries.has(e)).forEach(e => {
+      if (!others.has(e.staff_name)) others.set(e.staff_name, []);
+      others.get(e.staff_name).push(e);
+    });
+    others.forEach((list, name) => done.push({ name, min: minutesOf(list) }));
+
+    const attText = att => att ? `出勤 ${timeOf(att.clock_in)}${att.clock_out ? `〜${timeOf(att.clock_out)}` : ''}` : '';
+    el.innerHTML = `
+      <div class="nippo-status-group">
+        <div class="nippo-status-label warn">⚠️ 出勤しているのに日報が未入力（${missing.length}人）</div>
+        ${missing.length
+          ? `<div class="missing-badge-wrap">${missing.map(m =>
+              `<span class="missing-badge">${escHtml(m.name)}<span class="nippo-status-sub">${attText(m.att)}</span></span>`).join('')}</div>`
+          : '<div style="color:#999;font-size:13px;">いません</div>'}
+      </div>
+      <div class="nippo-status-group">
+        <div class="nippo-status-label ok">✅ 日報を入力済み（${done.length}人）</div>
+        ${done.length
+          ? `<div class="missing-badge-wrap">${done.map(d =>
+              `<span class="done-badge">${escHtml(d.name)}<span class="nippo-status-sub">${hmText(d.min)}</span></span>`).join('')}</div>`
+          : '<div style="color:#999;font-size:13px;">まだだれも入力していません</div>'}
+      </div>
+      ${off.length ? `<div class="nippo-status-group">
+        <div class="nippo-status-label">今日の出勤記録なし（${off.length}人）</div>
+        <div class="missing-badge-wrap">${off.map(o => `<span class="off-badge">${escHtml(o.name)}</span>`).join('')}</div>
+      </div>` : ''}`;
+    document.getElementById('nippoStatusUpdated').textContent =
+      `${new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} 更新`;
   }
 
   // ── 未出勤メンバー一覧（本日、出勤ボタンの押し忘れフォロー用） ──
@@ -3276,7 +3390,21 @@
         updateNowDisplay();
         loadProgress();
       }
+      if (currentTab === 'nippo') loadNippoStatus();
     }, 60000);
+
+    // 作業日報の入力状況のリアルタイム反映（日報・出退勤が登録・修正・削除されたとき）
+    supabaseClient
+      .channel('admin-nippo-status')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_work_entries' },
+        () => { if (currentTab === 'nippo') loadNippoStatus(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_records' },
+        () => { if (currentTab === 'nippo') loadNippoStatus(); })
+      .subscribe();
+    // スマホ・PCでしばらく別の画面を見ていた後に戻ってきたときも最新にする
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && currentTab === 'nippo') loadNippoStatus();
+    });
 
     // 完了記録のリアルタイム反映
     supabaseClient

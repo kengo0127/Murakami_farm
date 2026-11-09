@@ -111,7 +111,7 @@
 <body>
 
 <header>
-  <a class="btn-back" href="admin.html">← 管理画面</a>
+  <a class="btn-back" href="admin.html#nippo">← 作業日報</a>
   <div class="header-title">🗓️ 作業日報レポート</div>
 </header>
 
@@ -162,8 +162,8 @@
 <script>
   // スタッフ画面の「今日の作業報告（日報）」（daily_work_entries）を、週・月ごとに
   // 「だれが・何を・何時間したか」で集計する管理者専用レポート。
-  // 作物の並び順はスタッフ画面の NIPPO_CROPS に合わせる（リストにない作物は後ろに並べる）
-  const CROP_ORDER = ['メロン', 'スイカ', 'こかぶ', '大根', 'その他'];
+  // 作物の並び順は「日報を編集する」（nippo_crops）の並び順に合わせる（リストにない作物は後ろに並べる）
+  let CROP_ORDER = ['メロン', 'スイカ', 'こかぶ', '大根', 'その他'];
   const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
   let mode = 'week';     // week / month / custom（日付を直接変えたとき）
@@ -246,6 +246,9 @@
 
   // 分 → 時間（15分刻みなので小数2桁まで）
   function hours(min) { return Math.round(min / 60 * 100) / 100; }
+
+  // 場所（ハウス3・露地12 など。未入力は空）
+  function placeText(r) { return r.location_type ? `${r.location_type}${r.location_no ?? ''}` : ''; }
 
   function hm(min) {
     const h = Math.floor(min / 60), m = min % 60;
@@ -367,14 +370,15 @@
     // 日別の明細
     const dates = [...new Set(rows.map(r => r.work_date))].sort();
     document.getElementById('detailArea').innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>名前</th><th class="text">作物</th><th class="text">作業</th><th class="text">時間帯</th><th>時間</th></tr></thead>
+      <thead><tr><th>名前</th><th class="text">作物</th><th class="text">作業</th><th class="text">場所</th><th class="text">時間帯</th><th>時間</th></tr></thead>
       <tbody>
         ${dates.map(d => {
           const dayRows = rows.filter(r => r.work_date === d);
           const dayTotal = dayRows.reduce((s, r) => s + r.minutes, 0);
-          return `<tr class="day-head"><td colspan="4">${formatDateJa(d)}</td><td style="text-align:right">${hours(dayTotal)}</td></tr>`
+          return `<tr class="day-head"><td colspan="5">${formatDateJa(d)}</td><td style="text-align:right">${hours(dayTotal)}</td></tr>`
             + dayRows.map(r => `<tr>
               <td>${escapeHtml(r.staff_name)}</td><td class="text">${escapeHtml(r.crop)}</td><td class="text">${escapeHtml(r.task_name)}</td>
+              <td class="text">${escapeHtml(placeText(r)) || '<span style="color:#ccc">-</span>'}</td>
               <td class="text">${r.start_time.substring(0, 5)}〜${r.end_time.substring(0, 5)}</td><td>${hours(r.minutes)}</td>
             </tr>`).join('');
         }).join('')}
@@ -389,7 +393,7 @@
 
     const { data, error } = await supabaseClient
       .from('daily_work_entries')
-      .select('work_date, staff_name, crop, task_name, start_time, end_time')
+      .select('work_date, staff_name, crop, task_name, location_type, location_no, start_time, end_time')
       .gte('work_date', from)
       .lte('work_date', to)
       .order('work_date')
@@ -443,9 +447,9 @@
     ];
 
     const detailSheet = [
-      ['日付', '曜日', '名前', '作物', '作業', '開始', '終了', '時間'],
+      ['日付', '曜日', '名前', '作物', '作業', '場所', '開始', '終了', '時間'],
       ...rows.map(r => [
-        r.work_date, WEEKDAYS[parseDate(r.work_date).getDay()], r.staff_name, r.crop, r.task_name,
+        r.work_date, WEEKDAYS[parseDate(r.work_date).getDay()], r.staff_name, r.crop, r.task_name, placeText(r),
         r.start_time.substring(0, 5), r.end_time.substring(0, 5), hours(r.minutes),
       ]),
     ];
@@ -458,7 +462,7 @@
     ws2['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 8 }, ...agg.staffNames.map(() => ({ wch: 10 }))];
     XLSX.utils.book_append_sheet(wb, ws2, '作業別');
     const ws3 = XLSX.utils.aoa_to_sheet(detailSheet);
-    ws3['!cols'] = [{ wch: 12 }, { wch: 5 }, { wch: 14 }, { wch: 10 }, { wch: 18 }, { wch: 7 }, { wch: 7 }, { wch: 7 }];
+    ws3['!cols'] = [{ wch: 12 }, { wch: 5 }, { wch: 14 }, { wch: 10 }, { wch: 18 }, { wch: 10 }, { wch: 7 }, { wch: 7 }, { wch: 7 }];
     XLSX.utils.book_append_sheet(wb, ws3, '明細');
     XLSX.writeFile(wb, `作業日報_${from}_${to}${staff ? `_${staff}` : ''}.xlsx`);
   }
@@ -469,6 +473,9 @@
 
     const { data: staffList } = await supabaseClient.rpc('staff_sign_names');
     staffOrder = (staffList ?? []).map(s => s.name);
+
+    const { data: cropList } = await supabaseClient.from('nippo_crops').select('name').order('sort_order');
+    if (cropList?.length) CROP_ORDER = cropList.map(c => c.name);
 
     setWeek(todayJst());
     renderModeButtons();

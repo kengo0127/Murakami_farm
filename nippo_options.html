@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>村上農園 - 日報の選択肢を編集</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f7f0;
+      min-height: 100vh;
+      padding-bottom: 40px;
+      color: #222;
+    }
+
+    header {
+      background: #2e5c28;
+      color: #fff;
+      padding: 13px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-back {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .header-title { font-size: 17px; font-weight: 800; }
+
+    main { max-width: 820px; margin: 0 auto; padding: 16px 12px; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    .note { font-size: 13px; color: #555; line-height: 1.8; }
+    .note b { color: #1a3d17; }
+
+    .crop-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #e6eee4;
+    }
+
+    .crop-icon-btn {
+      font-size: 24px;
+      width: 44px;
+      height: 44px;
+      border: 1.5px dashed #c8e0c4;
+      border-radius: 10px;
+      background: #fafcf9;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .crop-icon-btn:hover { border-color: #81c784; }
+
+    .crop-name { font-size: 17px; font-weight: 800; color: #1a3d17; flex: 1; min-width: 0; word-break: break-all; }
+    .crop-count { font-size: 12px; color: #888; font-weight: 600; margin-left: 6px; }
+
+    .btn {
+      padding: 8px 12px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      border: 1.5px solid #c8e0c4;
+      background: #fff;
+      color: #2e5c28;
+      flex-shrink: 0;
+    }
+    .btn:disabled { opacity: 0.35; cursor: default; }
+    .btn-primary { background: #2e5c28; color: #fff; border-color: #2e5c28; }
+    .btn-danger { color: #c62828; border-color: #f2c4c4; }
+    .btn-icon { padding: 8px 10px; }
+
+    .task-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+
+    .task-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      background: #f4f8f3;
+      border: 1.5px solid #dce9dc;
+      border-radius: 20px;
+      padding: 4px 4px 4px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .chip-btn {
+      border: none;
+      background: none;
+      color: #999;
+      font-size: 14px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .chip-btn:hover:not(:disabled) { background: #e6eee4; color: #333; }
+    .chip-btn.del:hover { background: #fde7e7; color: #c62828; }
+    .chip-btn:disabled { opacity: 0.25; cursor: default; }
+
+    .task-empty { font-size: 13px; color: #999; }
+
+    .add-row { display: flex; gap: 8px; }
+    .add-row input {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 12px;
+      border: 1.5px solid #c8e0c4;
+      border-radius: 9px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+    .add-row input:focus { outline: none; border-color: #2e5c28; }
+
+    .new-crop-card { border: 2px dashed #c8e0c4; box-shadow: none; background: #fafcf9; }
+    .new-crop-title { font-size: 15px; font-weight: 800; color: #1a3d17; margin-bottom: 10px; }
+
+    .emoji-palette {
+      display: none;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #dce9dc;
+      border-radius: 10px;
+    }
+    .emoji-palette.open { display: flex; }
+    .emoji-palette button {
+      font-size: 22px;
+      width: 40px;
+      height: 40px;
+      border: 1.5px solid transparent;
+      border-radius: 8px;
+      background: #f4f8f3;
+      cursor: pointer;
+    }
+    .emoji-palette button.selected { border-color: #2e5c28; background: #e8f5e9; }
+
+    .empty { text-align: center; color: #999; padding: 30px 10px; }
+
+    .section-heading { font-size: 16px; font-weight: 800; color: #1a3d17; margin: 26px 2px 10px; }
+
+    .place-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e6eee4;
+    }
+    .place-name { font-size: 16px; font-weight: 800; color: #1a3d17; flex: 1; min-width: 0; word-break: break-all; }
+    .place-example { font-size: 12px; color: #888; font-weight: 600; margin-left: 6px; }
+    .num-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #555;
+      cursor: pointer;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .num-toggle input { width: 18px; height: 18px; accent-color: #2e5c28; }
+
+    @media (max-width: 540px) {
+      .btn-label { display: none; }
+      .place-row { flex-wrap: wrap; }
+      .place-name { flex-basis: calc(100% - 56px); }
+      .place-row .num-toggle { margin-right: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="btn-back" href="admin.html#nippo">← 作業日報</a>
+  <div class="header-title">✏️ 日報の選択肢を編集</div>
+</header>
+
+<main>
+  <div class="card">
+    <div class="note">
+      スタッフ画面「今日の作業報告（日報）」の<b>「作業を追加」で出てくる作物・作業・場所</b>を編集します。<br>
+      変更はすぐに保存され、スタッフが次に日報を開いたときから反映されます。<br>
+      ・作物は ↑↓ で並べ替え、アイコンを押すと絵文字を変えられます<br>
+      ・作業は ‹ › で並べ替え、× で削除します<br>
+      ・場所は「番号を書く」にチェックすると、スタッフは番号の記入が必須になります（例：ハウス3）<br>
+      ・削除しても、これまでに登録された日報は消えません（レポートにもそのまま残ります）
+    </div>
+  </div>
+
+  <div class="section-heading">🌱 作物と作業</div>
+  <div id="cropArea"><div class="empty">読み込み中...</div></div>
+
+  <div class="card new-crop-card">
+    <div class="new-crop-title">＋ 作物を追加</div>
+    <div class="add-row">
+      <button type="button" class="crop-icon-btn" id="newCropIconBtn" onclick="togglePalette('new')">📦</button>
+      <input type="text" id="newCropName" maxlength="30" placeholder="例：ニンジン" onkeydown="if (event.key === 'Enter' && !event.isComposing) addCrop()">
+      <button type="button" class="btn btn-primary" onclick="addCrop()">追加</button>
+    </div>
+    <div class="emoji-palette" id="palette-new"></div>
+  </div>
+
+  <div class="section-heading">📍 場所</div>
+  <div class="card">
+    <div id="placeArea"><div class="empty">読み込み中...</div></div>
+  </div>
+  <div class="card new-crop-card">
+    <div class="new-crop-title">＋ 場所を追加</div>
+    <div class="add-row">
+      <button type="button" class="crop-icon-btn" id="newPlaceIconBtn" onclick="togglePalette('newPlace')">📍</button>
+      <input type="text" id="newPlaceName" maxlength="20" placeholder="例：倉庫" onkeydown="if (event.key === 'Enter' && !event.isComposing) addPlace()">
+      <label class="num-toggle"><input type="checkbox" id="newPlaceNeedsNumber" checked>番号を書く</label>
+      <button type="button" class="btn btn-primary" onclick="addPlace()">追加</button>
+    </div>
+    <div class="emoji-palette" id="palette-newPlace"></div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script>
+  // スタッフ画面「今日の作業報告（日報）」の作物・作業の選択肢（nippo_crops / nippo_tasks）を編集する管理者専用ページ。
+  // 1操作ごとにすぐ保存する。日報（daily_work_entries）は作物名・作業名を文字で持つため、ここで削除しても過去の日報は消えない
+  const EMOJIS = ['🏠', '🌾', '📍', '🏭', '⛺', '🍈', '🍉', '🌱', '🥬', '🥕', '🧅', '🥔', '🍠', '🍅', '🥒', '🍆', '🫑', '🌽', '🥦', '🍓', '🍎', '🍇', '🌰', '🌿', '🌾', '🌻', '🚜', '🧹', '📦'];
+
+  let crops = [];          // [{ id, name, icon, sort_order, tasks: [{ id, name, sort_order }] }]
+  let newCropIcon = '📦';
+  let places = [];         // [{ id, name, icon, needs_number, sort_order }]。読めなかったときは null
+  let newPlaceIcon = '📍';
+  let openPalette = null;  // 'new' または作物のid
+  let busy = false;
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
+  // 連打で同じ操作が二重に送られないよう、1つずつ実行する
+  async function run(action) {
+    if (busy) return;
+    busy = true;
+    try {
+      await action();
+    } catch (e) {
+      console.error(e);
+      alert('保存に失敗しました。通信状況を確認して、もう一度お試しください。\n' + (e.message ?? ''));
+    } finally {
+      busy = false;
+      await load();
+    }
+  }
+
+  function check({ error }) {
+    if (error) throw error;
+  }
+
+  // ── 読み込み・描画 ──
+  async function load() {
+    await loadPlaces();
+    const { data, error } = await supabaseClient
+      .from('nippo_crops')
+      .select('id, name, icon, sort_order, nippo_tasks(id, name, sort_order)')
+      .order('sort_order');
+    if (error) {
+      console.error(error);
+      document.getElementById('cropArea').innerHTML =
+        '<div class="card empty">データの取得に失敗しました。<br>（Supabaseに migration_2026-11-09_nippo_options.sql を実行済みか確認してください）</div>';
+      return;
+    }
+    crops = (data ?? []).map(c => ({
+      ...c,
+      tasks: (c.nippo_tasks ?? []).sort((a, b) => a.sort_order - b.sort_order),
+    }));
+    render();
+  }
+
+  async function loadPlaces() {
+    const { data, error } = await supabaseClient
+      .from('nippo_places')
+      .select('id, name, icon, needs_number, sort_order')
+      .order('sort_order');
+    if (error) {
+      console.error(error);
+      places = null;
+      return;
+    }
+    places = data ?? [];
+  }
+
+  function renderPlaces() {
+    const area = document.getElementById('placeArea');
+    if (places === null) {
+      area.innerHTML = '<div class="empty">場所の取得に失敗しました。<br>（Supabaseに migration_2026-11-09b_nippo_places.sql を実行済みか確認してください）</div>';
+      return;
+    }
+    area.innerHTML = places.length ? places.map((p, i) => `
+      <div class="place-row">
+        <button type="button" class="crop-icon-btn" onclick="togglePalette('place-${p.id}')" title="アイコンを変更">${escapeHtml(p.icon)}</button>
+        <div class="place-name">${escapeHtml(p.name)}<span class="place-example">${p.needs_number ? `例：${escapeHtml(p.name)}3` : '番号なし'}</span></div>
+        <label class="num-toggle"><input type="checkbox" ${p.needs_number ? 'checked' : ''} onchange="setPlaceNeedsNumber('${p.id}', this.checked)">番号を書く</label>
+        <button type="button" class="btn btn-icon" onclick="movePlace(${i}, -1)" ${i === 0 ? 'disabled' : ''} title="上へ">↑</button>
+        <button type="button" class="btn btn-icon" onclick="movePlace(${i}, 1)" ${i === places.length - 1 ? 'disabled' : ''} title="下へ">↓</button>
+        <button type="button" class="btn btn-danger" onclick="deletePlace('${p.id}')">🗑<span class="btn-label"> 削除</span></button>
+      </div>
+      <div class="emoji-palette ${openPalette === `place-${p.id}` ? 'open' : ''}">${paletteHtml(`place-${p.id}`, p.icon)}</div>`).join('')
+      : '<div class="empty">場所がありません。スタッフは場所を選べず日報を保存できないため、1つ以上追加してください。</div>';
+  }
+
+  function paletteHtml(key, current) {
+    return EMOJIS.map(e =>
+      `<button type="button" class="${e === current ? 'selected' : ''}" data-key="${key}" data-emoji="${e}">${e}</button>`).join('');
+  }
+
+  function render() {
+    const area = document.getElementById('cropArea');
+    if (!crops.length) {
+      area.innerHTML = '<div class="card empty">作物がありません。下の「作物を追加」から追加してください。</div>';
+    } else {
+      area.innerHTML = crops.map((c, i) => `
+        <div class="card" data-crop-id="${c.id}">
+          <div class="crop-head">
+            <button type="button" class="crop-icon-btn" onclick="togglePalette('${c.id}')" title="アイコンを変更">${escapeHtml(c.icon)}</button>
+            <div class="crop-name">${escapeHtml(c.name)}<span class="crop-count">作業 ${c.tasks.length}件</span></div>
+            <button type="button" class="btn btn-icon" onclick="moveCrop(${i}, -1)" ${i === 0 ? 'disabled' : ''} title="上へ">↑</button>
+            <button type="button" class="btn btn-icon" onclick="moveCrop(${i}, 1)" ${i === crops.length - 1 ? 'disabled' : ''} title="下へ">↓</button>
+            <button type="button" class="btn btn-danger" onclick="deleteCrop('${c.id}')">🗑<span class="btn-label"> 作物を削除</span></button>
+          </div>
+          <div class="emoji-palette ${openPalette === c.id ? 'open' : ''}">${paletteHtml(c.id, c.icon)}</div>
+          <div class="task-list">
+            ${c.tasks.length ? c.tasks.map((t, j) => `
+              <span class="task-chip">
+                <button type="button" class="chip-btn" onclick="moveTask('${c.id}', ${j}, -1)" ${j === 0 ? 'disabled' : ''} title="前へ">‹</button>
+                ${escapeHtml(t.name)}
+                <button type="button" class="chip-btn" onclick="moveTask('${c.id}', ${j}, 1)" ${j === c.tasks.length - 1 ? 'disabled' : ''} title="後ろへ">›</button>
+                <button type="button" class="chip-btn del" onclick="deleteTask('${c.id}', '${t.id}')" title="削除">×</button>
+              </span>`).join('') : '<span class="task-empty">作業がありません（スタッフは自由記入のみになります）</span>'}
+          </div>
+          <div class="add-row">
+            <input type="text" id="newTask-${c.id}" maxlength="50" placeholder="追加する作業（例：草取り）"
+              onkeydown="if (event.key === 'Enter' && !event.isComposing) addTask('${c.id}')">
+            <button type="button" class="btn btn-primary" onclick="addTask('${c.id}')">＋<span class="btn-label"> 作業を</span>追加</button>
+          </div>
+        </div>`).join('');
+    }
+
+    renderPlaces();
+    const newPlacePalette = document.getElementById('palette-newPlace');
+    newPlacePalette.innerHTML = paletteHtml('newPlace', newPlaceIcon);
+    newPlacePalette.classList.toggle('open', openPalette === 'newPlace');
+    document.getElementById('newPlaceIconBtn').textContent = newPlaceIcon;
+
+    const newPalette = document.getElementById('palette-new');
+    newPalette.innerHTML = paletteHtml('new', newCropIcon);
+    newPalette.classList.toggle('open', openPalette === 'new');
+    document.getElementById('newCropIconBtn').textContent = newCropIcon;
+
+    document.querySelectorAll('.emoji-palette button').forEach(btn => btn.onclick = () => pickEmoji(btn.dataset.key, btn.dataset.emoji));
+  }
+
+  function togglePalette(key) {
+    openPalette = openPalette === key ? null : key;
+    render();
+  }
+
+  function pickEmoji(key, emoji) {
+    openPalette = null;
+    if (key === 'new') {
+      newCropIcon = emoji;
+      render();
+      return;
+    }
+    if (key === 'newPlace') {
+      newPlaceIcon = emoji;
+      render();
+      return;
+    }
+    if (key.startsWith('place-')) {
+      run(async () => check(await supabaseClient.from('nippo_places').update({ icon: emoji }).eq('id', key.slice(6))));
+      return;
+    }
+    run(async () => check(await supabaseClient.from('nippo_crops').update({ icon: emoji }).eq('id', key)));
+  }
+
+  // ── 作物 ──
+  function addCrop() {
+    const input = document.getElementById('newCropName');
+    const name = input.value.trim();
+    if (!name) { alert('作物の名前を入力してください'); return; }
+    if (crops.some(c => c.name === name)) { alert(`「${name}」はすでにあります`); return; }
+    const sortOrder = Math.max(0, ...crops.map(c => c.sort_order)) + 1;
+    run(async () => {
+      check(await supabaseClient.from('nippo_crops').insert({ name, icon: newCropIcon, sort_order: sortOrder }));
+      input.value = '';
+      newCropIcon = '📦';
+      openPalette = null;
+    });
+  }
+
+  function deleteCrop(id) {
+    const crop = crops.find(c => c.id === id);
+    if (!crop) return;
+    if (!confirm(`作物「${crop.name}」と、その作業 ${crop.tasks.length}件を選択肢から削除しますか？\n（これまでに登録された日報は消えません）`)) return;
+    run(async () => check(await supabaseClient.from('nippo_crops').delete().eq('id', id)));
+  }
+
+  // 並べ替えは、表示中の順番で sort_order を振り直して保存する
+  async function saveOrder(table, list) {
+    const changed = list.map((item, i) => ({ id: item.id, sort_order: i + 1 }))
+      .filter((row, i) => list[i].sort_order !== row.sort_order);
+    for (const row of changed) {
+      check(await supabaseClient.from(table).update({ sort_order: row.sort_order }).eq('id', row.id));
+    }
+  }
+
+  function moveCrop(index, delta) {
+    const to = index + delta;
+    if (to < 0 || to >= crops.length) return;
+    const list = [...crops];
+    [list[index], list[to]] = [list[to], list[index]];
+    run(() => saveOrder('nippo_crops', list));
+  }
+
+  // ── 作業 ──
+  function addTask(cropId) {
+    const crop = crops.find(c => c.id === cropId);
+    const input = document.getElementById(`newTask-${cropId}`);
+    const name = input.value.trim();
+    if (!crop) return;
+    if (!name) { alert('作業の名前を入力してください'); input.focus(); return; }
+    if (crop.tasks.some(t => t.name === name)) { alert(`「${name}」は${crop.name}の作業にすでにあります`); return; }
+    const sortOrder = Math.max(0, ...crop.tasks.map(t => t.sort_order)) + 1;
+    run(async () => {
+      check(await supabaseClient.from('nippo_tasks').insert({ crop_id: cropId, name, sort_order: sortOrder }));
+      // 続けて入力できるよう、追加後も同じ入力欄にカーソルを戻す
+      setTimeout(() => document.getElementById(`newTask-${cropId}`)?.focus(), 0);
+    });
+  }
+
+  function deleteTask(cropId, taskId) {
+    const crop = crops.find(c => c.id === cropId);
+    const task = crop?.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    if (!confirm(`${crop.name}の作業「${task.name}」を削除しますか？`)) return;
+    run(async () => check(await supabaseClient.from('nippo_tasks').delete().eq('id', taskId)));
+  }
+
+  function moveTask(cropId, index, delta) {
+    const crop = crops.find(c => c.id === cropId);
+    const to = index + delta;
+    if (!crop || to < 0 || to >= crop.tasks.length) return;
+    const list = [...crop.tasks];
+    [list[index], list[to]] = [list[to], list[index]];
+    run(() => saveOrder('nippo_tasks', list));
+  }
+
+  // ── 場所 ──
+  function addPlace() {
+    const input = document.getElementById('newPlaceName');
+    const name = input.value.trim();
+    if (places === null) return;
+    if (!name) { alert('場所の名前を入力してください'); return; }
+    if (places.some(p => p.name === name)) { alert(`「${name}」はすでにあります`); return; }
+    const needsNumber = document.getElementById('newPlaceNeedsNumber').checked;
+    const sortOrder = Math.max(0, ...places.map(p => p.sort_order)) + 1;
+    run(async () => {
+      check(await supabaseClient.from('nippo_places').insert({ name, icon: newPlaceIcon, needs_number: needsNumber, sort_order: sortOrder }));
+      input.value = '';
+      newPlaceIcon = '📍';
+      document.getElementById('newPlaceNeedsNumber').checked = true;
+      openPalette = null;
+    });
+  }
+
+  function setPlaceNeedsNumber(id, needsNumber) {
+    run(async () => check(await supabaseClient.from('nippo_places').update({ needs_number: needsNumber }).eq('id', id)));
+  }
+
+  function deletePlace(id) {
+    const place = places?.find(p => p.id === id);
+    if (!place) return;
+    if (!confirm(`場所「${place.name}」を選択肢から削除しますか？\n（これまでに登録された日報は消えません）`)) return;
+    run(async () => check(await supabaseClient.from('nippo_places').delete().eq('id', id)));
+  }
+
+  function movePlace(index, delta) {
+    const to = index + delta;
+    if (!places || to < 0 || to >= places.length) return;
+    const list = [...places];
+    [list[index], list[to]] = [list[to], list[index]];
+    run(() => saveOrder('nippo_places', list));
+  }
+
+  (async () => {
+    const profile = await requireAuth('admin');
+    if (!profile) return;
+    await load();
+  })();
+</script>
+</body>
+</html>
