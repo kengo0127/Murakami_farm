@@ -49,7 +49,7 @@ alter table public.attendance_records
 
 -- 出勤時刻の制限（migration_2026-11-09c）に、お手伝い先・帰社の制限を追加（管理者以外）
 --   ・お手伝い先の名前・始業時間は、画面から送られた値ではなく、お手伝い先の一覧から決める
---   ・お手伝い先・始業時間は登録後に変更できない（修正は管理者）
+--   ・お手伝い先は登録後に変更できない（修正は管理者）。始業時間は遅らせる方向にのみ変更できる（現在時刻まで）
 --   ・帰社時刻は「いまの時刻」（前後10分まで）のみ記録できる。取り消し（空に戻す）は可
 create or replace function public.guard_attendance_clock_in()
 returns trigger
@@ -89,9 +89,16 @@ begin
       raise exception '出勤時刻は管理者のみ変更できます';
     end if;
     if new.help_destination_id is distinct from old.help_destination_id
-       or new.help_destination_name is distinct from old.help_destination_name
-       or new.fixed_start_time is distinct from old.fixed_start_time then
+       or new.help_destination_name is distinct from old.help_destination_name then
       raise exception 'お手伝い先は管理者のみ変更できます';
+    end if;
+    -- 始業時間は「遅らせる」だけ可（お手伝い先に遅れて着いたときなど）。前倒し・未来の時刻・決まっていない日への設定は不可
+    if new.fixed_start_time is distinct from old.fixed_start_time then
+      if old.fixed_start_time is null or new.fixed_start_time is null
+         or new.fixed_start_time <= old.fixed_start_time
+         or ((new.date + new.fixed_start_time) at time zone 'Asia/Tokyo') > now() + interval '10 minutes' then
+        raise exception '始業時間は、いまの始業時間より後（現在時刻まで）にのみ変更できます';
+      end if;
     end if;
     if new.returned_at is not null and new.returned_at is distinct from old.returned_at
        and (new.returned_at < now() - interval '10 minutes' or new.returned_at > now() + interval '10 minutes') then

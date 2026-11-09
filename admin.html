@@ -1217,7 +1217,11 @@
     </div>
     <div class="form-group">
       <label>お手伝い先（外出）</label>
-      <select id="kintaiEditHelpDest"></select>
+      <select id="kintaiEditHelpDest" onchange="onKintaiEditHelpDestChange()"></select>
+    </div>
+    <div class="form-group">
+      <label>始業時間（お手伝い先で決まっているとき）</label>
+      <select id="kintaiEditStart"></select>
     </div>
     <div class="form-group">
       <label>帰社時刻</label>
@@ -2257,8 +2261,24 @@
     helpDestCache.filter(d => d.active).forEach(d => destOptions.push(
       `<option value="${d.id}" ${d.id === r.help_destination_id ? 'selected' : ''}>${escHtml(d.name)}（${d.start_time ? `始業 ${d.start_time.substring(0, 5)}` : '打刻時刻で始業'}）</option>`));
     document.getElementById('kintaiEditHelpDest').innerHTML = destOptions.join('');
+    setKintaiEditStart(r.fixed_start_time);
     document.getElementById('kintaiEditMsg').textContent = '';
     document.getElementById('kintaiEditModalOverlay').classList.add('open');
+  }
+
+  // 始業時間：空＝出勤打刻を30分切り上げ。お手伝い先を選び直したら、そのお手伝い先の始業時間に合わせる
+  function setKintaiEditStart(fixedStart) {
+    const v = fixedStart ? fixedStart.substring(0, 5) : '';
+    document.getElementById('kintaiEditStart').innerHTML =
+      kintaiTimeOptionsHtml(v).replace('-- 未設定 --', '決まっていない（出勤打刻を30分切り上げ）');
+  }
+
+  function onKintaiEditHelpDestChange() {
+    const destVal = document.getElementById('kintaiEditHelpDest').value;
+    const r = kintaiRecordsCache.find(x => x.id === kintaiEditingId);
+    if (!destVal) setKintaiEditStart(null);
+    else if (destVal === '__keep' || destVal === r?.help_destination_id) setKintaiEditStart(r?.fixed_start_time);
+    else setKintaiEditStart(helpDestCache.find(d => d.id === destVal)?.start_time);
   }
 
   function closeKintaiEditModal() {
@@ -2286,13 +2306,15 @@
     // お手伝い先：変えていなければ記録済みの名前・始業時間のまま。変えたら一覧の設定を写す
     let help;
     if (!destVal) {
-      help = { help_destination_id: null, help_destination_name: null, fixed_start_time: null };
+      help = { help_destination_id: null, help_destination_name: null };
     } else if (destVal === '__keep' || destVal === r.help_destination_id) {
       help = {};
     } else {
       const d = helpDestCache.find(x => x.id === destVal);
-      help = { help_destination_id: d.id, help_destination_name: d.name, fixed_start_time: d.start_time };
+      help = { help_destination_id: d.id, help_destination_name: d.name };
     }
+    const startVal = document.getElementById('kintaiEditStart').value;
+    help.fixed_start_time = startVal ? `${startVal}:00` : null;
 
     const btn = document.getElementById('kintaiEditSaveBtn');
     btn.disabled = true;

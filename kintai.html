@@ -546,6 +546,25 @@
     return text;
   }
 
+  // 始業時間が決まっているお手伝い先で出勤した人だけ、始業時間を遅らせられる（前倒しはできない）
+  function startChangeButtonHtml() {
+    if (!currentRecord?.fixed_start_time) return '';
+    return `<button type="button" class="btn-time-select" onclick="openTimeSelectModal('start')">🕐 始業時間を遅らせる（おくらせる）</button>`;
+  }
+
+  // いまの始業時間の15分後〜現在時刻（15分単位に切り捨て）の選択肢
+  function laterStartOptionsHtml() {
+    const [h, m] = currentRecord.fixed_start_time.substring(0, 5).split(':').map(Number);
+    const now = new Date();
+    const maxMin = Math.floor((now.getHours() * 60 + now.getMinutes()) / 15) * 15;
+    let html = '';
+    for (let t = h * 60 + m + 15; t <= maxMin; t += 15) {
+      const v = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+      html += `<option value="${v}">${v}</option>`;
+    }
+    return html;
+  }
+
   function renderActionView() {
     const statusEl  = document.getElementById('actionStatus');
     const btnsEl    = document.getElementById('actionButtons');
@@ -561,6 +580,7 @@
       statusEl.textContent = recordStatusText(currentRecord);
       btnsEl.innerHTML = `
         <button type="button" class="btn-clock btn-clock-return" id="returnBtn" onclick="handleReturn()">🏠 帰社する（きしゃする）</button>
+        ${startChangeButtonHtml()}
         <button type="button" class="action-cancel-link" onclick="handleCancelClockIn()">出勤の記録を取り消す（とりけす）</button>`;
     } else if (currentRecord.clock_in && !currentRecord.clock_out) {
       statusEl.textContent = recordStatusText(currentRecord);
@@ -573,10 +593,12 @@
           <button type="button" class="btn-clock btn-clock-out" id="clockOutBtn" onclick="handleClockOut()">🔴 退勤する（たいきんする）</button>
           <button type="button" class="btn-time-select" onclick="openBreakSelectModal()">☕ 休憩時間を変更する（へんこうする）</button>
           <button type="button" class="btn-time-select" onclick="openTimeSelectModal('clockOut')">🕐 退勤時間を選択する（せんたくする）</button>
+          ${startChangeButtonHtml()}
           ${cancelLink}`;
       } else {
         btnsEl.innerHTML = `
           <button type="button" class="btn-clock btn-clock-break" id="breakSelectBtn" onclick="openBreakSelectModal()">☕ 休憩時間をえらぶ（えらぶ）</button>
+          ${startChangeButtonHtml()}
           ${cancelLink}`;
       }
     } else {
@@ -617,7 +639,7 @@
   // ── 時刻選択（退勤の押し忘れ対応） ─────────────────────────
   // 出勤時刻はさかのぼって選べない（始業を前倒しして長く働いたことにできないよう、出勤は押した時刻のみ。
   // 押し忘れは管理者が管理画面の勤怠で修正する）。退勤は現在時刻までの過去の時刻から選べる
-  let timeSelectMode = null; // 'clockOut'
+  let timeSelectMode = null; // 'clockOut' | 'start'（お手伝い先の始業時間を遅らせる）
 
   // 現在時刻を15分単位に切り捨て（例：12:39 → 12:30）
   function floorTo15(date) {
@@ -643,6 +665,20 @@
 
   function openTimeSelectModal(mode) {
     clearActionIdleTimer(); // モーダル操作中に名前一覧へ戻されないようにする
+    if (mode === 'start') {
+      const options = laterStartOptionsHtml();
+      if (!options) {
+        alert(`いまの始業時間（${currentRecord.fixed_start_time.substring(0, 5)}）より後の時刻をまだ選べません`);
+        resetActionIdleTimer();
+        return;
+      }
+      timeSelectMode = mode;
+      document.getElementById('timeSelectTitle').textContent =
+        `始業時間を遅らせる（いま ${currentRecord.fixed_start_time.substring(0, 5)}）`;
+      document.getElementById('timeSelectInput').innerHTML = options;
+      document.getElementById('timeSelectModalOverlay').classList.add('open');
+      return;
+    }
     if (mode !== 'clockOut') return;
     timeSelectMode = mode;
     document.getElementById('timeSelectTitle').textContent = '退勤時間を選択（せんたく）する';
@@ -664,10 +700,13 @@
     btn.disabled = true;
     btn.textContent = '記録中（きろくちゅう）...';
 
+    const mode = timeSelectMode;
     const recordedAt = new Date(`${getToday()}T${timeVal}:00`);
     const { error } = await supabaseClient
       .from('attendance_records')
-      .update({ clock_out: recordedAt.toISOString(), updated_at: new Date().toISOString() })
+      .update(mode === 'start'
+        ? { fixed_start_time: `${timeVal}:00`, updated_at: new Date().toISOString() }
+        : { clock_out: recordedAt.toISOString(), updated_at: new Date().toISOString() })
       .eq('id', currentRecord.id);
 
     btn.disabled = false;
@@ -682,6 +721,10 @@
     document.getElementById('timeSelectModalOverlay').classList.remove('open');
     timeSelectMode = null;
 
+    if (mode === 'start') {
+      showFeedback('🕐', `${currentStaff.name}さん\n始業時間を ${timeVal} に変更しました`);
+      return;
+    }
     showFeedback('🔴', `${currentStaff.name}さん\n退勤を記録しました（${timeVal}）`);
   }
 
