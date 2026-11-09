@@ -762,6 +762,13 @@
       line-height: 1;
     }
     .pos-qty-ctrl span { min-width: 54px; text-align: center; font-weight: 700; }
+    .pos-cart-remove {
+      width: 32px; height: 32px; flex-shrink: 0;
+      border-radius: 50%; border: 1.5px solid #f2c4c4; background: #fff;
+      color: #c62828; font-size: 15px; font-weight: 800; cursor: pointer; font-family: inherit;
+    }
+    .pos-cart-remove:active { background: #fde7e7; }
+    .pos-cart-remove-spacer { width: 32px; flex-shrink: 0; }
 
     .pos-fee-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .pos-fee-btn {
@@ -3688,6 +3695,7 @@
           <div class="pos-cart-line">
             <div class="pos-cart-name">🚚 送料（税込み）</div>
             <div class="pos-cart-amount">${formatYen(posShippingFee())}</div>
+            <div class="pos-cart-remove-spacer"></div>
           </div>` : '';
     const cartHtml = pos.cart.length
       ? pos.cart.map((l, i) => `
@@ -3699,6 +3707,7 @@
               <button type="button" onclick="posChangeQty(${i}, 1)">＋</button>
             </div>
             <div class="pos-cart-amount">${formatYen(posLineAmount(l))}</div>
+            <button type="button" class="pos-cart-remove" title="この品物を消す" onclick="posRemoveLine(${i})">✕</button>
           </div>`).join('') + feeLine
       : '<div class="pos-cart-empty">上のアイコンから品物を選んでください</div>' + feeLine;
 
@@ -3861,6 +3870,12 @@
     const line = pos.cart[index];
     line.qty = Math.round((line.qty + delta) * 1000) / 1000;
     if (line.qty <= 0) pos.cart.splice(index, 1);
+    renderPos();
+  }
+
+  // 「選んだ品物」の行を✕で一度に消す（−で0まで減らさなくてよい）
+  function posRemoveLine(index) {
+    pos.cart.splice(index, 1);
     renderPos();
   }
 
