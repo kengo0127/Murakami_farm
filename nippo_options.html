@@ -191,11 +191,29 @@
     }
     .num-toggle input { width: 18px; height: 18px; accent-color: #2e5c28; }
 
+    .num-area { padding: 4px 0 12px 52px; border-bottom: 1px solid #e6eee4; }
+    .num-area-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: #555; font-weight: 700; }
+    .num-area-head .btn { margin-left: auto; padding: 5px 10px; font-size: 12px; }
+    .num-list { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; max-height: 260px; overflow-y: auto; }
+    .num-chip {
+      display: inline-flex; align-items: center;
+      background: #f4f8f3; border: 1.5px solid #dce9dc; border-radius: 16px;
+      font-size: 14px; font-weight: 700; color: #333;
+    }
+    .num-chip .num-label {
+      border: none; background: none; font: inherit; color: inherit; cursor: pointer;
+      padding: 3px 2px 3px 10px; min-width: 28px;
+    }
+    .num-chip .num-label:hover { color: #2e5c28; text-decoration: underline; }
+    .num-chip .chip-btn { width: 24px; height: 24px; font-size: 13px; }
+    .num-hint { font-size: 12px; color: #888; margin-top: 6px; }
+
     @media (max-width: 540px) {
       .btn-label { display: none; }
       .place-row { flex-wrap: wrap; }
       .place-name { flex-basis: calc(100% - 56px); }
       .place-row .num-toggle { margin-right: auto; }
+      .num-area { padding-left: 0; }
     }
   </style>
 </head>
@@ -213,7 +231,8 @@
       変更はすぐに保存され、スタッフが次に日報を開いたときから反映されます。<br>
       ・作物は ↑↓ で並べ替え、アイコンを押すと絵文字を変えられます<br>
       ・作業は ‹ › で並べ替え、× で削除します<br>
-      ・場所は「番号を書く」にチェックすると、スタッフは番号の記入が必須になります（例：ハウス3）<br>
+      ・場所は「番号を選ぶ」にチェックすると、スタッフは番号を選びます（例：ハウス3・5・7。いくつでも選べます）<br>
+      ・番号は、押すと名前を変えられます（ハウスの番号が変わったときなど）。× で削除します<br>
       ・削除しても、これまでに登録された日報は消えません（レポートにもそのまま残ります）
     </div>
   </div>
@@ -240,7 +259,7 @@
     <div class="add-row">
       <button type="button" class="crop-icon-btn" id="newPlaceIconBtn" onclick="togglePalette('newPlace')">📍</button>
       <input type="text" id="newPlaceName" maxlength="20" placeholder="例：倉庫" onkeydown="if (event.key === 'Enter' && !event.isComposing) addPlace()">
-      <label class="num-toggle"><input type="checkbox" id="newPlaceNeedsNumber" checked>番号を書く</label>
+      <label class="num-toggle"><input type="checkbox" id="newPlaceNeedsNumber" checked>番号を選ぶ</label>
       <button type="button" class="btn btn-primary" onclick="addPlace()">追加</button>
     </div>
     <div class="emoji-palette" id="palette-newPlace"></div>
@@ -257,6 +276,7 @@
   let crops = [];          // [{ id, name, icon, sort_order, tasks: [{ id, name, sort_order }] }]
   let newCropIcon = '📦';
   let places = [];         // [{ id, name, icon, needs_number, sort_order }]。読めなかったときは null
+  let placeNumbers = [];   // [{ id, place_id, label, sort_order }]。読めなかったときは null
   let newPlaceIcon = '📍';
   let openPalette = null;  // 'new' または作物のid
   let busy = false;
@@ -315,6 +335,38 @@
       return;
     }
     places = data ?? [];
+    const nums = await supabaseClient
+      .from('nippo_place_numbers')
+      .select('id, place_id, label, sort_order')
+      .order('sort_order');
+    if (nums.error) console.error(nums.error);
+    placeNumbers = nums.error ? null : (nums.data ?? []);
+  }
+
+  function numbersOf(placeId) { return (placeNumbers ?? []).filter(n => n.place_id === placeId); }
+
+  function numberAreaHtml(p) {
+    if (!p.needs_number) return '';
+    if (placeNumbers === null) {
+      return `<div class="num-area"><div class="num-hint">番号リストの取得に失敗しました。（Supabaseに migration_2026-11-13_nippo_place_numbers.sql を実行済みか確認してください）</div></div>`;
+    }
+    const nums = numbersOf(p.id);
+    return `<div class="num-area">
+        <div class="num-area-head">番号 ${nums.length}件
+          ${nums.length > 1 ? `<button type="button" class="btn" onclick="sortNumbers('${p.id}')">番号順に並べる</button>` : ''}
+        </div>
+        <div class="num-list">${nums.length ? nums.map(n => `
+          <span class="num-chip">
+            <button type="button" class="num-label" onclick="renameNumber('${n.id}')" title="名前を変更">${escapeHtml(n.label)}</button>
+            <button type="button" class="chip-btn del" onclick="deleteNumber('${n.id}')" title="削除">×</button>
+          </span>`).join('') : '<span class="task-empty">番号がありません（スタッフは番号を手で書きます）</span>'}</div>
+        <div class="add-row">
+          <input type="text" id="newNum-${p.id}" maxlength="50" placeholder="追加する番号（例：84　／　1〜10　／　3-2）"
+            onkeydown="if (event.key === 'Enter' && !event.isComposing) addNumbers('${p.id}')">
+          <button type="button" class="btn btn-primary" onclick="addNumbers('${p.id}')">＋<span class="btn-label"> 番号を</span>追加</button>
+        </div>
+        <div class="num-hint">「1〜10」のように書くとまとめて追加できます。「、」やスペースで区切って複数追加もできます。</div>
+      </div>`;
   }
 
   function renderPlaces() {
@@ -326,13 +378,14 @@
     area.innerHTML = places.length ? places.map((p, i) => `
       <div class="place-row">
         <button type="button" class="crop-icon-btn" onclick="togglePalette('place-${p.id}')" title="アイコンを変更">${escapeHtml(p.icon)}</button>
-        <div class="place-name">${escapeHtml(p.name)}<span class="place-example">${p.needs_number ? `例：${escapeHtml(p.name)}3` : '番号なし'}</span></div>
-        <label class="num-toggle"><input type="checkbox" ${p.needs_number ? 'checked' : ''} onchange="setPlaceNeedsNumber('${p.id}', this.checked)">番号を書く</label>
+        <div class="place-name">${escapeHtml(p.name)}<span class="place-example">${p.needs_number ? `例：${escapeHtml(p.name)}3・5` : '番号なし'}</span></div>
+        <label class="num-toggle"><input type="checkbox" ${p.needs_number ? 'checked' : ''} onchange="setPlaceNeedsNumber('${p.id}', this.checked)">番号を選ぶ</label>
         <button type="button" class="btn btn-icon" onclick="movePlace(${i}, -1)" ${i === 0 ? 'disabled' : ''} title="上へ">↑</button>
         <button type="button" class="btn btn-icon" onclick="movePlace(${i}, 1)" ${i === places.length - 1 ? 'disabled' : ''} title="下へ">↓</button>
         <button type="button" class="btn btn-danger" onclick="deletePlace('${p.id}')">🗑<span class="btn-label"> 削除</span></button>
       </div>
-      <div class="emoji-palette ${openPalette === `place-${p.id}` ? 'open' : ''}">${paletteHtml(`place-${p.id}`, p.icon)}</div>`).join('')
+      <div class="emoji-palette ${openPalette === `place-${p.id}` ? 'open' : ''}">${paletteHtml(`place-${p.id}`, p.icon)}</div>
+      ${numberAreaHtml(p)}`).join('')
       : '<div class="empty">場所がありません。スタッフは場所を選べず日報を保存できないため、1つ以上追加してください。</div>';
   }
 
@@ -518,6 +571,69 @@
     const list = [...places];
     [list[index], list[to]] = [list[to], list[index]];
     run(() => saveOrder('nippo_places', list));
+  }
+
+  // ── 場所の番号 ──
+  // 「1〜10」「1~10」は範囲、「、」「,」スペースは区切り。「3-2」のようなハイフン付きはそのまま1つの番号
+  function parseNumberInput(text) {
+    const half = text.replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+    const out = [];
+    for (const part of half.split(/[,、，\s]+/).map(v => v.trim()).filter(Boolean)) {
+      const m = part.match(/^(\d+)[〜~～](\d+)$/);
+      if (m) {
+        const a = Number(m[1]), b = Number(m[2]);
+        if (b < a || b - a > 500) throw new Error(`「${part}」の範囲が正しくありません`);
+        for (let n = a; n <= b; n++) out.push(String(n));
+      } else {
+        out.push(part);
+      }
+    }
+    return [...new Set(out)];
+  }
+
+  function addNumbers(placeId) {
+    const place = places?.find(p => p.id === placeId);
+    const input = document.getElementById(`newNum-${placeId}`);
+    if (!place || placeNumbers === null) return;
+    let labels;
+    try { labels = parseNumberInput(input.value); } catch (e) { alert(e.message); return; }
+    if (!labels.length) { alert('番号を入力してください'); input.focus(); return; }
+    const existing = numbersOf(placeId);
+    const dup = labels.filter(l => existing.some(n => n.label === l));
+    const fresh = labels.filter(l => !dup.includes(l));
+    if (!fresh.length) { alert(`${place.name}${dup.join('・')} はすでにあります`); return; }
+    if (dup.length && !confirm(`${place.name}${dup.join('・')} はすでにあるため、それ以外の ${fresh.length}件を追加します。`)) return;
+    let order = Math.max(0, ...existing.map(n => n.sort_order));
+    run(async () => {
+      check(await supabaseClient.from('nippo_place_numbers').insert(
+        fresh.map(label => ({ place_id: placeId, label, sort_order: ++order }))));
+      setTimeout(() => document.getElementById(`newNum-${placeId}`)?.focus(), 0);
+    });
+  }
+
+  function renameNumber(id) {
+    const num = placeNumbers?.find(n => n.id === id);
+    const place = places?.find(p => p.id === num?.place_id);
+    if (!num || !place) return;
+    const input = prompt(`${place.name}「${num.label}」の新しい番号を入力してください\n（これまでに登録された日報は、元の番号のまま残ります）`, num.label);
+    if (input === null) return;
+    const label = input.trim().replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+    if (!label || label === num.label) return;
+    if (numbersOf(place.id).some(n => n.label === label)) { alert(`${place.name}${label} はすでにあります`); return; }
+    run(async () => check(await supabaseClient.from('nippo_place_numbers').update({ label }).eq('id', id)));
+  }
+
+  function deleteNumber(id) {
+    const num = placeNumbers?.find(n => n.id === id);
+    const place = places?.find(p => p.id === num?.place_id);
+    if (!num || !place) return;
+    if (!confirm(`${place.name}${num.label} を選択肢から削除しますか？\n（これまでに登録された日報は消えません）`)) return;
+    run(async () => check(await supabaseClient.from('nippo_place_numbers').delete().eq('id', id)));
+  }
+
+  function sortNumbers(placeId) {
+    const list = [...numbersOf(placeId)].sort((a, b) => a.label.localeCompare(b.label, 'ja', { numeric: true }));
+    run(() => saveOrder('nippo_place_numbers', list));
   }
 
   (async () => {

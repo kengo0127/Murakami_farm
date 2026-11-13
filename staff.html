@@ -658,8 +658,37 @@
 
     .nippo-choice-btn.selected { background: #245b85; border-color: #245b85; color: #fff; }
 
-    .nippo-place-no { margin-top: 8px; }
+    .nippo-place-btn.active { box-shadow: 0 0 0 3px #f2b84b; }
+    .nippo-place-count {
+      display: inline-block; min-width: 20px; padding: 0 5px; margin-left: 3px;
+      background: #fff; color: #245b85; border-radius: 10px; font-size: 12px; line-height: 18px;
+    }
+    .nippo-place-no { margin-top: 8px; padding: 10px; background: #f5f9fc; border: 1.5px solid #d5e4ef; border-radius: 10px; }
     .nippo-place-no.hidden { display: none; }
+    .nippo-place-no-title { font-size: 13px; font-weight: 700; color: #245b85; margin-bottom: 8px; }
+    .nippo-num-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 5px;
+      max-height: 216px; overflow-y: auto;
+    }
+    .nippo-num-grid:empty { display: none; }
+    .nippo-num-btn {
+      padding: 10px 2px; background: #fff; border: 1.5px solid #dde8dd; border-radius: 8px;
+      font-size: 15px; font-weight: 700; color: #333; cursor: pointer; word-break: break-all;
+    }
+    .nippo-num-btn.selected { background: #245b85; border-color: #245b85; color: #fff; }
+    .nippo-place-other { display: flex; gap: 6px; margin-top: 8px; }
+    .nippo-place-other .modal-input { flex: 1; min-width: 0; margin: 0; }
+    .btn-nippo-place-add {
+      padding: 0 16px; background: #245b85; color: #fff; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+    }
+    .nippo-place-selected { margin-top: 8px; font-size: 13px; color: #555; }
+    .nippo-place-selected:empty { display: none; }
+    .nippo-place-chip {
+      display: inline-flex; align-items: center; gap: 2px; margin: 4px 4px 0 0; padding: 3px 4px 3px 10px;
+      background: #e3eef6; border: none; border-radius: 14px; font-size: 13px; font-weight: 700; color: #245b85; cursor: pointer;
+    }
+    .nippo-place-chip span { padding: 0 5px; color: #7a9bb5; }
     .nippo-task-free-label { font-size: 12px; color: #777; margin: 10px 0 4px; }
 
     .btn-nippo-delete {
@@ -1393,8 +1422,15 @@
       <label id="nippoPlaceLabel">場所</label>
       <div class="nippo-crop-grid" id="nippoPlaceGrid"></div>
       <div class="nippo-place-no" id="nippoPlaceNoWrap">
-        <input type="text" id="nippoPlaceNo" class="modal-input" maxlength="20" placeholder="番号">
+        <div class="nippo-place-no-title" id="nippoPlaceNoTitle"></div>
+        <div class="nippo-num-grid" id="nippoPlaceNumGrid"></div>
+        <div class="nippo-place-other">
+          <input type="text" id="nippoPlaceNo" class="modal-input" maxlength="20" placeholder="リストにない番号"
+            onkeydown="if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); addNippoPlaceNo(); }">
+          <button type="button" class="btn-nippo-place-add" id="nippoPlaceAddBtn" onclick="addNippoPlaceNo()">追加</button>
+        </div>
       </div>
+      <div class="nippo-place-selected" id="nippoPlaceSelected"></div>
     </div>
     <div class="modal-group">
       <div class="report-row">
@@ -1438,9 +1474,10 @@
       nippoTaskFree: 'リストにない作業はここに書いてください', nippoTaskPlaceholder: '例：草取り',
       nippoDelete: '削除', nippoConfirmDelete: 'この作業を削除しますか？',
       nippoCropRequired: '作物を選んでください', nippoTaskRequired: '作業を選ぶか、書いてください',
-      nippoPlaceLabel: '場所', nippoPlaceHouse: 'ハウス', nippoPlaceField: '露地', nippoPlaceNo: '番号',
-      nippoPlaceTypeRequired: '場所を選んでください', nippoPlaceNoRequired: '番号を書いてください',
-      nippoPlaceNoFor: name => `${name}の番号`,
+      nippoPlaceLabel: '場所（いくつでも選べます）', nippoPlaceHouse: 'ハウス', nippoPlaceField: '露地', nippoPlaceNo: '番号',
+      nippoPlaceTypeRequired: '場所を選んでください', nippoPlaceNoRequired: name => `${name}の番号を選ぶか、書いてください`,
+      nippoPlaceNoFor: name => `${name}の番号（いくつでも選べます）`,
+      nippoPlaceNoOther: 'リストにない番号', nippoPlaceAdd: '追加', nippoPlaceSelected: '選んだ場所',
       nippoTimeInvalid: '終了時刻は開始時刻より後にしてください',
       nippoOverlap: 'ほかの作業と時間が重なっています。このまま保存しますか？',
       nippoSaveFailed: '保存に失敗しました。もう一度お試しください。',
@@ -1509,9 +1546,10 @@
       nippoTaskFree: 'Jika tidak ada di daftar, tulis di sini', nippoTaskPlaceholder: 'Contoh: menyiangi',
       nippoDelete: 'Hapus', nippoConfirmDelete: 'Hapus pekerjaan ini?',
       nippoCropRequired: 'Silakan pilih tanaman', nippoTaskRequired: 'Pilih atau tulis pekerjaan',
-      nippoPlaceLabel: 'Tempat', nippoPlaceHouse: 'Rumah kaca', nippoPlaceField: 'Lahan terbuka', nippoPlaceNo: 'Nomor',
-      nippoPlaceTypeRequired: 'Silakan pilih tempat', nippoPlaceNoRequired: 'Silakan tulis nomornya',
-      nippoPlaceNoFor: name => `Nomor ${name}`,
+      nippoPlaceLabel: 'Tempat (boleh pilih lebih dari satu)', nippoPlaceHouse: 'Rumah kaca', nippoPlaceField: 'Lahan terbuka', nippoPlaceNo: 'Nomor',
+      nippoPlaceTypeRequired: 'Silakan pilih tempat', nippoPlaceNoRequired: name => `Pilih atau tulis nomor ${name}`,
+      nippoPlaceNoFor: name => `Nomor ${name} (boleh lebih dari satu)`,
+      nippoPlaceNoOther: 'Nomor yang tidak ada di daftar', nippoPlaceAdd: 'Tambah', nippoPlaceSelected: 'Tempat yang dipilih',
       nippoTimeInvalid: 'Waktu selesai harus setelah waktu mulai',
       nippoOverlap: 'Waktunya bertabrakan dengan pekerjaan lain. Tetap simpan?',
       nippoSaveFailed: 'Gagal menyimpan. Silakan coba lagi.',
@@ -1580,9 +1618,10 @@
       nippoTaskFree: 'បើមិនមានក្នុងបញ្ជី សូមសរសេរនៅទីនេះ', nippoTaskPlaceholder: 'ឧទាហរណ៍៖ ដកស្មៅ',
       nippoDelete: 'លុប', nippoConfirmDelete: 'លុបការងារនេះឬ？',
       nippoCropRequired: 'សូមជ្រើសរើសដំណាំ', nippoTaskRequired: 'សូមជ្រើសរើស ឬសរសេរការងារ',
-      nippoPlaceLabel: 'ទីកន្លែង', nippoPlaceHouse: 'ផ្ទះកញ្ចក់', nippoPlaceField: 'វាលចំហ', nippoPlaceNo: 'លេខ',
-      nippoPlaceTypeRequired: 'សូមជ្រើសរើសទីកន្លែង', nippoPlaceNoRequired: 'សូមសរសេរលេខ',
-      nippoPlaceNoFor: name => `លេខ${name}`,
+      nippoPlaceLabel: 'ទីកន្លែង (អាចជ្រើសបានច្រើន)', nippoPlaceHouse: 'ផ្ទះកញ្ចក់', nippoPlaceField: 'វាលចំហ', nippoPlaceNo: 'លេខ',
+      nippoPlaceTypeRequired: 'សូមជ្រើសរើសទីកន្លែង', nippoPlaceNoRequired: name => `សូមជ្រើសរើស ឬសរសេរលេខ${name}`,
+      nippoPlaceNoFor: name => `លេខ${name} (អាចជ្រើសបានច្រើន)`,
+      nippoPlaceNoOther: 'លេខដែលមិនមានក្នុងបញ្ជី', nippoPlaceAdd: 'បន្ថែម', nippoPlaceSelected: 'ទីកន្លែងដែលបានជ្រើស',
       nippoTimeInvalid: 'ម៉ោងបញ្ចប់ត្រូវនៅក្រោយម៉ោងចាប់ផ្តើម',
       nippoOverlap: 'ម៉ោងជាន់គ្នាជាមួយការងារផ្សេង។ រក្សាទុកដដែលឬ？',
       nippoSaveFailed: 'រក្សាទុកមិនជោគជ័យទេ។ សូមព្យាយាមម្ដងទៀត។',
@@ -3359,11 +3398,12 @@
     { name: '大根',   icon: '🥬', tasks: ['畑の準備', '種まき', '間引き', '除草', '追肥', '消毒', '収穫', '洗い・選別', '出荷'] },
     { name: 'その他', icon: '📦', labelKey: 'nippoCropOther', tasks: ['草刈り', '掃除・片付け', '機械の整備', '資材の運搬'] },
   ];
-  // 場所の選択肢は管理画面で編集する（nippo_places）。needsNumber の場所は番号の記入が必須。下は読めなかったとき用
+  // 場所と番号の選択肢は管理画面で編集する（nippo_places / nippo_place_numbers）。
+  // needsNumber の場所は番号を選ぶ（いくつでも。リストにない番号は手入力）。下は読めなかったとき用
   let NIPPO_PLACES = [
-    { name: 'ハウス', icon: '🏠', needsNumber: true },
-    { name: '露地',   icon: '🌾', needsNumber: true },
-    { name: 'その他', icon: '📍', needsNumber: false },
+    { name: 'ハウス', icon: '🏠', needsNumber: true, numbers: Array.from({ length: 83 }, (_, i) => String(i + 1)) },
+    { name: '露地',   icon: '🌾', needsNumber: true, numbers: [] },
+    { name: 'その他', icon: '📍', needsNumber: false, numbers: [] },
   ];
   // 初期の場所名はスタッフの言語で表示する（保存は日本語のまま）
   const NIPPO_PLACE_LABEL_KEYS = { 'ハウス': 'nippoPlaceHouse', '露地': 'nippoPlaceField', 'その他': 'nippoCropOther' };
@@ -3378,7 +3418,8 @@
   let nippoNameTab = '';
   let nippoEditingId = null; // null＝新規追加
   let nippoSelectedCrop = '';
-  let nippoSelectedPlace = ''; // 'ハウス' / '露地' / ''（日本語のまま保存）
+  let nippoSelectedPlaces = []; // [{ place: 'ハウス', no: '3' }, { place: 'その他', no: null }]（日本語のまま保存）
+  let nippoActivePlace = '';     // 番号を選んでいる場所
   let nippoLoadSeq = 0;      // 日付・名前を続けて切り替えたとき、古い読み込み結果で上書きしないため
 
   function minToHM(min) {
@@ -3398,6 +3439,8 @@
     document.getElementById('nippoTaskFreeLabel').textContent = st('nippoTaskFree');
     document.getElementById('nippoTaskInput').placeholder    = st('nippoTaskPlaceholder');
     document.getElementById('nippoPlaceLabel').textContent   = st('nippoPlaceLabel');
+    document.getElementById('nippoPlaceNo').placeholder      = st('nippoPlaceNoOther');
+    document.getElementById('nippoPlaceAddBtn').textContent  = st('nippoPlaceAdd');
     renderNippoPlace();
     document.getElementById('nippoStartLabel').textContent   = st('startLabel');
     document.getElementById('nippoEndLabel').textContent     = st('endLabel');
@@ -3433,10 +3476,22 @@
 
   // 管理者が編集した作物・作業の選択肢を読み込む（失敗・未登録のときは初期リストのまま）
   async function loadNippoOptions() {
-    const places = await supabaseClient.from('nippo_places').select('name, icon, needs_number').order('sort_order');
+    const [places, numbers] = await Promise.all([
+      supabaseClient.from('nippo_places').select('id, name, icon, needs_number').order('sort_order'),
+      supabaseClient.from('nippo_place_numbers').select('place_id, label').order('sort_order'),
+    ]);
+    if (numbers.error) console.error(numbers.error);
     if (places.error) console.error(places.error);
     else if (places.data?.length) {
-      NIPPO_PLACES = places.data.map(p => ({ name: p.name, icon: p.icon || '📍', needsNumber: p.needs_number }));
+      NIPPO_PLACES = places.data.map(p => ({
+        name: p.name,
+        icon: p.icon || '📍',
+        needsNumber: p.needs_number,
+        // 番号リストが読めなかったとき（マイグレーション未実行など）は、初期リスト（ハウス 1〜83）を使う
+        numbers: numbers.error
+          ? (NIPPO_PLACES.find(d => d.name === p.name)?.numbers ?? [])
+          : (numbers.data ?? []).filter(n => n.place_id === p.id).map(n => n.label),
+      }));
       renderNippoPlace();
     }
     const { data, error } = await supabaseClient
@@ -3507,7 +3562,7 @@
     }
     const { data, error } = await supabaseClient
       .from('daily_work_entries')
-      .select('id, crop, task_name, location_type, location_no, start_time, end_time')
+      .select('id, crop, task_name, places, location_type, location_no, start_time, end_time')
       .eq('work_date', date)
       .eq('staff_name', nippoStaffName)
       .order('start_time');
@@ -3595,8 +3650,9 @@
     nippoSelectedCrop = entry?.crop ?? '';
     document.getElementById('nippoEntryTitle').textContent = st(entry ? 'nippoEditTitle' : 'nippoAddTitle');
     document.getElementById('nippoTaskInput').value = entry?.task_name ?? '';
-    nippoSelectedPlace = entry?.location_type ?? '';
-    document.getElementById('nippoPlaceNo').value = entry?.location_no ?? '';
+    nippoSelectedPlaces = entry ? nippoEntryPlaces(entry).map(p => ({ ...p })) : [];
+    nippoActivePlace = nippoSelectedPlaces.find(p => p.no != null)?.place ?? '';
+    document.getElementById('nippoPlaceNo').value = '';
     renderNippoPlace();
     document.getElementById('nippoStartTime').value = entry ? fmt(entry.start_time) : minToHM(startMin);
     document.getElementById('nippoEndTime').value   = entry ? fmt(entry.end_time) : minToHM(Math.min(startMin + 60, NIPPO_DAY_END));
@@ -3638,36 +3694,96 @@
 
   function onNippoTaskInput() { renderNippoTaskGrid(); }
 
-  // ── 場所（管理者が編集した場所から選ぶ。番号が必要な場所は番号を直接記入） ──
+  // ── 場所（管理者が編集した場所・番号から選ぶ。いくつでも選べる。リストにない番号は手入力） ──
   function nippoPlaceInfo(name) { return NIPPO_PLACES.find(p => p.name === name); }
   function nippoPlaceLabel(name) { return NIPPO_PLACE_LABEL_KEYS[name] ? st(NIPPO_PLACE_LABEL_KEYS[name]) : name; }
   // 選択肢から消された場所の日報を開いたときも、番号欄は出しておく
   function nippoPlaceNeedsNumber(name) { return nippoPlaceInfo(name)?.needsNumber ?? !!name; }
+  function isNippoPlaceSelected(place, no) { return nippoSelectedPlaces.some(p => p.place === place && p.no === no); }
 
-  function selectNippoPlace(name) {
-    nippoSelectedPlace = name;
+  // 日報の場所一覧（新しい日報は places、古い日報は location_type / location_no）
+  function nippoEntryPlaces(entry) {
+    if (Array.isArray(entry.places)) return entry.places;
+    return entry.location_type ? [{ place: entry.location_type, no: entry.location_no ?? null }] : [];
+  }
+
+  // 「ハウス3・5・7、露地12、その他」のように場所ごとにまとめる
+  function nippoPlacesText(list) {
+    const groups = new Map();
+    list.forEach(p => {
+      if (!groups.has(p.place)) groups.set(p.place, []);
+      if (p.no) groups.get(p.place).push(p.no);
+    });
+    return [...groups].map(([place, nos]) => nippoPlaceLabel(place) + nos.join('・')).join('、');
+  }
+
+  function onNippoPlaceClick(name) {
+    if (nippoPlaceNeedsNumber(name)) {
+      nippoActivePlace = nippoActivePlace === name ? '' : name;
+    } else if (isNippoPlaceSelected(name, null)) {
+      nippoSelectedPlaces = nippoSelectedPlaces.filter(p => p.place !== name);
+    } else {
+      nippoSelectedPlaces.push({ place: name, no: null });
+    }
     renderNippoPlace();
-    if (nippoPlaceNeedsNumber(name)) document.getElementById('nippoPlaceNo').focus();
+  }
+
+  function toggleNippoPlaceNo(place, no) {
+    if (isNippoPlaceSelected(place, no)) nippoSelectedPlaces = nippoSelectedPlaces.filter(p => !(p.place === place && p.no === no));
+    else nippoSelectedPlaces.push({ place, no });
+    renderNippoPlace();
+  }
+
+  // 手入力の番号を追加（「3,5」「3、5」のように区切ってもまとめて追加できる）
+  function addNippoPlaceNo() {
+    const input = document.getElementById('nippoPlaceNo');
+    const nos = input.value.split(/[,、，\s]+/).map(v => v.trim()).filter(Boolean);
+    if (!nippoActivePlace || !nos.length) return;
+    nos.forEach(no => { if (!isNippoPlaceSelected(nippoActivePlace, no)) nippoSelectedPlaces.push({ place: nippoActivePlace, no }); });
+    input.value = '';
+    renderNippoPlace();
   }
 
   function renderNippoPlace() {
     const el = document.getElementById('nippoPlaceGrid');
     const places = [...NIPPO_PLACES];
-    if (nippoSelectedPlace && !nippoPlaceInfo(nippoSelectedPlace)) places.push({ name: nippoSelectedPlace, icon: '📍' });
-    el.innerHTML = places.map(p =>
-      `<button type="button" class="nippo-choice-btn ${p.name === nippoSelectedPlace ? 'selected' : ''}" data-place="${escapeHtml(p.name)}">`
-      + `${escapeHtml(p.icon)} ${escapeHtml(nippoPlaceLabel(p.name))}</button>`).join('');
-    el.querySelectorAll('.nippo-choice-btn').forEach(btn => btn.onclick = () => selectNippoPlace(btn.dataset.place));
-    const needsNumber = nippoPlaceNeedsNumber(nippoSelectedPlace);
-    document.getElementById('nippoPlaceNoWrap').classList.toggle('hidden', !needsNumber);
-    document.getElementById('nippoPlaceNo').placeholder = nippoSelectedPlace
-      ? st('nippoPlaceNoFor', nippoPlaceLabel(nippoSelectedPlace)) : st('nippoPlaceNo');
+    nippoSelectedPlaces.forEach(sel => {
+      if (!places.some(p => p.name === sel.place)) places.push({ name: sel.place, icon: '📍', needsNumber: true, numbers: [] });
+    });
+    el.innerHTML = places.map(p => {
+      const count = nippoSelectedPlaces.filter(sel => sel.place === p.name).length;
+      return `<button type="button" class="nippo-choice-btn nippo-place-btn ${count ? 'selected' : ''} ${p.name === nippoActivePlace ? 'active' : ''}" data-place="${escapeHtml(p.name)}">`
+        + `${escapeHtml(p.icon)} ${escapeHtml(nippoPlaceLabel(p.name))}`
+        + (nippoPlaceNeedsNumber(p.name) && count ? `<span class="nippo-place-count">${count}</span>` : '') + `</button>`;
+    }).join('');
+    el.querySelectorAll('.nippo-choice-btn').forEach(btn => btn.onclick = () => onNippoPlaceClick(btn.dataset.place));
+
+    // 番号の選択欄（リストの番号 ＋ 手入力して選んだ番号）
+    const wrap = document.getElementById('nippoPlaceNoWrap');
+    wrap.classList.toggle('hidden', !nippoActivePlace);
+    if (nippoActivePlace) {
+      document.getElementById('nippoPlaceNoTitle').textContent = st('nippoPlaceNoFor', nippoPlaceLabel(nippoActivePlace));
+      const listed = nippoPlaceInfo(nippoActivePlace)?.numbers ?? [];
+      const extra = nippoSelectedPlaces.filter(p => p.place === nippoActivePlace && p.no != null && !listed.includes(p.no)).map(p => p.no);
+      const grid = document.getElementById('nippoPlaceNumGrid');
+      grid.innerHTML = [...listed, ...extra].map(no =>
+        `<button type="button" class="nippo-num-btn ${isNippoPlaceSelected(nippoActivePlace, no) ? 'selected' : ''}" data-no="${escapeHtml(no)}">${escapeHtml(no)}</button>`).join('');
+      grid.querySelectorAll('.nippo-num-btn').forEach(btn => btn.onclick = () => toggleNippoPlaceNo(nippoActivePlace, btn.dataset.no));
+    }
+
+    // 選んだ場所（タップで外せる）
+    const selEl = document.getElementById('nippoPlaceSelected');
+    selEl.innerHTML = nippoSelectedPlaces.length
+      ? `${st('nippoPlaceSelected')}：` + nippoSelectedPlaces.map((p, i) =>
+          `<button type="button" class="nippo-place-chip" data-i="${i}">${escapeHtml(nippoPlaceLabel(p.place) + (p.no ?? ''))}<span>×</span></button>`).join('')
+      : '';
+    selEl.querySelectorAll('.nippo-place-chip').forEach(btn => btn.onclick = () => {
+      nippoSelectedPlaces.splice(Number(btn.dataset.i), 1);
+      renderNippoPlace();
+    });
   }
 
-  function nippoPlaceText(entry) {
-    if (!entry.location_type) return '';
-    return `${nippoPlaceLabel(entry.location_type)}${entry.location_no ?? ''}`;
-  }
+  function nippoPlaceText(entry) { return nippoPlacesText(nippoEntryPlaces(entry)); }
 
   async function saveNippoEntry() {
     const taskName = document.getElementById('nippoTaskInput').value.trim();
@@ -3675,10 +3791,12 @@
     const end   = document.getElementById('nippoEndTime').value;
     if (!nippoSelectedCrop) { alert(st('nippoCropRequired')); return; }
     if (!taskName) { alert(st('nippoTaskRequired')); return; }
-    const placeNeedsNumber = nippoPlaceNeedsNumber(nippoSelectedPlace);
-    const placeNo = placeNeedsNumber ? document.getElementById('nippoPlaceNo').value.trim() : '';
-    if (!nippoSelectedPlace) { alert(st('nippoPlaceTypeRequired')); return; }
-    if (placeNeedsNumber && !placeNo) { alert(st('nippoPlaceNoRequired')); document.getElementById('nippoPlaceNo').focus(); return; }
+    // 番号を書いたまま「追加」を押し忘れたときも、その番号を入れる
+    if (document.getElementById('nippoPlaceNo').value.trim()) addNippoPlaceNo();
+    if (!nippoSelectedPlaces.length) {
+      alert(nippoActivePlace ? st('nippoPlaceNoRequired', nippoPlaceLabel(nippoActivePlace)) : st('nippoPlaceTypeRequired'));
+      return;
+    }
     if (toMin(end) <= toMin(start)) { alert(st('nippoTimeInvalid')); return; }
 
     const overlaps = nippoEntries.some(e => e.id !== nippoEditingId
@@ -3688,8 +3806,9 @@
     const row = {
       crop: nippoSelectedCrop,
       task_name: taskName,
-      location_type: nippoSelectedPlace,
-      location_no: placeNo || null,
+      places: nippoSelectedPlaces.map(p => ({ place: p.place, no: p.no ?? null })),
+      location_type: null, // 古い形式（1か所だけ）の列。新しい日報では places を使う
+      location_no: null,
       start_time: start + ':00',
       end_time: end + ':00',
     };

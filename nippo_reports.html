@@ -247,8 +247,18 @@
   // 分 → 時間（15分刻みなので小数2桁まで）
   function hours(min) { return Math.round(min / 60 * 100) / 100; }
 
-  // 場所（ハウス3・露地12 など。未入力は空）
-  function placeText(r) { return r.location_type ? `${r.location_type}${r.location_no ?? ''}` : ''; }
+  // 場所（ハウス3・5・7、露地12 など。未入力は空）
+  // 新しい日報は places（複数の場所）、古い日報は location_type / location_no
+  function placeText(r) {
+    const list = Array.isArray(r.places) ? r.places
+      : (r.location_type ? [{ place: r.location_type, no: r.location_no }] : []);
+    const groups = new Map();
+    list.forEach(p => {
+      if (!groups.has(p.place)) groups.set(p.place, []);
+      if (p.no) groups.get(p.place).push(p.no);
+    });
+    return [...groups].map(([place, nos]) => place + nos.join('・')).join('、');
+  }
 
   function hm(min) {
     const h = Math.floor(min / 60), m = min % 60;
@@ -393,7 +403,7 @@
 
     const { data, error } = await supabaseClient
       .from('daily_work_entries')
-      .select('work_date, staff_name, crop, task_name, location_type, location_no, start_time, end_time')
+      .select('work_date, staff_name, crop, task_name, places, location_type, location_no, start_time, end_time')
       .gte('work_date', from)
       .lte('work_date', to)
       .order('work_date')
@@ -462,7 +472,7 @@
     ws2['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 8 }, ...agg.staffNames.map(() => ({ wch: 10 }))];
     XLSX.utils.book_append_sheet(wb, ws2, '作業別');
     const ws3 = XLSX.utils.aoa_to_sheet(detailSheet);
-    ws3['!cols'] = [{ wch: 12 }, { wch: 5 }, { wch: 14 }, { wch: 10 }, { wch: 18 }, { wch: 10 }, { wch: 7 }, { wch: 7 }, { wch: 7 }];
+    ws3['!cols'] = [{ wch: 12 }, { wch: 5 }, { wch: 14 }, { wch: 10 }, { wch: 18 }, { wch: 20 }, { wch: 7 }, { wch: 7 }, { wch: 7 }];
     XLSX.utils.book_append_sheet(wb, ws3, '明細');
     XLSX.writeFile(wb, `作業日報_${from}_${to}${staff ? `_${staff}` : ''}.xlsx`);
   }
