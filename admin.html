@@ -127,6 +127,15 @@
     .home-card-title { font-size: 16px; font-weight: 800; }
     .home-card-desc { font-size: 12px; color: #667; line-height: 1.5; }
 
+    /* 準備中のカード（まだ中身がない機能） */
+    .home-card.soon { background: #f7f9f7; border-style: dashed; color: #8a9a88; }
+    .home-card.soon:hover { transform: none; box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-color: #dce9dc; }
+    .home-card.soon .home-card-icon { opacity: 0.55; }
+    .home-card-badge {
+      display: inline-block; margin-left: 6px; padding: 1px 7px; vertical-align: 2px;
+      background: #e6ebe5; color: #6b7a69; border-radius: 9px; font-size: 11px; font-weight: 700;
+    }
+
     @media (max-width: 540px) {
       .home-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
       .home-card { padding: 14px 12px; }
@@ -947,6 +956,12 @@
         <span class="home-card-icon">📝</span>
         <span class="home-card-title">タスクの指示</span>
         <span class="home-card-desc">タスク登録・進捗確認・自発報告・データ出力</span>
+      </button>
+      <!-- 在庫管理：中身はこれから作る（いまは押すと「準備中」と出るだけ） -->
+      <button type="button" class="home-card soon" onclick="alert('在庫管理は準備中です。')">
+        <span class="home-card-icon">📦</span>
+        <span class="home-card-title">在庫管理<span class="home-card-badge">準備中</span></span>
+        <span class="home-card-desc">これから作る機能です</span>
       </button>
     </div>
   </div>
