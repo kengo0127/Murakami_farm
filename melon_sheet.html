@@ -298,6 +298,13 @@
 
     .mini-table td:first-child, .mini-table th:first-child { text-align: left; }
     .mini-table tr:last-child td { border-bottom: none; }
+    /* 販売停止中の追加商品：グレーにして商品名に打ち消し線 */
+    .mini-table tr.custom-inactive td { color: #aaa; background: #f4f4f4; }
+    .mini-table tr.custom-inactive td.amount-cell { color: #aaa; }
+    .mini-table tr.custom-inactive td:first-child { text-decoration: line-through; }
+    .custom-status { display: inline-block; padding: 1px 8px; border-radius: 10px; font-weight: 700; }
+    .custom-status.on { background: #e8f5e9; color: #2e7d32; }
+    .custom-status.off { background: #e0e0e0; color: #757575; }
     .mini-table .amount-cell { font-weight: 800; color: #1a3d17; }
 
     /* 出荷状況：縦横にスクロールしても、見出しと日付は固定 */
@@ -1141,6 +1148,15 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.05);
     }
     .set-manage-row.inactive { opacity: 0.55; }
+    .set-rename-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .set-rename-row input[type="text"] {
+      flex: 1; min-width: 0; padding: 11px 12px; font-size: 17px; font-weight: 700;
+      border: 2px solid #c8e0c4; border-radius: 10px; font-family: inherit;
+    }
+    .set-rename-row input[type="text"]:focus { outline: none; border-color: #2e5c28; }
+    .set-rename-row .set-small-btn { flex-shrink: 0; }
+    .set-rename-orig { font-size: 12px; color: #888; margin: -4px 0 10px 2px; }
+    .set-rename-orig button { border: none; background: none; color: #2e5c28; text-decoration: underline; font-size: 12px; cursor: pointer; font-family: inherit; }
     .set-manage-name { flex: 1; font-size: 15px; font-weight: 700; color: #222; }
     .set-manage-name small { display: block; font-size: 12px; color: #888; font-weight: 600; }
     .custom-tag { font-size: 10px; font-weight: 700; color: #2e5c28; background: #e8f5e9; border-radius: 8px; padding: 1px 6px; margin-left: 4px; }
@@ -1633,12 +1649,12 @@
       const next = it.prices.find(x => x.start_date > today);
       const nextNote = next ? `<div class="cell-sub">${formatDateJa(next.start_date)}から ${formatYen(next.unit_price)}</div>` : '';
       return `
-        <tr>
+        <tr class="${it.active ? '' : 'custom-inactive'}">
           <td>${escHtml(customItemName(it))}</td>
           <td>${escHtml(it.unit)}</td>
           <td class="amount-cell">${p ? formatYen(p.unit_price) : '販売前'}${nextNote}</td>
           <td>${p ? escHtml(bundleLabel(p.bundles, it.unit)) || '-' : '-'}</td>
-          <td>${it.active ? '販売中' : '販売停止'}</td>
+          <td><span class="custom-status ${it.active ? 'on' : 'off'}">${it.active ? '販売中' : '販売停止中'}</span></td>
         </tr>`;
     }).join('') : '<tr><td colspan="5" style="color:#bbb;">まだありません（「🏷 商品・価格の設定」→「商品・サイズを追加する」から追加できます）</td></tr>';
   }
@@ -1912,7 +1928,7 @@
       </tr>`;
   }
 
-  // 日付未設定の行は末尾に送る
+  // 日付未設定の行は末尾に送る（売上Excelなどで使う、日付の古い順）
   function sortEntriesByDate(list) {
     return [...list].sort((a, b) => {
       if (!a.entry_date && !b.entry_date) return 0;
@@ -1922,8 +1938,18 @@
     });
   }
 
+  // 明細一覧の表示用：日付の新しい順。同じ日付は後から登録した行が上。
+  // 日付未設定の行（「＋ 行を追加」したばかりの行など）は、すぐ入力できるよう先頭に出す
+  function sortEntriesByDateDesc(list) {
+    return [...list].sort((a, b) => {
+      if (!a.entry_date !== !b.entry_date) return a.entry_date ? 1 : -1;
+      if (a.entry_date !== b.entry_date) return a.entry_date < b.entry_date ? 1 : -1;
+      return (b.sort_order || 0) - (a.sort_order || 0);
+    });
+  }
+
   function getDisplayEntries() {
-    return autoSortByDate ? sortEntriesByDate(entries) : entries;
+    return autoSortByDate ? sortEntriesByDateDesc(entries) : entries;
   }
 
   function renderTable() {
@@ -3527,6 +3553,43 @@
     posTileSettings = Object.fromEntries((data || []).map(r => [r.tile_key, { hidden: r.hidden, icon: r.icon }]));
   }
 
+  // 会計に出る商品名（従来の品種だけ。pos_name_settings。全端末共通）
+  // name_key：'group:<カテゴリ>:<元の種類名>'／'sku:<数量の列名>'。画面から追加した商品は ec_items の名前そのものを変える
+  let posNameSettings = {}; // name_key -> label
+
+  async function loadPosNameSettings() {
+    const { data, error } = await supabaseClient.from('pos_name_settings').select('name_key, label');
+    if (error) { console.error(error); return; }
+    posNameSettings = Object.fromEntries((data || []).map(r => [r.name_key, r.label]));
+  }
+
+  // label が null なら元の名前に戻す
+  async function savePosNameSetting(key, label) {
+    const { error } = label == null
+      ? await supabaseClient.from('pos_name_settings').delete().eq('name_key', key)
+      : await supabaseClient.from('pos_name_settings').upsert({ name_key: key, label, updated_at: new Date().toISOString() });
+    if (error) throw error;
+    if (label == null) delete posNameSettings[key];
+    else posNameSettings[key] = label;
+  }
+
+  function posGroupDisplay(catKey, label) {
+    return posNameSettings[`group:${catKey}:${label}`] || label;
+  }
+
+  function posBuiltinSizeDisplay(it) {
+    return posNameSettings[`sku:${it.qtyKey}`] ?? it.label;
+  }
+
+  function posBuiltinItemName(catKey, groupLabel, it) {
+    const size = posBuiltinSizeDisplay(it);
+    return posItemName(catKey, `${posGroupDisplay(catKey, groupLabel)}${size ? ' ' + size : ''}`);
+  }
+
+  function posCustomItemName(ci) {
+    return posItemName(ci.category, `${posGroupDisplay(ci.category, ci.group_label)}${ci.size_label ? ' ' + ci.size_label : ''}`);
+  }
+
   async function savePosTileSetting(key, fields) {
     const current = posTileSettings[key] || { hidden: false, icon: null };
     const next = { ...current, ...fields };
@@ -3548,7 +3611,7 @@
       { key: 'melon', label: 'メロン', defaultIcon: '🍈', open: () => posOpenCategory('melon') },
       { key: 'suika', label: 'スイカ', defaultIcon: '🍉', open: () => posOpenCategory('suika') },
       ...veggieGroups.map(g => ({
-        key: `veggie:${g.label}`, label: g.label, defaultIcon: POS_GROUP_ICONS[g.label] || null,
+        key: `veggie:${g.label}`, label: posGroupDisplay('veggie', g.label), defaultIcon: POS_GROUP_ICONS[g.label] || null,
         open: () => posOpenVeggieGroup(g.label),
       })),
     ];
@@ -3955,7 +4018,7 @@
         key: `custom:${ci.id}`,
         customId: ci.id,
         category: ci.category,
-        name: posItemName(catKey, customItemName(ci)),
+        name: posCustomItemName(ci),
         unit: ci.unit,
         price: p.unit_price,
         bundles: p.bundles || [],
@@ -3968,7 +4031,7 @@
       key: item.qtyKey,
       field: item.qtyKey,
       priceField: item.priceKey,
-      name: posItemName(catKey, `${groupLabel}${item.label ? ' ' + item.label : ''}`),
+      name: posBuiltinItemName(catKey, groupLabel, item),
       unit: item.unit || '玉',
       price: pos.prices[item.priceDefaultKey],
       isKg: false,
@@ -3978,7 +4041,9 @@
   }
 
   function posSkuTileLabel(sku) {
-    return sku.type === 'custom' ? (sku.ci.size_label || sku.ci.group_label) : sku.it.label;
+    return sku.type === 'custom'
+      ? (sku.ci.size_label || posGroupDisplay(sku.ci.category, sku.ci.group_label))
+      : posBuiltinSizeDisplay(sku.it);
   }
 
   function posSkuTileSub(sku) {
@@ -4005,7 +4070,7 @@
       const tiles = posCurrentGroups.map((g, gi) => `
         <div class="pos-tile tone-${gi % 4}" onclick="posSelectGroup('${catKey}', ${gi})">
           <span class="pos-tile-icon">${POS_GROUP_ICONS[g.label] || cat.icon}</span>
-          <span class="pos-tile-label">${escHtml(g.label)}</span>
+          <span class="pos-tile-label">${escHtml(posGroupDisplay(catKey, g.label))}</span>
         </div>`).join('');
       posShowStep(`${cat.icon} ${cat.label}：種類を選ぶ`, `<div class="pos-tile-grid">${tiles}</div>`, isFirst);
     });
@@ -4024,7 +4089,7 @@
           <span class="pos-tile-big" style="${posSkuTileLabel(sku).length > 4 ? 'font-size:18px;' : ''}">${escHtml(posSkuTileLabel(sku))}</span>
           <span class="pos-tile-sub">${escHtml(posSkuTileSub(sku))}</span>
         </div>`).join('');
-      posShowStep(`${g.label}：サイズを選ぶ`, `<div class="pos-tile-grid">${tiles}</div>`, isFirst);
+      posShowStep(`${posGroupDisplay(catKey, g.label)}：サイズを選ぶ`, `<div class="pos-tile-grid">${tiles}</div>`, isFirst);
     });
   }
 
@@ -4172,7 +4237,7 @@
       if (!e[it.qtyKey]) return;
       cart.push({
         key: it.qtyKey, field: it.qtyKey, priceField: it.priceKey,
-        name: posItemName(c.key, `${g.label}${it.label ? ' ' + it.label : ''}`),
+        name: posBuiltinItemName(c.key, g.label, it),
         unit: it.unit || '玉', price: e[it.priceKey] ?? pos.prices[it.priceDefaultKey], isKg: false, qty: e[it.qtyKey],
       });
     })));
@@ -4504,6 +4569,10 @@
           <span class="set-menu-icon">➕</span>
           <span><b>商品・サイズを追加する</b><small>新しい野菜や、「1玉」「1袋」などの売り方を追加します。「2玉で500円」のようなまとめ買い価格も設定できます</small></span>
         </button>
+        <button type="button" class="set-menu-btn" onclick="setStartRename()">
+          <span class="set-menu-icon">✏️</span>
+          <span><b>会計に出る商品名を変える</b><small>店頭会計に出る種類の名前（例：こかぶ）や、サイズの名前（例：規格外（10玉1セット））を変えます</small></span>
+        </button>
         ${customItems.length ? `
         <button type="button" class="set-menu-btn" onclick="setPush(setManageList)">
           <span class="set-menu-icon">🛑</span>
@@ -4547,7 +4616,7 @@
     const cat = CUSTOM_CATEGORIES.find(c => c.key === catKey);
     setDraft.groups = mergedGroups(catKey, shiftedDateStr(0), { includeInactive: true, includeUnpriced: true });
     setPush(() => setShow(`${cat.icon} ${cat.label}：種類を選ぶ`, setTiles(setDraft.groups.map((g, gi) => ({
-      icon: POS_GROUP_ICONS[g.label] || cat.icon, label: g.label, onclick: `setPickPriceGroup(${gi})`,
+      icon: POS_GROUP_ICONS[g.label] || cat.icon, label: posGroupDisplay(catKey, g.label), onclick: `setPickPriceGroup(${gi})`,
     })))));
   }
 
@@ -4583,7 +4652,7 @@
       setGoPriceForm(setTargetFromSku(g.label, g.skus[0]));
       return;
     }
-    setPush(() => setShow(`${g.label}：サイズを選ぶ`, setTiles(g.skus.map((sku, si) => ({
+    setPush(() => setShow(`${posGroupDisplay(setDraft.cat, g.label)}：サイズを選ぶ`, setTiles(g.skus.map((sku, si) => ({
       big: true, label: posSkuTileLabel(sku), sub: `いま ${setSkuCurrentLabel(sku)}`, onclick: `setPickPriceSku(${gi}, ${si})`,
     })))));
   }
@@ -4869,6 +4938,163 @@
     await loadCustomItems();
   }
 
+  // ── 会計に出る商品名を変える ──
+  // 従来の品種：会計での表示名だけ変える（pos_name_settings。表の列名・Excelは元の名前のまま）
+  // 画面から追加した商品だけの種類・サイズ：商品名そのもの（ec_items）を変える（表・Excelも新しい名前。登録済みの行は元の名前のまま）
+  function setStartRename() {
+    setDraft = { mode: 'rename' };
+    setPush(() => setShow('✏️ どの品物の名前を変えますか？', setTiles(CUSTOM_CATEGORIES.map(c => ({
+      icon: c.icon, label: c.label, onclick: `setPickRenameCategory('${c.key}')`,
+    })))));
+  }
+
+  function setRenameGroups() {
+    return mergedGroups(setDraft.cat, shiftedDateStr(0), { includeInactive: true, includeUnpriced: true });
+  }
+
+  function setPickRenameCategory(catKey) {
+    setDraft.cat = catKey;
+    setPush(() => {
+      const cat = CUSTOM_CATEGORIES.find(c => c.key === catKey);
+      const groups = setRenameGroups();
+      setShow(`${cat.icon} ${cat.label}：どの種類ですか？`, setTiles(groups.map(g => {
+        const shown = posGroupDisplay(catKey, g.label);
+        return {
+          icon: POS_GROUP_ICONS[g.label] || cat.icon, label: shown,
+          sub: shown !== g.label ? `元：${g.label}` : '',
+          onclick: `setPickRenameGroup(${JSON.stringify(g.label).replace(/"/g, '&quot;')})`,
+        };
+      })));
+    });
+  }
+
+  function setPickRenameGroup(label) {
+    setDraft.groupLabel = label;
+    setPush(setRenameForm);
+  }
+
+  function setRenameCurrentGroup() {
+    return setRenameGroups().find(g => g.label === setDraft.groupLabel);
+  }
+
+  function setRenameForm() {
+    const g = setRenameCurrentGroup();
+    if (!g) { setBack(); return; }
+    const cat = setDraft.cat;
+    const hasBuiltin = g.skus.some(s => s.type === 'builtin');
+    const shownGroup = posGroupDisplay(cat, g.label);
+    const showSizes = g.skus.length > 1 || g.skus.some(s => (s.type === 'custom' ? s.ci.size_label : s.it.label));
+    const sizeRows = g.skus.map((sku, si) => {
+      const isBuiltin = sku.type === 'builtin';
+      const orig = isBuiltin ? sku.it.label : sku.ci.size_label;
+      const shown = isBuiltin ? posBuiltinSizeDisplay(sku.it) : orig;
+      const changed = isBuiltin && shown !== orig;
+      return `
+        <div class="set-rename-row">
+          <input type="text" id="setRenameSku_${si}" maxlength="30" value="${escHtml(shown)}"
+            onkeydown="if (event.key === 'Enter' && !event.isComposing) setSaveSkuName(${si})">
+          <button type="button" class="set-small-btn" onclick="setSaveSkuName(${si})">保存</button>
+        </div>
+        ${changed ? `<div class="set-rename-orig">元の名前：${escHtml(orig || '（なし）')}　<button type="button" onclick="setResetSkuName(${si})">元に戻す</button></div>` : ''}`;
+    }).join('');
+
+    setShow(`✏️ ${shownGroup}：名前を変える`, `
+      <div class="set-field">
+        <label>種類の名前</label>
+        <div class="set-rename-row">
+          <input type="text" id="setRenameGroup" maxlength="30" value="${escHtml(shownGroup)}"
+            onkeydown="if (event.key === 'Enter' && !event.isComposing) setSaveGroupName()">
+          <button type="button" class="set-small-btn" onclick="setSaveGroupName()">保存</button>
+        </div>
+        ${hasBuiltin && shownGroup !== g.label ? `<div class="set-rename-orig">元の名前：${escHtml(g.label)}　<button type="button" onclick="setResetGroupName()">元に戻す</button></div>` : ''}
+      </div>
+      ${showSizes ? `<div class="set-field"><label>サイズの名前</label>${sizeRows}</div>` : ''}
+      <p class="pos-step-note">${hasBuiltin
+        ? '※ 会計の画面に出る名前だけが変わります。注文管理表の列名・Excel・CSVは元の名前のままです。'
+        : '※ 画面から追加した商品なので、注文管理表・Excelの名前も新しい名前になります（すでに登録した行は、登録したときの名前のまま残ります）。'}</p>`);
+  }
+
+  // 他の種類と同じ名前にすると、会計で見分けがつかなくなる（追加商品は同じ種類にまとまってしまう）ため止める
+  function setRenameGroupNameTaken(g, name) {
+    return setRenameGroups().some(x => x.label !== g.label && (x.label === name || posGroupDisplay(setDraft.cat, x.label) === name));
+  }
+
+  async function setRenameRun(action) {
+    try {
+      await action();
+    } catch (e) {
+      console.error(e);
+      alert('保存に失敗しました。' + (String(e.message || '').includes('pos_name_settings')
+        ? '（migration_2026-11-13b_pos_name_settings.sql を実行済みか確認してください）' : ''));
+    }
+    renderCustomItemTable();
+    setRerender();
+  }
+
+  function setSaveGroupName() {
+    const g = setRenameCurrentGroup();
+    if (!g) return;
+    const cat = setDraft.cat;
+    const name = document.getElementById('setRenameGroup').value.trim();
+    if (!name) { alert('名前を入力してください'); return; }
+    if (name === posGroupDisplay(cat, g.label)) return;
+    if (setRenameGroupNameTaken(g, name)) { alert(`「${name}」という種類がすでにあります。別の名前にしてください。`); return; }
+    const hasBuiltin = g.skus.some(s => s.type === 'builtin');
+    setRenameRun(async () => {
+      if (hasBuiltin) {
+        await savePosNameSetting(`group:${cat}:${g.label}`, name === g.label ? null : name);
+        return;
+      }
+      const { error } = await supabaseClient.from('ec_items').update({ group_label: name })
+        .eq('category', cat).eq('group_label', g.label);
+      if (error) throw error;
+      // 野菜のアイコン・表示/非表示の設定は品名で保存しているため、新しい名前に引き継ぐ
+      const oldKey = `veggie:${g.label}`;
+      if (cat === 'veggie' && posTileSettings[oldKey]) {
+        await savePosTileSetting(`veggie:${name}`, posTileSettings[oldKey]);
+        await supabaseClient.from('pos_tile_settings').delete().eq('tile_key', oldKey);
+        delete posTileSettings[oldKey];
+      }
+      await loadCustomItems();
+      setDraft.groupLabel = name;
+    });
+  }
+
+  function setResetGroupName() {
+    const g = setRenameCurrentGroup();
+    if (!g) return;
+    setRenameRun(() => savePosNameSetting(`group:${setDraft.cat}:${g.label}`, null));
+  }
+
+  function setSaveSkuName(si) {
+    const g = setRenameCurrentGroup();
+    const sku = g?.skus[si];
+    if (!sku) return;
+    const name = document.getElementById(`setRenameSku_${si}`).value.trim();
+    const current = sku.type === 'builtin' ? posBuiltinSizeDisplay(sku.it) : sku.ci.size_label;
+    if (name === current) return;
+    if (!name && g.skus.length > 1) { alert('サイズの名前を入力してください'); return; }
+    if (g.skus.some((other, oi) => oi !== si && posSkuTileLabel(other) === name)) {
+      alert(`「${name}」というサイズがすでにあります。別の名前にしてください。`);
+      return;
+    }
+    setRenameRun(async () => {
+      if (sku.type === 'builtin') {
+        await savePosNameSetting(`sku:${sku.it.qtyKey}`, name === sku.it.label ? null : name);
+        return;
+      }
+      const { error } = await supabaseClient.from('ec_items').update({ size_label: name }).eq('id', sku.ci.id);
+      if (error) throw error;
+      await loadCustomItems();
+    });
+  }
+
+  function setResetSkuName(si) {
+    const sku = setRenameCurrentGroup()?.skus[si];
+    if (!sku || sku.type !== 'builtin') return;
+    setRenameRun(() => savePosNameSetting(`sku:${sku.it.qtyKey}`, null));
+  }
+
   // ── 追加した商品の販売をやめる・再開する ──
   function setManageList() {
     const today = shiftedDateStr(0);
@@ -4923,6 +5149,7 @@
     renderProductToggles();
     await loadCustomItems();
     await loadPosTileSettings();
+    await loadPosNameSettings();
     await loadPricePeriods();
     await loadEntries();
 
